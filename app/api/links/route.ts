@@ -1,0 +1,36 @@
+/**
+ * app/api/links/route.ts
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
+import { findLinks, insertLink } from '@/lib/db/dao/linkDao'
+import { z } from 'zod'
+
+const createSchema = z.object({
+  name: z.string().min(1).max(100),
+  url: z.string().url(),
+  description: z.string().optional(),
+  avatarUrl: z.string().url().optional(),
+  category: z.enum(['friend', 'tool', 'resource', 'inspire', 'other']).optional(),
+  sortOrder: z.number().int().optional(),
+  isActive: z.boolean().optional(),
+})
+
+export async function GET(req: NextRequest) {
+  const session = await auth()
+  // 管理员可查看全部（包括 inactive），访客只看 active
+  const links = await findLinks(!session)
+  return NextResponse.json(links)
+}
+
+export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const parsed = createSchema.safeParse(await req.json())
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+
+  const link = await insertLink(parsed.data)
+  return NextResponse.json(link, { status: 201 })
+}

@@ -1,0 +1,189 @@
+-- ============================================================
+-- 梨花海 (Lihua Hai) — 数据库 Schema
+-- 数据库: PostgreSQL 16+
+-- 执行方式: npm run db:migrate
+-- ============================================================
+
+-- 启用 UUID 扩展（备用）
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- ============================================================
+-- 文章表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS posts (
+  id             SERIAL PRIMARY KEY,
+  title          TEXT        NOT NULL,
+  slug           TEXT        NOT NULL UNIQUE,
+  -- Tiptap JSON 内容，存为 JSONB 以支持索引和查询
+  content        JSONB       NOT NULL DEFAULT '{}',
+  excerpt        TEXT,
+  cover_url      TEXT,
+  status         TEXT        NOT NULL DEFAULT 'draft'
+                   CHECK (status IN ('draft', 'published', 'archived')),
+  tags           TEXT[]      NOT NULL DEFAULT '{}',
+  view_count     INTEGER     NOT NULL DEFAULT 0,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  published_at   TIMESTAMPTZ
+);
+
+-- 文章查询常用索引
+CREATE INDEX IF NOT EXISTS idx_posts_slug        ON posts (slug);
+CREATE INDEX IF NOT EXISTS idx_posts_status      ON posts (status);
+CREATE INDEX IF NOT EXISTS idx_posts_published   ON posts (published_at DESC NULLS LAST)
+  WHERE status = 'published';
+CREATE INDEX IF NOT EXISTS idx_posts_tags        ON posts USING GIN (tags);
+
+-- ============================================================
+-- 极客瞬间表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS moments (
+  id          SERIAL PRIMARY KEY,
+  type        TEXT        NOT NULL DEFAULT 'text'
+                CHECK (type IN ('text','image','sleep','steps','heartrate','mood','link')),
+  content     TEXT,
+  images      TEXT[]      NOT NULL DEFAULT '{}',
+  -- 扩展数据（手环数据、链接元信息等）
+  meta        JSONB,
+  mood        TEXT,
+  weather     TEXT,
+  location    TEXT,
+  is_public   BOOLEAN     NOT NULL DEFAULT TRUE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_moments_created ON moments (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_moments_type    ON moments (type);
+
+-- ============================================================
+-- 动漫表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS animes (
+  id                SERIAL PRIMARY KEY,
+  title             TEXT        NOT NULL,
+  title_cn          TEXT,
+  cover_url         TEXT,
+  type              TEXT        NOT NULL DEFAULT 'tv'
+                      CHECK (type IN ('tv','movie','ova','special')),
+  episodes_total    INTEGER,
+  episodes_watched  INTEGER     NOT NULL DEFAULT 0,
+  status            TEXT        NOT NULL DEFAULT 'plan_to_watch'
+                      CHECK (status IN ('watching','completed','on_hold','dropped','plan_to_watch')),
+  rating            NUMERIC(3,1) CHECK (rating >= 1 AND rating <= 10),
+  short_review      TEXT,
+  start_season      TEXT,
+  mal_id            INTEGER UNIQUE,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_animes_status ON animes (status);
+
+-- ============================================================
+-- 游戏表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS games (
+  id                   SERIAL PRIMARY KEY,
+  title                TEXT        NOT NULL,
+  cover_url            TEXT,
+  cartridge_image_url  TEXT,
+  platform             TEXT        NOT NULL DEFAULT 'pc'
+                         CHECK (platform IN ('pc','ps5','ps4','switch','xbox','mobile','other')),
+  status               TEXT        NOT NULL DEFAULT 'plan_to_play'
+                         CHECK (status IN ('playing','completed','abandoned','plan_to_play','platinum')),
+  play_hours           NUMERIC(7,1),
+  rating               NUMERIC(3,1) CHECK (rating >= 1 AND rating <= 10),
+  short_review         TEXT,
+  completed_at         TIMESTAMPTZ,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_games_status ON games (status);
+
+-- ============================================================
+-- 相册表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS gallery_items (
+  id              SERIAL PRIMARY KEY,
+  title           TEXT,
+  description     TEXT,
+  url             TEXT        NOT NULL,
+  thumbnail_url   TEXT,
+  width           INTEGER,
+  height          INTEGER,
+  file_size       BIGINT,
+  file_name       TEXT        NOT NULL,
+  category        TEXT        NOT NULL DEFAULT 'photo'
+                    CHECK (category IN ('photo','artwork','screenshot','other')),
+  -- 从 EXIF 解析出的元数据
+  exif            JSONB,
+  tags            TEXT[]      NOT NULL DEFAULT '{}',
+  is_featured     BOOLEAN     NOT NULL DEFAULT FALSE,
+  sort_order      INTEGER     NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_gallery_category   ON gallery_items (category);
+CREATE INDEX IF NOT EXISTS idx_gallery_featured   ON gallery_items (is_featured) WHERE is_featured = TRUE;
+CREATE INDEX IF NOT EXISTS idx_gallery_sort       ON gallery_items (sort_order, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_gallery_tags       ON gallery_items USING GIN (tags);
+
+-- ============================================================
+-- 友情链接表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS links (
+  id          SERIAL PRIMARY KEY,
+  name        TEXT        NOT NULL,
+  url         TEXT        NOT NULL,
+  description TEXT,
+  avatar_url  TEXT,
+  category    TEXT        NOT NULL DEFAULT 'friend'
+                CHECK (category IN ('friend','tool','resource','inspire','other')),
+  sort_order  INTEGER     NOT NULL DEFAULT 0,
+  is_active   BOOLEAN     NOT NULL DEFAULT TRUE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_links_category ON links (category);
+CREATE INDEX IF NOT EXISTS idx_links_active   ON links (is_active) WHERE is_active = TRUE;
+
+-- ============================================================
+-- 自动更新 updated_at 的触发器函数
+-- ============================================================
+CREATE OR REPLACE FUNCTION trigger_set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 绑定触发器
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'trg_posts_updated_at'
+  ) THEN
+    CREATE TRIGGER trg_posts_updated_at
+      BEFORE UPDATE ON posts
+      FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'trg_animes_updated_at'
+  ) THEN
+    CREATE TRIGGER trg_animes_updated_at
+      BEFORE UPDATE ON animes
+      FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'trg_games_updated_at'
+  ) THEN
+    CREATE TRIGGER trg_games_updated_at
+      BEFORE UPDATE ON games
+      FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+  END IF;
+END;
+$$;

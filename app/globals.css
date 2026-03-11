@@ -1,0 +1,296 @@
+/* JetBrains Mono — 通过 jsDelivr 加载（国内可访问） */
+@import url('https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/index.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 字体回退栈 */
+:root {
+  --font-inter: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas',
+    'SF Mono', ui-monospace, monospace;
+}
+
+/* ============================================================
+   CSS 变量 — 颜色系统 (HSL)
+   深色优先；.dark 类由 next-themes 控制
+   ============================================================ */
+@layer base {
+  :root {
+    /* 浅色模式 */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --muted: 210 40% 94%;
+    --muted-foreground: 215 16% 47%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 199 89% 48%;
+  }
+
+  .dark {
+    /* ── 极致暗黑夜间主题 — Zinc 冷灰系 ───────────────────
+       设计规范：
+         背景底色   #09090B  →  hsl(240 10%  4%)
+         卡片/面板  #121217  →  hsl(240 12%  8%)
+         边框/分割  #27272A  →  hsl(240  4% 16%)
+         主文本     #EDEDEF  →  hsl(240  1% 93%)
+         次要文本   #A1A1AA  →  hsl(240  3% 65%)
+         强调橙   #FF8A6B  —— 用于发光 ring
+       ─────────────────────────────────────────────────── */
+    --background:       240 10%  4%;   /* #09090B — zinc-950  */
+    --foreground:       240  1% 93%;   /* #EDEDEF — 珍珠灰白  */
+    --card:             240 12%  8%;   /* #121217 — surface   */
+    --card-foreground:  240  1% 93%;
+    --muted:            240  4% 16%;   /* #27272A — zinc-800  */
+    --muted-foreground: 240  4% 65%;   /* #A1A1AA — zinc-400  */
+    --border:           240  4% 16%;   /* #27272A — 极细边框  */
+    --input:            240  4% 16%;
+    --ring:             199 89% 48%;   /* ocean 蓝 — 焦点环   */
+  }
+}
+
+/* ============================================================
+   全局基础样式
+   ============================================================ */
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+
+  h1, h2 {
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  h3, h4 {
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  /* 滚动条 — 随主题自适应 */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: #D4D4D8;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #A1A1AA; }
+
+  .dark ::-webkit-scrollbar-thumb { background: #27272A; }
+  .dark ::-webkit-scrollbar-thumb:hover { background: #3F3F46; }
+}
+
+/* ============================================================
+   发光边框交互系统
+   零阴影原则：层级靠 border 颜色变化 + 橙红 ring 体现
+   ============================================================ */
+@layer utilities {
+  /* 悬浮橙红发光边框 */
+  .glow-ember {
+    @apply border border-border transition-all duration-200;
+  }
+  .glow-ember:hover {
+    border-color: rgba(255, 138, 107, 0.5);
+    box-shadow: 0 0 0 1px rgba(255, 138, 107, 0.15);
+  }
+
+  /* 悬浮海蓝发光边框（链接 / 系统提示） */
+  .glow-ocean {
+    @apply border border-border transition-all duration-200;
+  }
+  .glow-ocean:hover {
+    border-color: rgba(14, 165, 233, 0.5);
+    box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.12);
+  }
+}
+
+/* ============================================================
+   Tiptap 编辑器 / 文章 Prose 样式
+   ============================================================ */
+@layer components {
+  .prose {
+    @apply text-foreground;
+    line-height: 1.8;
+  }
+
+  .prose h1, .prose h2, .prose h3, .prose h4 {
+    @apply text-foreground font-bold;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+
+  .prose h2 {
+    @apply text-2xl mt-10 mb-4 pb-2;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  .prose h3 { @apply text-xl mt-8 mb-3; }
+
+  .prose p { @apply mb-4; }
+
+  .prose a {
+    @apply text-ocean underline underline-offset-2 hover:text-ocean-400 transition-colors;
+  }
+
+  .prose blockquote {
+    @apply border-l-2 border-ocean/40 pl-4 text-muted-foreground italic my-6;
+  }
+
+  .prose code:not(pre code) {
+    @apply font-mono text-[0.85em] px-1.5 py-0.5 rounded;
+    color: #FF8A6B;
+    background: rgba(255, 138, 107, 0.08);
+    border: 1px solid rgba(255, 138, 107, 0.15);
+  }
+
+  .prose pre {
+    @apply my-6 overflow-x-auto;
+    border-radius: 12px;
+    border: 1px solid hsl(var(--border));
+  }
+
+  .prose pre code { @apply text-sm font-mono; }
+
+  /* 代码块（Tiptap CodeBlockLowlight） */
+  .code-block {
+    background: hsl(var(--muted));
+    @apply my-6 overflow-x-auto p-4 font-mono text-sm;
+    border-radius: 12px;
+    border: 1px solid hsl(var(--border));
+  }
+
+  .dark .code-block {
+    background: #09090B;
+    border-color: #27272A;
+  }
+
+  /* ProseMirror placeholder */
+  .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    @apply text-muted-foreground pointer-events-none float-left h-0;
+  }
+
+  /* 选区高亮 */
+  .ProseMirror-selectednode {
+    outline: 2px dashed rgba(14, 165, 233, 0.5);
+    outline-offset: 2px;
+  }
+
+  /* 编辑器图片 */
+  .editor-image {
+    @apply max-w-full my-4 mx-auto block;
+    border-radius: 12px;
+  }
+}
+
+/* ============================================================
+   SSH 终端（前台渲染）
+   ============================================================ */
+@layer components {
+  .ssh-terminal-render {
+    @apply my-6 font-mono text-sm overflow-hidden;
+    border-radius: 12px;
+    border: 1px solid #27272A;
+  }
+
+  .ssh-terminal-render .terminal-bar {
+    @apply flex items-center gap-2 px-4 py-2;
+    background: #18181B;
+    border-bottom: 1px solid #27272A;
+  }
+
+  .ssh-terminal-render .terminal-body {
+    @apply p-4 leading-relaxed;
+    background: #09090B;
+    color: #A1A1AA;
+  }
+
+  .ssh-terminal-render .cmd-prompt  { @apply text-green-400; }
+  .ssh-terminal-render .cmd-text    { color: #EDEDEF; }
+  .ssh-terminal-render .cmd-output  { @apply block mt-1 mb-3; color: #71717A; }
+
+  /* 打字光标 */
+  .terminal-cursor {
+    @apply inline-block w-2 h-4 bg-ocean align-middle ml-0.5;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+}
+
+/* ============================================================
+   3D 游戏卡带翻转
+   ============================================================ */
+@layer components {
+  .game-card-flip { perspective: 800px; }
+
+  .game-card-inner {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .game-card-flip:hover .game-card-inner { transform: rotateY(180deg); }
+
+  .game-card-front,
+  .game-card-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .game-card-back {
+    transform: rotateY(180deg);
+    @apply flex flex-col items-center justify-center p-4;
+    @apply bg-card border border-border;
+  }
+}
+
+/* ============================================================
+   瀑布流布局
+   ============================================================ */
+@layer utilities {
+  .masonry-2 { column-count: 2; column-gap: 1rem; }
+  .masonry-3 { column-count: 3; column-gap: 1rem; }
+  .masonry-4 { column-count: 4; column-gap: 1rem; }
+  .masonry-item { break-inside: avoid; margin-bottom: 1rem; }
+
+  @media (max-width: 768px) {
+    .masonry-3, .masonry-4 { column-count: 2; }
+  }
+  @media (max-width: 480px) {
+    .masonry-2, .masonry-3, .masonry-4 { column-count: 1; }
+  }
+}
