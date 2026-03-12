@@ -15,6 +15,7 @@ export async function fetchPosts(params: PostQueryParams = {}): Promise<Paginate
   if (params.pageSize) qs.set('pageSize', String(params.pageSize))
   if (params.status) qs.set('status', params.status)
   if (params.tag) qs.set('tag', params.tag)
+  if (params.category) qs.set('category', params.category)
   if (params.keyword) qs.set('keyword', params.keyword)
 
   const res = await fetch(`${BASE}?${qs}`)
@@ -34,7 +35,11 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   })
-  if (!res.ok) throw new Error('Failed to create post')
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    const msg = typeof data?.error === 'string' ? data.error : JSON.stringify(data?.error ?? '创建失败')
+    throw new Error(msg)
+  }
   return res.json()
 }
 
@@ -44,7 +49,11 @@ export async function updatePost(id: number, input: UpdatePostInput): Promise<Po
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   })
-  if (!res.ok) throw new Error('Failed to update post')
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    const msg = typeof data?.error === 'string' ? data.error : JSON.stringify(data?.error ?? '更新失败')
+    throw new Error(msg)
+  }
   return res.json()
 }
 

@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { TiptapEditor } from '@/features/editor/TiptapEditor'
@@ -18,115 +18,16 @@ import {
   RiSaveLine,
   RiSendPlaneLine,
   RiPriceTag3Line,
+  RiFolderLine,
   RiLink,
   RiFileTextLine,
   RiImageLine,
   RiLoader4Line,
+  RiCloseLine,
 } from '@remixicon/react'
 import type { JSONContent } from '@tiptap/core'
 import type { PostRow } from '@/types/post'
 
-// ── 假数据（新建文章时预填充，方便预览 UI 效果） ─────────────────────
-const MOCK_TITLE = 'ESP32-C3 开发实战：从零搭建 MQTT 物联网节点'
-
-const MOCK_TAGS = 'ESP32, 物联网, MQTT, C语言'
-
-const MOCK_EXCERPT =
-  '本文详细记录了使用 ESP32-C3 构建轻量级 MQTT 客户端的全过程，包含环境配置、引脚复用与低功耗睡眠策略，适合嵌入式初学者参考。'
-
-const MOCK_SLUG = 'esp32c3-mqtt-iot-node-from-scratch'
-
-const MOCK_CONTENT: JSONContent = {
-  type: 'doc',
-  content: [
-    {
-      type: 'heading',
-      attrs: { level: 2 },
-      content: [{ type: 'text', text: '为什么选择 ESP32-C3？' }],
-    },
-    {
-      type: 'paragraph',
-      content: [
-        { type: 'text', text: 'ESP32-C3 是乐鑫推出的一款基于 ' },
-        { type: 'text', marks: [{ type: 'bold' }], text: 'RISC-V 单核 32-bit' },
-        {
-          type: 'text',
-          text: ' 架构的低功耗 SoC。相比经典的 ESP8266，它拥有更完善的蓝牙 5.0 支持、更大的 RAM，以及内置的硬件安全加速器——而价格依然亲民。',
-        },
-      ],
-    },
-    {
-      type: 'heading',
-      attrs: { level: 3 },
-      content: [{ type: 'text', text: '环境配置' }],
-    },
-    {
-      type: 'paragraph',
-      content: [
-        { type: 'text', text: '使用 ESP-IDF v5.x 工具链。以下命令完成基础安装：' },
-      ],
-    },
-    {
-      type: 'codeBlock',
-      attrs: { language: 'bash' },
-      content: [
-        {
-          type: 'text',
-          text: '# 克隆 ESP-IDF 并初始化子模块\ngit clone --recursive https://github.com/espressif/esp-idf.git\ncd esp-idf\n\n# 安装 ESP32-C3 工具链\n./install.sh esp32c3\nsource ./export.sh\n\n# 验证安装\nidf.py --version  # 应输出 ESP-IDF v5.x.x',
-        },
-      ],
-    },
-    {
-      type: 'heading',
-      attrs: { level: 3 },
-      content: [{ type: 'text', text: 'MQTT 连接核心代码' }],
-    },
-    {
-      type: 'codeBlock',
-      attrs: { language: 'c' },
-      content: [
-        {
-          type: 'text',
-          text: 'static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)\n{\n    switch (event->event_id) {\n        case MQTT_EVENT_CONNECTED:\n            ESP_LOGI(TAG, "MQTT connected");\n            esp_mqtt_client_subscribe(client, "/lihuahai/sensor", 0);\n            break;\n        case MQTT_EVENT_DATA:\n            ESP_LOGI(TAG, "topic=%.*s data=%.*s",\n                     event->topic_len, event->topic,\n                     event->data_len, event->data);\n            break;\n        default:\n            break;\n    }\n    return ESP_OK;\n}',
-        },
-      ],
-    },
-    {
-      type: 'blockquote',
-      content: [
-        {
-          type: 'paragraph',
-          content: [
-            {
-              type: 'text',
-              text: '注意：ESP32-C3 的 GPIO9 在上电时会拉低采样以进入下载模式，开发板上请避免将其连接到外部下拉电阻。',
-            },
-          ],
-        },
-      ],
-    },
-    {
-      type: 'heading',
-      attrs: { level: 2 },
-      content: [{ type: 'text', text: '低功耗睡眠策略' }],
-    },
-    {
-      type: 'paragraph',
-      content: [
-        {
-          type: 'text',
-          text: '在采集频率较低的场景中（如温湿度每 5 分钟上报一次），可以将 ESP32-C3 配置为 ',
-        },
-        { type: 'text', marks: [{ type: 'italic' }], text: 'Deep Sleep' },
-        {
-          type: 'text',
-          text: ' 模式。唤醒后重新连接 Wi-Fi 和 MQTT Broker，平均电流可压到 15μA 以内。',
-        },
-      ],
-    },
-  ],
-}
-// ──────────────────────────────────────────────────────────────────────
 
 interface PostEditorProps {
   post?: PostRow
@@ -134,25 +35,61 @@ interface PostEditorProps {
 
 export function PostEditor({ post }: PostEditorProps) {
   const router = useRouter()
-  const isNew = !post
 
-  const [title, setTitle] = useState(isNew ? MOCK_TITLE : (post?.title ?? ''))
-  const [slug, setSlug] = useState(isNew ? MOCK_SLUG : (post?.slug ?? ''))
-  const [excerpt, setExcerpt] = useState(isNew ? MOCK_EXCERPT : (post?.excerpt ?? ''))
-  const [tags, setTags] = useState(isNew ? MOCK_TAGS : (post?.tags ?? []).join(', '))
+  const [title, setTitle] = useState(post?.title ?? '')
+  const [slug, setSlug] = useState(post?.slug ?? '')
+  const [excerpt, setExcerpt] = useState(post?.excerpt ?? '')
+  const [tags, setTags] = useState((post?.tags ?? []).join(', '))
+  const [category, setCategory] = useState(post?.category ?? '未分类')
+  const [existingCategories, setExistingCategories] = useState<string[]>([])
+  const [creatingCategory, setCreatingCategory] = useState(false)
+  const [coverUrl, setCoverUrl] = useState(post?.cover_url ?? '')
   const [content, setContent] = useState<JSONContent>(
-    isNew ? MOCK_CONTENT : ((post?.content as JSONContent) ?? {})
+    (post?.content as JSONContent) ?? {}
   )
   const [saving, setSaving] = useState(false)
   const [savedStatus, setSavedStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+
+  // 拉取已有分类列表
+  useEffect(() => {
+    fetch('/api/categories')
+      .then((r) => r.json())
+      .then((data: { category: string }[]) =>
+        setExistingCategories(data.map((d) => d.category))
+      )
+      .catch(() => {})
+  }, [])
   const [error, setError] = useState('')
+  const [coverUploading, setCoverUploading] = useState(false)
+  const coverInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleCoverUpload(file: File) {
+    setCoverUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload/cover', { method: 'POST', body: fd })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error(d?.error ?? '上传失败')
+      }
+      const { url } = await res.json()
+      setCoverUrl(url)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '封面上传失败')
+    } finally {
+      setCoverUploading(false)
+    }
+  }
 
   function autoSlug(t: string) {
-    return t
+    const latin = t
       .toLowerCase()
       .replace(/[\u4e00-\u9fa5]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '')
+    // 纯中文标题时用时间戳生成合法 slug
+    return latin || `post-${Date.now()}`
   }
 
   async function handleSave(targetStatus: 'draft' | 'published') {
@@ -165,8 +102,10 @@ export function PostEditor({ post }: PostEditorProps) {
         slug: slug || autoSlug(title),
         content,
         excerpt: excerpt || undefined,
+        coverUrl: coverUrl || undefined,
         status: targetStatus,
         tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+        category: category.trim() || '未分类',
       }
 
       if (post) {
@@ -190,7 +129,7 @@ export function PostEditor({ post }: PostEditorProps) {
   }
 
   return (
-    <div className="-m-6 flex flex-col">
+    <div className="-m-6 flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 65px)' }}>
       {/* ══════════════════════════════════════════════════════
           顶栏：返回 / 状态指示 / 操作按钮
       ══════════════════════════════════════════════════════ */}
@@ -324,6 +263,63 @@ export function PostEditor({ post }: PostEditorProps) {
               />
             </Field>
 
+            {/* 分类 */}
+            <Field icon={<RiFolderLine size={13} />} label="分类">
+              {creatingCategory ? (
+                <div className="flex gap-1.5">
+                  <input
+                    autoFocus
+                    type="text"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    placeholder="输入新分类名…"
+                    className={inputCls + ' flex-1'}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); setCreatingCategory(false) }
+                      if (e.key === 'Escape') { setCreatingCategory(false) }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setCreatingCategory(false)}
+                    className="text-[10px] px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    确定
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-1.5">
+                  <select
+                    value={existingCategories.includes(category) ? category : '__other__'}
+                    onChange={(e) => {
+                      if (e.target.value === '__new__') {
+                        setCategory('')
+                        setCreatingCategory(true)
+                      } else if (e.target.value !== '__other__') {
+                        setCategory(e.target.value)
+                      }
+                    }}
+                    className={inputCls + ' flex-1 pr-2'}
+                  >
+                    {existingCategories.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                    {/* 当前值不在列表中时显示 */}
+                    {!existingCategories.includes(category) && (
+                      <option value="__other__">{category}</option>
+                    )}
+                    <option value="__new__">＋ 新建分类…</option>
+                  </select>
+                </div>
+              )}
+              {/* 当前分类预览（选择器模式） */}
+              {!creatingCategory && (
+                <p className="text-[10px] text-muted-foreground mt-1.5">
+                  当前：<span className="text-foreground">{category}</span>
+                </p>
+              )}
+            </Field>
+
             {/* 标签 */}
             <Field icon={<RiPriceTag3Line size={13} />} label="标签（逗号分隔）">
               <input
@@ -360,17 +356,48 @@ export function PostEditor({ post }: PostEditorProps) {
               />
             </Field>
 
-            {/* 封面图（预留） */}
+            {/* 封面图 */}
             <Field icon={<RiImageLine size={13} />} label="封面图">
-              <button
-                type="button"
-                className="w-full h-20 rounded-base border border-dashed border-border
-                           text-muted-foreground text-xs hover:border-foreground/30 hover:text-foreground/50
-                           transition-colors flex flex-col items-center justify-center gap-1"
-              >
-                <RiImageLine size={18} />
-                点击上传封面
-              </button>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleCoverUpload(file)
+                  e.target.value = ''
+                }}
+              />
+              {coverUrl ? (
+                <div className="relative group rounded-base overflow-hidden border border-border">
+                  <img src={coverUrl} alt="封面预览" className="w-full h-28 object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setCoverUrl('')}
+                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 text-white
+                               flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="移除封面"
+                  >
+                    <RiCloseLine size={14} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={coverUploading}
+                  onClick={() => coverInputRef.current?.click()}
+                  className="w-full h-20 rounded-base border border-dashed border-border
+                             text-muted-foreground text-xs hover:border-foreground/30 hover:text-foreground/50
+                             transition-colors flex flex-col items-center justify-center gap-1
+                             disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {coverUploading
+                    ? <><RiLoader4Line size={18} className="animate-spin" /><span>上传中…</span></>
+                    : <><RiImageLine size={18} /><span>点击上传封面</span></>
+                  }
+                </button>
+              )}
             </Field>
 
             {/* 字数统计（示意） */}

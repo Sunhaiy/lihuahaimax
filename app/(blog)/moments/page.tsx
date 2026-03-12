@@ -30,8 +30,8 @@ export default async function MomentsPage() {
               <div className="flex flex-col items-center flex-shrink-0 w-6">
                 <div
                   className="w-2.5 h-2.5 rounded-full mt-1.5 ring-4
-                              bg-ocean ring-ocean/15 flex-shrink-0
-                              group-hover:ring-ocean/30 transition-all"
+                              bg-ember ring-ember/15 flex-shrink-0
+                              group-hover:ring-ember/30 transition-all"
                 />
                 {i < moments.length - 1 && (
                   <div className="w-px flex-1 bg-black/[0.06] dark:bg-white/5 my-2" />

@@ -16,9 +16,10 @@ const updateSchema = z.object({
   slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/).optional(),
   content: z.record(z.unknown()).optional(),
   excerpt: z.string().optional(),
-  coverUrl: z.string().url().optional(),
+  coverUrl: z.string().min(1).optional(),
   status: z.enum(['draft', 'published', 'archived']).optional(),
   tags: z.array(z.string()).optional(),
+  category: z.string().optional(),
 })
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS posts (
   status         TEXT        NOT NULL DEFAULT 'draft'
                    CHECK (status IN ('draft', 'published', 'archived')),
   tags           TEXT[]      NOT NULL DEFAULT '{}',
+  category       TEXT        NOT NULL DEFAULT '未分类',
   view_count     INTEGER     NOT NULL DEFAULT 0,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -28,11 +29,15 @@ CREATE TABLE IF NOT EXISTS posts (
 );
 
 -- 文章查询常用索引
+-- 迁移：为已有数据库添加 category 列（幂等，必须在创建 category 索引之前运行）
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT '未分类';
+
 CREATE INDEX IF NOT EXISTS idx_posts_slug        ON posts (slug);
 CREATE INDEX IF NOT EXISTS idx_posts_status      ON posts (status);
 CREATE INDEX IF NOT EXISTS idx_posts_published   ON posts (published_at DESC NULLS LAST)
   WHERE status = 'published';
 CREATE INDEX IF NOT EXISTS idx_posts_tags        ON posts USING GIN (tags);
+CREATE INDEX IF NOT EXISTS idx_posts_category    ON posts (category);
 
 -- ============================================================
 -- 极客瞬间表
@@ -128,6 +133,23 @@ CREATE INDEX IF NOT EXISTS idx_gallery_category   ON gallery_items (category);
 CREATE INDEX IF NOT EXISTS idx_gallery_featured   ON gallery_items (is_featured) WHERE is_featured = TRUE;
 CREATE INDEX IF NOT EXISTS idx_gallery_sort       ON gallery_items (sort_order, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_gallery_tags       ON gallery_items USING GIN (tags);
+
+-- ============================================================
+-- 评论表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS comments (
+  id            SERIAL PRIMARY KEY,
+  post_id       INTEGER     NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  author_name   TEXT        NOT NULL,
+  author_email  TEXT,
+  content       TEXT        NOT NULL,
+  is_approved   BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_comments_post    ON comments (post_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_comments_pending ON comments (is_approved, created_at DESC)
+  WHERE is_approved = FALSE;
 
 -- ============================================================
 -- 友情链接表

@@ -41,6 +41,7 @@ export async function findPosts(params: PostQueryParams = {}): Promise<Paginated
     pageSize = 10,
     status,
     tag,
+    category,
     keyword,
   } = params
 
@@ -56,6 +57,10 @@ export async function findPosts(params: PostQueryParams = {}): Promise<Paginated
     conditions.push(`$${idx++} = ANY(tags)`)
     values.push(tag)
   }
+  if (category) {
+    conditions.push(`category = $${idx++}`)
+    values.push(category)
+  }
   if (keyword) {
     conditions.push(`(title ILIKE $${idx++} OR excerpt ILIKE $${idx++})`)
     values.push(`%${keyword}%`, `%${keyword}%`)
@@ -67,7 +72,7 @@ export async function findPosts(params: PostQueryParams = {}): Promise<Paginated
 
   const [dataResult, countResult] = await Promise.all([
     query<PostRow>(
-      `SELECT id, title, slug, excerpt, cover_url, status, tags, view_count,
+      `SELECT id, title, slug, excerpt, cover_url, status, tags, category, view_count,
               created_at, updated_at, published_at
        FROM posts
        ${where}
@@ -92,14 +97,26 @@ export async function findPosts(params: PostQueryParams = {}): Promise<Paginated
   }
 }
 
+/** 获取已发布文章的所有分类及数量 */
+export async function findCategories(): Promise<{ category: string; count: number }[]> {
+  const result = await query<{ category: string; count: string }>(
+    `SELECT category, COUNT(*) as count
+     FROM posts
+     WHERE status = 'published'
+     GROUP BY category
+     ORDER BY count DESC, category ASC`
+  )
+  return result.rows.map((r) => ({ category: r.category, count: Number(r.count) }))
+}
+
 // ============================================================
 // 创建
 // ============================================================
 
 export async function insertPost(input: CreatePostInput): Promise<PostRow> {
   const result = await query<PostRow>(
-    `INSERT INTO posts (title, slug, content, excerpt, cover_url, status, tags, published_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO posts (title, slug, content, excerpt, cover_url, status, tags, category, published_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING *`,
     [
       input.title,
@@ -109,6 +126,7 @@ export async function insertPost(input: CreatePostInput): Promise<PostRow> {
       input.coverUrl ?? null,
       input.status ?? 'draft',
       input.tags ?? [],
+      input.category ?? '未分类',
       input.status === 'published' ? new Date() : null,
     ]
   )
@@ -130,6 +148,7 @@ export async function updatePost(id: number, input: UpdatePostInput): Promise<Po
   if (input.excerpt !== undefined) { setClauses.push(`excerpt = $${idx++}`); values.push(input.excerpt) }
   if (input.coverUrl !== undefined) { setClauses.push(`cover_url = $${idx++}`); values.push(input.coverUrl) }
   if (input.tags !== undefined) { setClauses.push(`tags = $${idx++}`); values.push(input.tags) }
+  if (input.category !== undefined) { setClauses.push(`category = $${idx++}`); values.push(input.category) }
   if (input.status !== undefined) {
     setClauses.push(`status = $${idx++}`)
     values.push(input.status)
@@ -154,6 +173,54 @@ export async function incrementViewCount(id: number): Promise<void> {
     `UPDATE posts SET view_count = view_count + 1 WHERE id = $1`,
     [id]
   )
+}
+
+/** 获取相邻文章（上一篇 / 下一篇），按发布时间排序 */
+export async function findAdjacentPosts(
+  publishedAt: Date,
+  id: number
+): Promise<{ prev: PostRow | null; next: PostRow | null }> {
+  const cols = `id, title, slug, cover_url, tags, published_at`
+  const [prevResult, nextResult] = await Promise.all([
+    query<PostRow>(
+      `SELECT ${cols} FROM posts
+       WHERE status = 'published'
+         AND (published_at < $1 OR (published_at = $1 AND id < $2))
+       ORDER BY published_at DESC, id DESC
+       LIMIT 1`,
+      [publishedAt, id]
+    ),
+    query<PostRow>(
+      `SELECT ${cols} FROM posts
+       WHERE status = 'published'
+         AND (published_at > $1 OR (published_at = $1 AND id > $2))
+       ORDER BY published_at ASC, id ASC
+       LIMIT 1`,
+      [publishedAt, id]
+    ),
+  ])
+  return {
+    prev: prevResult.rows[0] ?? null,
+    next: nextResult.rows[0] ?? null,
+  }
+}
+
+/** 重命名分类（批量更新该分类下所有文章） */
+export async function renameCategory(oldName: string, newName: string): Promise<number> {
+  const result = await query(
+    `UPDATE posts SET category = $2 WHERE category = $1`,
+    [oldName, newName]
+  )
+  return result.rowCount ?? 0
+}
+
+/** 删除分类（将该分类下所有文章重置为"未分类"） */
+export async function resetCategory(name: string): Promise<number> {
+  const result = await query(
+    `UPDATE posts SET category = '未分类' WHERE category = $1 AND category != '未分类'`,
+    [name]
+  )
+  return result.rowCount ?? 0
 }
 
 // ============================================================

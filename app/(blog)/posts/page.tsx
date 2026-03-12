@@ -14,20 +14,23 @@ export const revalidate = 60
 export default async function PostsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; tag?: string; keyword?: string }>
+  searchParams: Promise<{ page?: string; tag?: string; keyword?: string; category?: string }>
 }) {
-  const { page, tag, keyword } = await searchParams
+  const { page, tag, keyword, category } = await searchParams
   const result = await findPosts({
     status: 'published',
     page: Number(page ?? 1),
     pageSize: 12,
     tag: tag ?? undefined,
+    category: category ?? undefined,
     keyword: keyword ?? undefined,
   })
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
-      <h1 className="text-3xl font-bold mb-2">文章</h1>
+      <h1 className="text-3xl font-bold mb-2">
+        {category ? category : '文章'}
+      </h1>
       <p className="text-muted-foreground text-sm mb-10">
         共 {result.total} 篇 · 第 {result.page} / {result.totalPages} 页
       </p>

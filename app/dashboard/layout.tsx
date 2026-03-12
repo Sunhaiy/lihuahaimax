@@ -14,6 +14,8 @@ const navItems = [
   { href: '/dashboard', label: '概览', icon: '⊞' },
   { href: '/dashboard/posts', label: '文章管理', icon: '✦' },
   { href: '/dashboard/editor', label: '新建文章', icon: '+' },
+  { href: '/dashboard/categories', label: '分类管理', icon: '◈' },
+  { href: '/dashboard/comments', label: '评论管理', icon: '⌥' },
   { href: '/dashboard/moments', label: '瞬间管理', icon: '◎' },
   { href: '/dashboard/acg', label: 'ACG 陈列室', icon: '▣' },
   { href: '/dashboard/gallery', label: '相册管理', icon: '⊟' },

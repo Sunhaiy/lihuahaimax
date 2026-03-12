@@ -15,9 +15,10 @@ const createSchema = z.object({
   slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/),
   content: z.record(z.unknown()),
   excerpt: z.string().optional(),
-  coverUrl: z.string().url().optional(),
+  coverUrl: z.string().min(1).optional(),
   status: z.enum(['draft', 'published', 'archived']).optional(),
   tags: z.array(z.string()).optional(),
+  category: z.string().optional(),
 })
 
 export async function GET(req: NextRequest) {
@@ -34,6 +35,7 @@ export async function GET(req: NextRequest) {
       // 未登录用户只能看已发布的
       status: session ? (status ?? undefined) : 'published',
       tag: searchParams.get('tag') ?? undefined,
+      category: searchParams.get('category') ?? undefined,
       keyword: searchParams.get('keyword') ?? undefined,
     })
     return NextResponse.json(result)

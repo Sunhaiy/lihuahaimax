@@ -137,59 +137,56 @@
    Tiptap 编辑器 / 文章 Prose 样式
    ============================================================ */
 @layer components {
-  .prose {
-    @apply text-foreground;
-    line-height: 1.8;
-  }
-
-  .prose h1, .prose h2, .prose h3, .prose h4 {
-    @apply text-foreground font-bold;
-    line-height: 1.25;
-    letter-spacing: -0.02em;
-  }
-
-  .prose h2 {
-    @apply text-2xl mt-10 mb-4 pb-2;
-    border-bottom: 1px solid hsl(var(--border));
-  }
-  .prose h3 { @apply text-xl mt-8 mb-3; }
-
-  .prose p { @apply mb-4; }
-
-  .prose a {
-    @apply text-ocean underline underline-offset-2 hover:text-ocean-400 transition-colors;
-  }
-
-  .prose blockquote {
-    @apply border-l-2 border-ocean/40 pl-4 text-muted-foreground italic my-6;
-  }
-
-  .prose code:not(pre code) {
-    @apply font-mono text-[0.85em] px-1.5 py-0.5 rounded;
-    color: hsl(var(--ember));
-    background: hsl(var(--ember) / 0.08);
-    border: 1px solid hsl(var(--ember) / 0.15);
-  }
-
-  .prose pre {
-    @apply my-6 overflow-x-auto;
-    border-radius: 12px;
-    border: 1px solid hsl(var(--border));
-  }
-
-  .prose pre code { @apply text-sm font-mono; }
-
-  /* 代码块（Tiptap CodeBlockLowlight） */
+  /* 代码块（Tiptap CodeBlockLowlight 生成 .code-block class） */
   .code-block {
-    background: hsl(var(--muted));
-    @apply my-6 overflow-x-auto p-4 font-mono text-sm;
+    @apply my-6 overflow-x-auto p-5 font-mono text-sm leading-relaxed;
+    background: #282c34;
+    color: #abb2bf;
     border-radius: 12px;
     border: 1px solid hsl(var(--border));
   }
 
-  .dark .code-block {
-    background: #09090B;
-    border-color: #27272A;
+  /* lowlight / highlight.js 语法高亮 token 颜色（Atom One Dark） */
+  .code-block .hljs-keyword,
+  .code-block .hljs-operator,
+  .code-block .hljs-selector-tag { color: #c678dd; }
+
+  .code-block .hljs-string,
+  .code-block .hljs-addition,
+  .code-block .hljs-selector-attr { color: #98c379; }
+
+  .code-block .hljs-comment,
+  .code-block .hljs-quote { color: #5c6370; font-style: italic; }
+
+  .code-block .hljs-number,
+  .code-block .hljs-literal,
+  .code-block .hljs-bool { color: #d19a66; }
+
+  .code-block .hljs-function,
+  .code-block .hljs-title,
+  .code-block .hljs-title.function_ { color: #61afef; }
+
+  .code-block .hljs-type,
+  .code-block .hljs-class,
+  .code-block .hljs-built_in { color: #e5c07b; }
+
+  .code-block .hljs-variable,
+  .code-block .hljs-template-variable,
+  .code-block .hljs-attr { color: #e06c75; }
+
+  .code-block .hljs-meta { color: #56b6c2; }
+  .code-block .hljs-punctuation { color: #abb2bf; }
+
+  /* 代码块语言标签（CodeBlockLowlight 在顶部渲染的 data-language） */
+  .code-block[data-language]::before {
+    content: attr(data-language);
+    display: block;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: #5c6370;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
   }
 
   /* ProseMirror placeholder */
@@ -198,16 +195,19 @@
     @apply text-muted-foreground pointer-events-none float-left h-0;
   }
 
-  /* 选区高亮 */
+  /* 节点选中高亮 */
   .ProseMirror-selectednode {
     outline: 2px dashed rgba(14, 165, 233, 0.5);
     outline-offset: 2px;
   }
 
-  /* 编辑器图片 */
+  /* 编辑器内图片 */
   .editor-image {
-    @apply max-w-full my-4 mx-auto block;
-    border-radius: 12px;
+    @apply max-w-full my-4 mx-auto block rounded-xl;
+  }
+  /* prose 内图片（前台渲染） */
+  .prose img {
+    @apply mx-auto rounded-xl;
   }
 }
 

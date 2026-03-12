@@ -16,6 +16,7 @@ export interface PostRow {
   cover_url: string | null
   status: PostStatus
   tags: string[]
+  category: string
   view_count: number
   created_at: Date
   updated_at: Date
@@ -32,6 +33,7 @@ export interface Post {
   coverUrl: string | null
   status: PostStatus
   tags: string[]
+  category: string
   viewCount: number
   createdAt: string
   updatedAt: string
@@ -50,6 +52,7 @@ export interface CreatePostInput {
   coverUrl?: string
   status?: PostStatus
   tags?: string[]
+  category?: string
 }
 
 /** 更新文章的输入 */
@@ -61,6 +64,7 @@ export interface PostQueryParams {
   pageSize?: number
   status?: PostStatus
   tag?: string
+  category?: string
   keyword?: string
 }
 

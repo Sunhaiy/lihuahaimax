@@ -6,6 +6,7 @@
 
 'use client'
 
+import { useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { getEditorExtensions } from '@/lib/editor/registry'
 import type { JSONContent } from '@tiptap/core'
@@ -28,6 +29,8 @@ import {
   RiTerminalBoxLine,
   RiPlugLine,
   RiHtml5Line,
+  RiImageAddLine,
+  RiLoader4Line,
 } from '@remixicon/react'
 
 interface TiptapEditorProps {
@@ -62,7 +65,7 @@ export function TiptapEditor({
       {editable && <EditorToolbar editor={editor} />}
       <EditorContent
         editor={editor}
-        className="prose prose-invert max-w-none focus:outline-none min-h-[520px] px-8 py-6"
+        className="prose dark:prose-invert max-w-none focus:outline-none min-h-[520px] px-8 py-6"
       />
     </div>
   )
@@ -81,6 +84,25 @@ type ToolItem =
   | { type: 'sep' }
 
 function EditorToolbar({ editor }: { editor: Editor }) {
+  const imgInputRef = useRef<HTMLInputElement>(null)
+  const [imgUploading, setImgUploading] = useState(false)
+
+  async function handleImageFile(file: File) {
+    setImgUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload/image', { method: 'POST', body: fd })
+      if (!res.ok) throw new Error('上传失败')
+      const { url } = await res.json()
+      editor.chain().focus().setImage({ src: url }).run()
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '图片上传失败')
+    } finally {
+      setImgUploading(false)
+    }
+  }
+
   const groups: ToolGroup[] = [
     {
       items: [
@@ -130,6 +152,17 @@ function EditorToolbar({ editor }: { editor: Editor }) {
                     border-b border-border
                     bg-background/95 backdrop-blur-sm
                     overflow-x-auto scrollbar-none">
+      <input
+        ref={imgInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) handleImageFile(file)
+          e.target.value = ''
+        }}
+      />
       {groups.map((group, gi) => (
         <div key={gi} className="flex items-center gap-0.5">
           {/* 分组间分隔线 */}
@@ -162,6 +195,23 @@ function EditorToolbar({ editor }: { editor: Editor }) {
           })}
         </div>
       ))}
+
+      {/* 图片上传按钮 */}
+      <div className="w-px h-4 bg-foreground/10 mx-1.5 flex-shrink-0" />
+      <button
+        type="button"
+        title="插入图片"
+        disabled={imgUploading}
+        onMouseDown={(e) => { e.preventDefault(); imgInputRef.current?.click() }}
+        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded
+                   transition-all duration-150 disabled:opacity-40
+                   text-muted-foreground hover:text-foreground hover:bg-black/[0.06] dark:hover:bg-white/[0.06]"
+      >
+        {imgUploading
+          ? <RiLoader4Line size={15} className="animate-spin" />
+          : <RiImageAddLine size={15} />
+        }
+      </button>
     </div>
   )
 }
