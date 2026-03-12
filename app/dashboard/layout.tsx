@@ -56,6 +56,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
         {/* 底部用户信息 */}
         <div className="border-t border-border p-4 space-y-2">
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-ember transition-colors"
+          >
+            <span>↗</span> 访问前台
+          </Link>
           <p className="text-xs text-muted-foreground truncate">{session.user?.email}</p>
           <Link
             href="/api/auth/signout"

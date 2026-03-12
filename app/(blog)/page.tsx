@@ -25,6 +25,38 @@ export const metadata: Metadata = {
 
 export const revalidate = 60
 
+/** 从 moment 提取首页卡片显示文字（content 为空时从 meta 生成摘要） */
+function getMomentPreview(moment: MomentRow): { text: string; mono: boolean } | null {
+  if (moment.content) return { text: moment.content, mono: false }
+  if (!moment.meta) return null
+
+  if (moment.type === 'sleep') {
+    const m = moment.meta as { sleepStart?: string; sleepEnd?: string; deepSleepMinutes?: number; score?: number | null }
+    const parts: string[] = []
+    if (m.sleepStart && m.sleepEnd) parts.push(`入睡 ${m.sleepStart}  起床 ${m.sleepEnd}`)
+    if (m.deepSleepMinutes != null) parts.push(`深睡 ${m.deepSleepMinutes}min`)
+    if (m.score != null) parts.push(`评分 ${m.score}`)
+    return parts.length ? { text: parts.join('\n'), mono: true } : null
+  }
+
+  if (moment.type === 'steps') {
+    const m = moment.meta as { steps?: number; distance?: number; calories?: number }
+    const parts: string[] = []
+    if (m.steps != null) parts.push(`${m.steps.toLocaleString()} 步`)
+    if (m.distance != null) parts.push(`${m.distance} km`)
+    if (m.calories != null) parts.push(`${m.calories} kcal`)
+    return parts.length ? { text: parts.join('  '), mono: true } : null
+  }
+
+  if (moment.type === 'link') {
+    const m = moment.meta as { title?: string; url?: string }
+    const text = m.title || m.url
+    return text ? { text, mono: false } : null
+  }
+
+  return null
+}
+
 export default async function HomePage() {
   const [postsResult, momentsResult, heroBgSettings, activityData] = await Promise.all([
     findPosts({ status: 'published', pageSize: 5 }),
@@ -42,7 +74,7 @@ export default async function HomePage() {
           Hero — 全屏
           ══════════════════════════════════════════════════ */}
       <section
-        className="relative flex flex-col overflow-hidden"
+        className="relative flex flex-col overflow-hidden -mt-16"
         style={{
           height: '100vh',
           ...(hasBg
@@ -161,13 +193,17 @@ export default async function HomePage() {
                     )}
 
                     {/* 正文 */}
-                    {moment.content && (
-                      <p className={`text-xs leading-relaxed line-clamp-3 flex-1 ${
-                        hasBg ? 'text-white/80' : 'text-foreground'
-                      }`}>
-                        {moment.content}
-                      </p>
-                    )}
+                    {(() => {
+                      const preview = getMomentPreview(moment)
+                      if (!preview) return null
+                      return (
+                        <p className={`text-xs leading-relaxed line-clamp-3 flex-1 whitespace-pre-line ${
+                          preview.mono ? 'font-mono' : ''
+                        } ${hasBg ? 'text-white/80' : 'text-foreground'}`}>
+                          {preview.text}
+                        </p>
+                      )
+                    })()}
 
                     {/* 底部：时间 + 跳转按钮 */}
                     <div className="flex items-center justify-between mt-2.5">
@@ -203,7 +239,7 @@ export default async function HomePage() {
           主内容区（圆角上沿面板，与 hero 平滑融合）
           ══════════════════════════════════════════════════ */}
       <div className="relative z-10 -mt-12 rounded-t-[2rem] bg-background">
-        <div className="max-w-7xl mx-auto px-3 sm:px-5">
+        <div className="max-w-6xl mx-auto px-4">
           <section className="pt-14 pb-20">
             {/* 两栏布局：左栏主内容 + 右栏侧边栏 */}
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-8 items-start">
@@ -265,7 +301,7 @@ export default async function HomePage() {
               </div>
 
               {/* ── 右栏：个人介绍 + 数据统计 ── */}
-              <div className="flex flex-col gap-3 lg:sticky lg:top-6">
+              <div className="flex flex-col gap-3 lg:sticky lg:top-20">
                 {/* 头像 + 简介 */}
                 <div className="rounded-2xl border border-border bg-card p-5 flex flex-col items-center text-center">
                   <div className="w-14 h-14 rounded-full bg-gradient-to-br from-ember/40 to-ember/10

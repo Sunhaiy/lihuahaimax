@@ -19,7 +19,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
       <NavBar categories={categories} />
 
       {/* ── 主内容 ───────────────────────────────────────── */}
-      <main className="flex-1">
+      <main className="flex-1 pt-16">
         {children}
       </main>
 

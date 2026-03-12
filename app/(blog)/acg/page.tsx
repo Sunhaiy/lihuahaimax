@@ -26,7 +26,7 @@ export default async function AcgPage() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
       {/* ── 动漫 ─────────────────────────────────────────── */}
-      <section className="mb-20">
+      <section id="anime" className="mb-20">
         <h2 className="text-2xl font-bold mb-2">动漫追踪</h2>
         <p className="text-muted-foreground text-sm mb-8">
           {animes.filter((a) => a.status === 'completed').length} 部完结 ·{' '}
@@ -79,7 +79,7 @@ export default async function AcgPage() {
       </section>
 
       {/* ── 游戏 ─────────────────────────────────────────── */}
-      <section>
+      <section id="games">
         <h2 className="text-2xl font-bold mb-2">游戏收藏</h2>
         <p className="text-muted-foreground text-sm mb-8">
           {games.filter((g) => g.status === 'completed' || g.status === 'platinum').length} 部通关 ·{' '}
