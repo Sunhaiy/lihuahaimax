@@ -54,7 +54,7 @@ export default function LoginPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-surface border border-white/5 bg-card p-8 space-y-5"
+          className="rounded-surface border border-border bg-card p-8 space-y-5"
         >
           {error && (
             <div className="rounded-base px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
@@ -73,7 +73,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-10 px-3 rounded-base bg-white/5 border border-white/10
+              className="w-full h-10 px-3 rounded-base bg-background border border-border
                          text-sm text-foreground placeholder:text-muted-foreground/50
                          focus:outline-none focus:border-ocean/50 transition-colors"
               placeholder="admin@lihuahai.com"
@@ -91,7 +91,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-10 px-3 rounded-base bg-white/5 border border-white/10
+              className="w-full h-10 px-3 rounded-base bg-background border border-border
                          text-sm text-foreground placeholder:text-muted-foreground/50
                          focus:outline-none focus:border-ocean/50 transition-colors"
               placeholder="••••••••"

@@ -68,22 +68,22 @@ function SshTerminalNodeView({
         <div className="bg-[#121217] p-3 border-t border-[#27272A] space-y-2">
           <div className="flex gap-2">
             <input
-              className="flex-1 text-xs bg-white/5 border border-white/10 rounded-base px-2 py-1 text-foreground font-mono"
+              className="flex-1 text-xs bg-background border border-border rounded-base px-2 py-1 text-foreground font-mono"
               value={user}
               onChange={(e) => updateAttributes({ user: e.target.value })}
               placeholder="用户名"
             />
             <input
-              className="flex-1 text-xs bg-white/5 border border-white/10 rounded-base px-2 py-1 text-foreground font-mono"
+              className="flex-1 text-xs bg-background border border-border rounded-base px-2 py-1 text-foreground font-mono"
               value={hostname}
               onChange={(e) => updateAttributes({ hostname: e.target.value })}
               placeholder="主机名"
             />
           </div>
           <textarea
-            className={`w-full text-xs bg-white/5 border rounded-base px-2 py-1
+            className={`w-full text-xs bg-background border rounded-base px-2 py-1
                         text-foreground font-mono resize-y min-h-[80px] focus:outline-none
-                        ${jsonError ? 'border-red-500/50' : 'border-white/10 focus:border-ocean/50'}`}
+                        ${jsonError ? 'border-red-500/50' : 'border-border focus:border-ocean/50'}`}
             value={commandsJson}
             onChange={(e) => handleCommandsChange(e.target.value)}
             placeholder={`[{"cmd": "ls -la", "output": "total 0\\ndrwxr-xr-x ..."}]`}

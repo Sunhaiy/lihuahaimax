@@ -33,12 +33,12 @@ function RawHtmlNodeView({
 
   return (
     <NodeViewWrapper className="raw-html-block my-4">
-      <div className="flex items-center gap-2 mb-1 px-3 py-1 bg-white/5 border border-white/10 rounded-t-base text-xs text-muted-foreground">
+      <div className="flex items-center gap-2 mb-1 px-3 py-1 bg-background border border-border rounded-t-base text-xs text-muted-foreground">
         <span className="text-ocean">{'</>'}</span>
         <span>原始 {node.attrs.language} 注入块</span>
       </div>
       <textarea
-        className="w-full min-h-[120px] p-3 bg-white/[0.03] border border-white/10 rounded-b-base
+        className="w-full min-h-[120px] p-3 bg-background border border-border rounded-b-base
                    font-mono text-sm text-foreground resize-y focus:outline-none focus:border-ocean/50"
         value={node.attrs.code}
         onChange={handleChange}

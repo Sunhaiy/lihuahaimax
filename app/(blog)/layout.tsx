@@ -27,7 +27,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
           {/* Logo */}
           <Link
             href="/"
-            className="text-lg font-bold tracking-tight text-foreground hover:text-ocean transition-colors"
+            className="text-lg font-bold tracking-tight text-foreground hover:text-ember transition-colors"
           >
             梨花海
             <span className="ml-2 text-xs font-normal text-muted-foreground tracking-widest">

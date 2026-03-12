@@ -225,7 +225,7 @@ export function PostEditor({ post }: PostEditorProps) {
             href={`/posts/${slug || post?.slug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-ocean
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-ember
                        transition-colors px-2 py-1 rounded hover:bg-black/5 dark:hover:bg-white/5"
           >
             <RiEyeLine size={14} />
@@ -340,7 +340,7 @@ export function PostEditor({ post }: PostEditorProps) {
                     <span
                       key={tag}
                       className="text-[10px] px-1.5 py-0.5 rounded
-                                 bg-ocean/10 text-ocean border border-ocean/20"
+                                 bg-ember/10 text-ember border border-ember/20"
                     >
                       {tag}
                     </span>

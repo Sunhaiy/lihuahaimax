@@ -30,6 +30,7 @@
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 199 89% 48%;
+    --ember: 12 100% 71%;    /* #FF8A6B — 珊瑚橙，全模式通用 */
   }
 
   .dark {
@@ -40,7 +41,7 @@
          边框/分割  #27272A  →  hsl(240  4% 16%)
          主文本     #EDEDEF  →  hsl(240  1% 93%)
          次要文本   #A1A1AA  →  hsl(240  3% 65%)
-         强调橙   #FF8A6B  —— 用于发光 ring
+         强调橙   #FF8A6B  →  hsl(var(--ember))
        ─────────────────────────────────────────────────── */
     --background:       240 10%  4%;   /* #09090B — zinc-950  */
     --foreground:       240  1% 93%;   /* #EDEDEF — 珍珠灰白  */
@@ -51,6 +52,7 @@
     --border:           240  4% 16%;   /* #27272A — 极细边框  */
     --input:            240  4% 16%;
     --ring:             199 89% 48%;   /* ocean 蓝 — 焦点环   */
+    --ember:             12 100% 71%;  /* #FF8A6B — 珊瑚橙    */
   }
 }
 
@@ -117,8 +119,8 @@
     @apply border border-border transition-all duration-200;
   }
   .glow-ember:hover {
-    border-color: rgba(255, 138, 107, 0.5);
-    box-shadow: 0 0 0 1px rgba(255, 138, 107, 0.15);
+    border-color: hsl(var(--ember) / 0.5);
+    box-shadow: 0 0 0 1px hsl(var(--ember) / 0.15);
   }
 
   /* 悬浮海蓝发光边框（链接 / 系统提示） */
@@ -164,9 +166,9 @@
 
   .prose code:not(pre code) {
     @apply font-mono text-[0.85em] px-1.5 py-0.5 rounded;
-    color: #FF8A6B;
-    background: rgba(255, 138, 107, 0.08);
-    border: 1px solid rgba(255, 138, 107, 0.15);
+    color: hsl(var(--ember));
+    background: hsl(var(--ember) / 0.08);
+    border: 1px solid hsl(var(--ember) / 0.15);
   }
 
   .prose pre {

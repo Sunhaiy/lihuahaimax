@@ -40,11 +40,11 @@ export default async function PostsPage({
         <div className="grid gap-4 sm:grid-cols-2">
           {result.data.map((post) => (
             <Link key={post.id} href={`/posts/${post.slug}`} className="group block">
-              <article className="h-full border border-white/5 rounded-card p-5
+              <article className="h-full border border-border rounded-card p-5
                                   transition-all duration-300
                                   hover:border-ocean/20 hover:shadow-[0_0_24px_rgba(14,165,233,0.06)]">
                 {post.cover_url && (
-                  <div className="aspect-video rounded-base overflow-hidden mb-4 bg-white/5">
+                  <div className="aspect-video rounded-base overflow-hidden mb-4 bg-muted">
                     <img
                       src={post.cover_url}
                       alt=""
@@ -55,12 +55,12 @@ export default async function PostsPage({
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {post.tags.slice(0, 3).map((tag) => (
                     <span key={tag} className="text-[10px] font-mono px-1.5 py-0.5 rounded
-                                               bg-ocean/10 text-ocean border border-ocean/20">
+                                               bg-ember/10 text-ember border border-ember/20">
                       {tag}
                     </span>
                   ))}
                 </div>
-                <h2 className="font-semibold text-foreground group-hover:text-ocean
+                <h2 className="font-semibold text-foreground group-hover:text-ember
                                transition-colors mb-2 line-clamp-2">
                   {post.title}
                 </h2>
@@ -91,7 +91,7 @@ export default async function PostsPage({
                 transition-colors
                 ${p === result.page
                   ? 'bg-ocean text-white'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'
                 }`}
             >
               {p}

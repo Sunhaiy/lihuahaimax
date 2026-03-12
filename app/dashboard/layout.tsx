@@ -18,6 +18,7 @@ const navItems = [
   { href: '/dashboard/acg', label: 'ACG 陈列室', icon: '▣' },
   { href: '/dashboard/gallery', label: '相册管理', icon: '⊟' },
   { href: '/dashboard/links', label: '友链管理', icon: '⊕' },
+  { href: '/dashboard/settings', label: '设置', icon: '⚙' },
 ]
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -30,7 +31,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <aside className="w-56 flex-shrink-0 border-r border-border flex flex-col">
         {/* Logo */}
         <div className="h-16 flex items-center px-5 border-b border-border">
-          <Link href="/dashboard" className="font-bold text-foreground hover:text-ocean transition-colors">
+          <Link href="/dashboard" className="font-bold text-foreground hover:text-ember transition-colors">
             梨花海后台
           </Link>
         </div>
@@ -42,10 +43,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
               key={item.href}
               href={item.href}
               className="flex items-center gap-3 px-3 py-2 rounded-base text-sm
-                         text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5
+                         text-muted-foreground hover:text-ember hover:bg-black/5 dark:hover:bg-white/5
                          transition-all duration-200"
             >
-              <span className="w-4 text-center text-ocean opacity-70">{item.icon}</span>
+              <span className="w-4 text-center text-ember/70">{item.icon}</span>
               {item.label}
             </Link>
           ))}

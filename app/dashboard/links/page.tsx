@@ -41,28 +41,28 @@ export default function DashboardLinksPage() {
       <h1 className="text-2xl font-bold mb-8">友情链接</h1>
 
       {/* 添加表单 */}
-      <div className="rounded-card border border-white/5 p-5 mb-8 space-y-4">
+      <div className="rounded-card border border-border p-5 mb-8 space-y-4">
         <p className="text-sm font-medium">添加友链</p>
         <div className="grid gap-3 sm:grid-cols-3">
           <input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="站点名称"
-            className="h-9 px-3 rounded-base bg-white/5 border border-white/10 text-sm text-foreground
+            className="h-9 px-3 rounded-base bg-background border border-border text-sm text-foreground
                        placeholder:text-muted-foreground/40 focus:outline-none focus:border-ocean/50 transition-colors"
           />
           <input
             value={form.url}
             onChange={(e) => setForm({ ...form, url: e.target.value })}
             placeholder="https://example.com"
-            className="h-9 px-3 rounded-base bg-white/5 border border-white/10 text-sm text-foreground
+            className="h-9 px-3 rounded-base bg-background border border-border text-sm text-foreground
                        placeholder:text-muted-foreground/40 focus:outline-none focus:border-ocean/50 transition-colors"
           />
           <input
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
             placeholder="简短描述（可选）"
-            className="h-9 px-3 rounded-base bg-white/5 border border-white/10 text-sm text-foreground
+            className="h-9 px-3 rounded-base bg-background border border-border text-sm text-foreground
                        placeholder:text-muted-foreground/40 focus:outline-none focus:border-ocean/50 transition-colors"
           />
         </div>
@@ -81,14 +81,14 @@ export default function DashboardLinksPage() {
           data.map((link: { id: number; name: string; url: string; description: string | null; is_active: boolean }) => (
             <div
               key={link.id}
-              className="flex items-center gap-4 p-4 rounded-card border border-white/5"
+              className="flex items-center gap-4 p-4 rounded-card border border-border"
             >
               <div className="flex-1 min-w-0">
                 <a
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-medium text-foreground hover:text-ocean transition-colors"
+                  className="text-sm font-medium text-foreground hover:text-ember transition-colors"
                 >
                   {link.name}
                 </a>

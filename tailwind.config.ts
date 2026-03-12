@@ -35,9 +35,9 @@ const config: Config = {
           500: '#0EA5E9',
           600: '#0284c7',
         },
-        // 主题强调色 — 珊瑚橙 #FF8A6B（全模式通用）
+        // 主题强调色 — 珊瑚橙（全模式通用，由 --ember CSS 变量驱动）
         ember: {
-          DEFAULT: '#FF8A6B',
+          DEFAULT: 'hsl(var(--ember) / <alpha-value>)',
           400: '#FFAA90',
           500: '#FF8A6B',
           600: '#FF5C33',  // hover 加深

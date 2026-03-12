@@ -149,6 +149,18 @@ CREATE INDEX IF NOT EXISTS idx_links_category ON links (category);
 CREATE INDEX IF NOT EXISTS idx_links_active   ON links (is_active) WHERE is_active = TRUE;
 
 -- ============================================================
+-- 设置表 — 站点配置（Hero 背景图等）
+-- ============================================================
+CREATE TABLE IF NOT EXISTS settings (
+  key             TEXT        PRIMARY KEY,
+  value           JSONB       NOT NULL,
+  description     TEXT,
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_settings_updated ON settings (updated_at DESC);
+
+-- ============================================================
 -- 自动更新 updated_at 的触发器函数
 -- ============================================================
 CREATE OR REPLACE FUNCTION trigger_set_updated_at()

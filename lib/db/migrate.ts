@@ -12,7 +12,33 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { Pool } from 'pg'
 
+// 加载 .env.local 文件（无需额外包）
+function loadEnv(filePath: string) {
+  if (!fs.existsSync(filePath)) return
+  const content = fs.readFileSync(filePath, 'utf-8')
+  const lines = content.split('\n')
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    const match = trimmed.match(/^([^=]+)=(.*)$/)
+    if (match) {
+      const key = match[1].trim()
+      let value = match[2].trim()
+        .replace(/^["']|["']$/g, '')  // 移除首尾引号
+        .replace(/\\n/g, '\n')             // 处理转义序列
+        .replace(/\\t/g, '\t')
+        .replace(/\\r/g, '\r')
+      if (!process.env[key]) {
+        process.env[key] = value
+      }
+    }
+  }
+}
+
 async function migrate() {
+  const envPath = path.join(process.cwd(), '.env.local')
+  loadEnv(envPath)
+
   const schemaPath = path.join(process.cwd(), 'lib', 'db', 'schema.sql')
 
   if (!fs.existsSync(schemaPath)) {
@@ -22,8 +48,16 @@ async function migrate() {
 
   const sql = fs.readFileSync(schemaPath, 'utf-8')
 
+  const databaseUrl = process.env.DATABASE_URL
+  if (!databaseUrl) {
+    console.error('[migrate] DATABASE_URL not set. Check .env.local file.')
+    process.exit(1)
+  }
+
+  console.log('[migrate] Using DATABASE_URL:', databaseUrl.replace(/:[^:]+@/, ':***@'))
+
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: databaseUrl,
     ssl: process.env.NODE_ENV === 'production'
       ? { rejectUnauthorized: false }
       : false,
@@ -44,3 +78,5 @@ async function migrate() {
 }
 
 migrate()
+
+

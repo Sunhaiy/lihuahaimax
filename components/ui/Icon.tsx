@@ -9,11 +9,10 @@
  *   <Icon icon={RiHome3Line} size={20} className="text-ocean" />
  */
 
-import type { ComponentType } from 'react'
 import type { RemixiconComponentType } from '@remixicon/react'
 
 interface IconProps {
-  icon: RemixiconComponentType | ComponentType<{ size?: number; className?: string }>
+  icon: RemixiconComponentType | undefined
   size?: number
   className?: string
   'aria-hidden'?: boolean
@@ -27,6 +26,8 @@ export function Icon({
   'aria-hidden': ariaHidden = true,
   'aria-label': ariaLabel,
 }: IconProps) {
+  if (!IconComponent) return null
+
   return (
     <IconComponent
       size={size}
@@ -36,3 +37,5 @@ export function Icon({
     />
   )
 }
+
+

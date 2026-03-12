@@ -39,14 +39,14 @@ export default function DashboardMomentsPage() {
       <h1 className="text-2xl font-bold mb-8">瞬间管理</h1>
 
       {/* 快速发布 */}
-      <div className="rounded-card border border-white/5 p-5 mb-8 space-y-3">
+      <div className="rounded-card border border-border p-5 mb-8 space-y-3">
         <p className="text-sm font-medium">快速发布瞬间</p>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="此刻在想什么…"
           rows={3}
-          className="w-full px-3 py-2 rounded-base bg-white/5 border border-white/10
+          className="w-full px-3 py-2 rounded-base bg-background border border-border
                      text-sm text-foreground placeholder:text-muted-foreground/40 resize-none
                      focus:outline-none focus:border-ocean/50 transition-colors"
         />
@@ -67,7 +67,7 @@ export default function DashboardMomentsPage() {
           data?.data?.map((m: { id: number; content: string | null; type: string; created_at: string; is_public: boolean }) => (
             <div
               key={m.id}
-              className="flex items-start gap-4 p-4 rounded-card border border-white/5 hover:bg-white/[0.02]"
+              className="flex items-start gap-4 p-4 rounded-card border border-border hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">

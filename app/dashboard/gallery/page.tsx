@@ -54,7 +54,7 @@ export default function DashboardGalleryPage() {
 
       {/* 拖放提示区 */}
       <div
-        className="border-2 border-dashed border-white/10 rounded-surface p-10 text-center mb-8
+        className="border-2 border-dashed border-border rounded-surface p-10 text-center mb-8
                    hover:border-ocean/30 transition-colors cursor-pointer"
         onClick={() => fileRef.current?.click()}
       >
@@ -79,7 +79,7 @@ export default function DashboardGalleryPage() {
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
           {data?.data?.map((item: { id: number; thumbnail_url: string | null; url: string; file_name: string; title: string | null }) => (
             <div key={item.id} className="group relative aspect-square">
-              <div className="w-full h-full rounded-card overflow-hidden bg-white/5">
+              <div className="w-full h-full rounded-card overflow-hidden bg-muted">
                 <img
                   src={item.thumbnail_url ?? item.url}
                   alt={item.title ?? item.file_name}

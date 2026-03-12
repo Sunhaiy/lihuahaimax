@@ -9,9 +9,9 @@ import { findPosts } from '@/lib/db/dao/postDao'
 import { Button } from '@/components/ui/Button'
 
 const STATUS_LABELS: Record<string, [string, string]> = {
-  draft: ['草稿', 'text-muted-foreground bg-white/5'],
+  draft: ['草稿', 'text-muted-foreground bg-black/[0.06] dark:bg-white/5'],
   published: ['已发布', 'text-green-400 bg-green-400/10'],
-  archived: ['已存档', 'text-muted-foreground bg-white/5'],
+  archived: ['已存档', 'text-muted-foreground bg-black/[0.06] dark:bg-white/5'],
 }
 
 export default async function DashboardPostsPage({
@@ -49,7 +49,7 @@ export default async function DashboardPostsPage({
             className={`px-3 py-1 text-xs rounded-base border transition-colors
               ${(status ?? '') === val
                 ? 'bg-ocean text-white border-ocean'
-                : 'border-white/10 text-muted-foreground hover:text-foreground'
+                : 'border-border text-muted-foreground hover:text-foreground'
               }`}
           >
             {label}
@@ -58,9 +58,9 @@ export default async function DashboardPostsPage({
       </div>
 
       {/* 文章表格 */}
-      <div className="rounded-card border border-white/5 overflow-hidden">
+      <div className="rounded-card border border-border overflow-hidden">
         <div className="grid grid-cols-[1fr_auto_auto_auto] text-xs text-muted-foreground
-                        px-5 py-3 border-b border-white/5 font-medium">
+                        px-5 py-3 border-b border-border font-medium">
           <span>标题</span>
           <span className="text-right pr-10">状态</span>
           <span className="text-right pr-10">浏览</span>
@@ -76,12 +76,12 @@ export default async function DashboardPostsPage({
               <div
                 key={post.id}
                 className="grid grid-cols-[1fr_auto_auto_auto] items-center
-                           px-5 py-3.5 border-b last:border-b-0 border-white/5
-                           hover:bg-white/[0.02] transition-colors"
+                           px-5 py-3.5 border-b last:border-b-0 border-border
+                           hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
               >
                 <Link
                   href={`/dashboard/editor/${post.id}`}
-                  className="font-medium text-sm text-foreground hover:text-ocean transition-colors truncate pr-4"
+                  className="font-medium text-sm text-foreground hover:text-ember transition-colors truncate pr-4"
                 >
                   {post.title}
                 </Link>

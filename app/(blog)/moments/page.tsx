@@ -115,7 +115,7 @@ function TypeBadge({ type }: { type: string }) {
   }
   const [label, cls] = map[type] ?? ['未知', '']
   return (
-    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border border-white/10 ${cls}`}>
+    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border border-border ${cls}`}>
       {label}
     </span>
   )
@@ -124,7 +124,7 @@ function TypeBadge({ type }: { type: string }) {
 function MiBandData({ type, meta }: { type: string; meta: Record<string, unknown> }) {
   if (type === 'sleep') {
     return (
-      <div className="flex flex-wrap gap-3 mt-2 p-3 rounded-base bg-white/3 border border-white/5 text-xs font-mono">
+      <div className="flex flex-wrap gap-3 mt-2 p-3 rounded-base bg-black/[0.03] dark:bg-white/[0.03] border border-border text-xs font-mono">
         {meta.sleepStart != null && <span>入睡 {String(meta.sleepStart)}</span>}
         {meta.sleepEnd != null && <span>起床 {String(meta.sleepEnd)}</span>}
         {typeof meta.deepSleepMinutes === 'number' && (
@@ -138,7 +138,7 @@ function MiBandData({ type, meta }: { type: string; meta: Record<string, unknown
   }
   if (type === 'steps') {
     return (
-      <div className="flex flex-wrap gap-3 mt-2 p-3 rounded-base bg-white/3 border border-white/5 text-xs font-mono">
+      <div className="flex flex-wrap gap-3 mt-2 p-3 rounded-base bg-black/[0.03] dark:bg-white/[0.03] border border-border text-xs font-mono">
         {typeof meta.steps === 'number' && <span className="text-green-400">{meta.steps} 步</span>}
         {typeof meta.distance === 'number' && <span>{(meta.distance / 1000).toFixed(2)} km</span>}
         {typeof meta.calories === 'number' && <span>{meta.calories} kcal</span>}

@@ -37,7 +37,7 @@ export default async function AcgPage() {
           {animes.map((anime) => (
             <div key={anime.id} className="group relative">
               {/* 海报 */}
-              <div className="aspect-[2/3] rounded-card overflow-hidden bg-white/5 mb-2">
+              <div className="aspect-[2/3] rounded-card overflow-hidden bg-muted mb-2">
                 {anime.cover_url ? (
                   <img
                     src={anime.cover_url}
@@ -95,7 +95,7 @@ export default async function AcgPage() {
                   {game.cover_url ? (
                     <img src={game.cover_url} alt={game.title} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-white/5
+                    <div className="w-full h-full flex items-center justify-center bg-muted
                                     text-muted-foreground text-xs text-center p-3">
                       {game.title}
                     </div>

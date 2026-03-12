@@ -50,7 +50,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     <article className="max-w-3xl mx-auto px-6 py-12">
       {/* 封面 */}
       {post.cover_url && (
-        <div className="aspect-[21/9] rounded-surface overflow-hidden mb-10 bg-white/5">
+        <div className="aspect-[21/9] rounded-surface overflow-hidden mb-10 bg-muted">
           <img src={post.cover_url} alt="" className="w-full h-full object-cover" />
         </div>
       )}
@@ -60,7 +60,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         <div className="flex flex-wrap gap-2 mb-4">
           {post.tags.map((tag) => (
             <span key={tag} className="text-xs font-mono px-2 py-1 rounded
-                                       bg-ocean/10 text-ocean border border-ocean/20">
+                                       bg-ember/10 text-ember border border-ember/20">
               {tag}
             </span>
           ))}
@@ -86,7 +86,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       </header>
 
       {/* 分隔线 */}
-      <div className="border-t border-white/5 mb-10" />
+      <div className="border-t border-border mb-10" />
 
       {/* 文章正文（客户端 Tiptap 渲染） */}
       <PostContent content={post.content} />

@@ -47,7 +47,7 @@ function PinoutNodeView({
             引脚图：{BOARD_LABELS[node.attrs.boardType] ?? node.attrs.boardType}
           </span>
           <select
-            className="text-xs bg-white/5 border border-white/10 rounded-base px-2 py-1 text-foreground"
+            className="text-xs bg-background border border-border rounded-base px-2 py-1 text-foreground"
             value={node.attrs.boardType}
             onChange={(e) => updateAttributes({ boardType: e.target.value })}
           >
@@ -57,14 +57,14 @@ function PinoutNodeView({
           </select>
         </div>
         <input
-          className="w-full text-sm bg-transparent border-b border-white/10 pb-1
+          className="w-full text-sm bg-transparent border-b border-border pb-1
                      text-muted-foreground focus:outline-none focus:border-ocean/50"
           value={node.attrs.title}
           onChange={(e) => updateAttributes({ title: e.target.value })}
           placeholder="可选：添加说明标题"
         />
         <div className="mt-3 h-20 flex items-center justify-center text-xs text-muted-foreground
-                        border border-dashed border-white/10 rounded-base">
+                        border border-dashed border-border rounded-base">
           {/* 实际引脚图组件在文章页渲染 */}
           引脚图将在文章页显示（编辑器内为占位预览）
         </div>

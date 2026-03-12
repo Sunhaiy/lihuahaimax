@@ -28,7 +28,7 @@ export default function DashboardAcgPage() {
             className={`px-4 py-1.5 text-sm rounded-base border transition-colors
               ${tab === t
                 ? 'bg-ocean text-white border-ocean'
-                : 'border-white/10 text-muted-foreground hover:text-foreground'
+                : 'border-border text-muted-foreground hover:text-foreground'
               }`}
           >
             {t === 'anime' ? '动漫' : '游戏'}
@@ -70,7 +70,7 @@ function AnimePanel() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="动漫标题（先快速添加，再去编辑细节）"
-          className="flex-1 h-9 px-3 rounded-base bg-white/5 border border-white/10
+          className="flex-1 h-9 px-3 rounded-base bg-background border border-border
                      text-sm text-foreground placeholder:text-muted-foreground/40
                      focus:outline-none focus:border-ocean/50 transition-colors"
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
@@ -83,8 +83,8 @@ function AnimePanel() {
           Array.from({ length: 12 }).map((_, i) => <AnimeCardSkeleton key={i} />)
         ) : (
           data?.data?.map((anime: { id: number; cover_url: string | null; title: string; title_cn: string | null; status: string; rating: number | null }) => (
-            <div key={anime.id} className="group relative rounded-card border border-white/5 overflow-hidden">
-              <div className="aspect-[2/3] bg-white/5">
+            <div key={anime.id} className="group relative rounded-card border border-border overflow-hidden">
+              <div className="aspect-[2/3] bg-muted">
                 {anime.cover_url && (
                   <img src={anime.cover_url} alt={anime.title} className="w-full h-full object-cover" />
                 )}
@@ -134,7 +134,7 @@ function GamePanel() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="游戏名称"
-          className="flex-1 h-9 px-3 rounded-base bg-white/5 border border-white/10
+          className="flex-1 h-9 px-3 rounded-base bg-background border border-border
                      text-sm text-foreground placeholder:text-muted-foreground/40
                      focus:outline-none focus:border-ocean/50 transition-colors"
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
@@ -147,8 +147,8 @@ function GamePanel() {
           Array.from({ length: 10 }).map((_, i) => <GameCardSkeleton key={i} />)
         ) : (
           data?.data?.map((game: { id: number; cover_url: string | null; title: string; platform: string; status: string }) => (
-            <div key={game.id} className="group relative rounded-card border border-white/5 overflow-hidden">
-              <div className="aspect-square bg-white/5">
+            <div key={game.id} className="group relative rounded-card border border-border overflow-hidden">
+              <div className="aspect-square bg-muted">
                 {game.cover_url && (
                   <img src={game.cover_url} alt={game.title} className="w-full h-full object-cover" />
                 )}

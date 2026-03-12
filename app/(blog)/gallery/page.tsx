@@ -40,7 +40,7 @@ export default async function GalleryPage({
             className={`px-3 py-1 text-sm rounded-base transition-colors border
               ${(category ?? 'all') === cat
                 ? 'bg-ocean text-white border-ocean'
-                : 'border-white/10 text-muted-foreground hover:border-white/20 hover:text-foreground'
+                : 'border-border text-muted-foreground hover:border-foreground/30 dark:hover:border-white/20 hover:text-foreground'
               }`}
           >
             {cat === 'all' ? '全部' : { photo: '摄影', artwork: '艺术', screenshot: '截图' }[cat] ?? cat}
@@ -55,7 +55,7 @@ export default async function GalleryPage({
         <div className="masonry-3">
           {items.map((item) => (
             <div key={item.id} className="masonry-item group relative cursor-zoom-in">
-              <div className="rounded-card overflow-hidden bg-white/5">
+              <div className="rounded-card overflow-hidden bg-muted">
                 <img
                   src={item.thumbnail_url ?? item.url}
                   alt={item.title ?? item.file_name}
