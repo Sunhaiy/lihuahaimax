@@ -1,132 +1,199 @@
 /**
  * app/(blog)/moments/page.tsx
  *
- * 极客瞬间页 — 时间轴布局。
+ * 极客瞬间页 — 社交卡片网格布局。
  */
 
 import type { Metadata } from 'next'
 import { findMoments } from '@/lib/db/dao/momentDao'
+import { Icon } from '@/components/ui/Icon'
+import { RiHeart2Line, RiShareForwardLine, RiMapPin2Line } from '@remixicon/react'
+import type { MomentRow } from '@/types/moment'
 
-export const metadata: Metadata = { title: '极客瞬间' }
+export const metadata: Metadata = { title: '极客瞬间 · 梨花海' }
 export const revalidate = 30
+
+function timeAgo(date: Date): string {
+  const diff = Date.now() - date.getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 1) return '刚刚'
+  if (m < 60) return `${m}分钟前`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}小时前`
+  const d = Math.floor(h / 24)
+  if (d < 30) return `${d}天前`
+  const mo = Math.floor(d / 30)
+  if (mo < 12) return `${mo}个月前`
+  return `${Math.floor(mo / 12)}年前`
+}
+
+const TYPE_CONFIG: Record<string, { label: string; color: string }> = {
+  text:      { label: '随想',     color: 'text-muted-foreground' },
+  image:     { label: '图片',     color: 'text-ocean' },
+  sleep:     { label: '睡眠记录', color: 'text-purple-400' },
+  steps:     { label: '步数记录', color: 'text-green-400' },
+  heartrate: { label: '心率数据', color: 'text-red-400' },
+  mood:      { label: '心情打卡', color: 'text-ember' },
+  link:      { label: '链接分享', color: 'text-ocean' },
+}
 
 export default async function MomentsPage() {
   const { data: moments } = await findMoments({ publicOnly: true, pageSize: 50 })
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12">
-      <h1 className="text-3xl font-bold mb-2">极客瞬间</h1>
-      <p className="text-muted-foreground text-sm mb-12">
-        碎片生活流，真实作息与随想。
-      </p>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
+
+      {/* ── 页头 ── */}
+      <div className="max-w-xl mx-auto mb-10">
+        <p className="text-xs font-mono text-ember tracking-[0.25em] uppercase mb-3">MOMENTS</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">极客瞬间</h1>
+        <p className="text-sm text-muted-foreground">碎片生活流，真实作息与随想。</p>
+      </div>
 
       {moments.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground">暂无瞬间。</div>
+        <div className="text-center py-24 text-muted-foreground">暂无瞬间。</div>
       ) : (
-        <div className="relative">
-          {moments.map((moment, i) => (
-            <div key={moment.id} className="flex gap-6 group">
-              {/* 时间轴线 */}
-              <div className="flex flex-col items-center flex-shrink-0 w-6">
-                <div
-                  className="w-2.5 h-2.5 rounded-full mt-1.5 ring-4
-                              bg-ember ring-ember/15 flex-shrink-0
-                              group-hover:ring-ember/30 transition-all"
-                />
-                {i < moments.length - 1 && (
-                  <div className="w-px flex-1 bg-black/[0.06] dark:bg-white/5 my-2" />
-                )}
-              </div>
-
-              {/* 内容区 */}
-              <div className="pb-10 flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-2">
-                  <time className="text-xs text-muted-foreground font-mono">
-                    {new Date(moment.created_at).toLocaleString('zh-CN', {
-                      year: 'numeric', month: 'numeric', day: 'numeric',
-                      hour: '2-digit', minute: '2-digit',
-                    })}
-                  </time>
-                  {/* 类型标签 */}
-                  <TypeBadge type={moment.type} />
-                </div>
-
-                {/* 文字内容 */}
-                {moment.content && (
-                  <p className="text-sm text-foreground leading-relaxed mb-3">
-                    {moment.content}
-                  </p>
-                )}
-
-                {/* 图片 */}
-                {moment.images?.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-                    {moment.images.map((url, j) => (
-                      <div key={j} className="aspect-square rounded-card overflow-hidden bg-muted">
-                        <img src={url} alt="" className="w-full h-full object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* 手环数据展示（sleep / steps） */}
-                {(moment.type === 'sleep' || moment.type === 'steps') && moment.meta && (
-                  <MiBandData type={moment.type} meta={moment.meta as Record<string, unknown>} />
-                )}
-
-                {/* 标签元数据 */}
-                {(moment.mood || moment.weather || moment.location) && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {moment.mood && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-black/[0.06] dark:bg-white/5 text-muted-foreground">
-                        {moment.mood}
-                      </span>
-                    )}
-                    {moment.weather && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-black/[0.06] dark:bg-white/5 text-muted-foreground">
-                        {moment.weather}
-                      </span>
-                    )}
-                    {moment.location && (
-                      <span className="text-xs px-2 py-0.5 rounded bg-black/[0.06] dark:bg-white/5 text-muted-foreground">
-                        📍 {moment.location}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
+        <div className="max-w-xl mx-auto flex flex-col gap-4">
+          {moments.map((moment) => (
+            <MomentCard key={moment.id} moment={moment} />
           ))}
         </div>
       )}
+
     </div>
   )
 }
 
-function TypeBadge({ type }: { type: string }) {
-  const map: Record<string, [string, string]> = {
-    text: ['随想', 'text-muted-foreground bg-black/[0.06] dark:bg-white/5'],
-    image: ['图片', 'text-ocean bg-ocean/10'],
-    sleep: ['睡眠', 'text-purple-400 bg-purple-400/10'],
-    steps: ['步数', 'text-green-400 bg-green-400/10'],
-    heartrate: ['心率', 'text-red-400 bg-red-400/10'],
-    mood: ['心情', 'text-ember bg-ember/10'],
-    link: ['链接', 'text-ocean bg-ocean/10'],
-  }
-  const [label, cls] = map[type] ?? ['未知', '']
+/* ── 单张瞬间卡 ─────────────────────────────────────── */
+function MomentCard({ moment }: { moment: MomentRow }) {
+  const conf = TYPE_CONFIG[moment.type] ?? { label: '其他', color: 'text-muted-foreground' }
+
   return (
-    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border border-border ${cls}`}>
-      {label}
-    </span>
+    <div
+      className="group relative rounded-2xl border border-border bg-card overflow-hidden
+                 flex flex-col
+                 before:absolute before:inset-0 before:-translate-x-full before:skew-x-[-20deg]
+                 before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent
+                 before:transition-transform before:duration-500 before:pointer-events-none before:z-10
+                 hover:before:translate-x-full
+                 transition-all duration-300
+                 hover:[border-color:rgba(255,138,107,0.35)]"
+    >
+      {/* ── 头部：头像 + 用户名 + 类型 + 时间 ── */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full flex-shrink-0
+                          bg-gradient-to-br from-ember/50 to-ember/15
+                          border border-ember/30 flex items-center justify-center">
+            <span className="text-sm font-bold text-ember select-none leading-none">梨</span>
+          </div>
+          <div className="leading-tight">
+            <p className="text-xs font-semibold text-foreground">梨花海</p>
+            <span className={`text-[9px] font-mono ${conf.color}`}>{conf.label}</span>
+          </div>
+        </div>
+        <time className="text-[10px] font-mono text-muted-foreground flex-shrink-0">
+          {timeAgo(new Date(moment.created_at))}
+        </time>
+      </div>
+
+      {/* ── 正文 ── */}
+      {moment.content && (
+        <p className="px-4 text-sm text-foreground leading-relaxed whitespace-pre-line">
+          {moment.content}
+        </p>
+      )}
+
+      {/* ── 手环数据（sleep / steps） ── */}
+      {(moment.type === 'sleep' || moment.type === 'steps') && moment.meta && (
+        <div className="mx-4 mt-3">
+          <MiBandData type={moment.type} meta={moment.meta as Record<string, unknown>} />
+        </div>
+      )}
+
+      {/* ── 图片 ── */}
+      {moment.images.length > 0 && (
+        moment.images.length === 1 ? (
+          <div className="mx-4 mt-3 aspect-[4/3] rounded-xl overflow-hidden bg-muted flex-shrink-0">
+            <img
+              src={moment.images[0]}
+              alt=""
+              className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+            />
+          </div>
+        ) : (
+          <div className="mx-4 mt-3 grid grid-cols-2 gap-1 rounded-xl overflow-hidden flex-shrink-0">
+            {moment.images.slice(0, 4).map((url, j) => (
+              <div key={j} className="relative aspect-square bg-muted overflow-hidden">
+                <img
+                  src={url}
+                  alt=""
+                  className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                />
+                {j === 3 && moment.images.length > 4 && (
+                  <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">+{moment.images.length - 4}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )
+      )}
+
+      {/* ── 标签：mood / weather / location ── */}
+      {(moment.mood || moment.weather || moment.location) && (
+        <div className="flex flex-wrap gap-1.5 px-4 mt-3">
+          {moment.mood && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+              {moment.mood}
+            </span>
+          )}
+          {moment.weather && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+              {moment.weather}
+            </span>
+          )}
+          {moment.location && (
+            <span className="flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+              <Icon icon={RiMapPin2Line} size={9} />
+              {moment.location}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* ── 底部操作行 ── */}
+      <div className="flex items-center gap-4 px-4 py-3 mt-3 border-t border-border">
+        <button className="flex items-center gap-1.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+          <Icon icon={RiShareForwardLine} size={13} />
+          <span className="text-[10px] font-mono">分享</span>
+        </button>
+        <button className="flex items-center gap-1.5 text-muted-foreground/60 hover:text-ember transition-colors">
+          <Icon icon={RiHeart2Line} size={13} />
+          <span className="text-[10px] font-mono">喜欢</span>
+        </button>
+        <time className="ml-auto text-[10px] font-mono text-muted-foreground/40">
+          {new Date(moment.created_at).toLocaleDateString('zh-CN', {
+            month: '2-digit', day: '2-digit',
+          })}
+        </time>
+      </div>
+    </div>
   )
 }
 
+/* ── 手环数据块 ─────────────────────────────────────── */
 function MiBandData({ type, meta }: { type: string; meta: Record<string, unknown> }) {
   if (type === 'sleep') {
     return (
-      <div className="flex flex-wrap gap-3 mt-2 p-3 rounded-base bg-black/[0.03] dark:bg-white/[0.03] border border-border text-xs font-mono">
-        {meta.sleepStart != null && <span>入睡 {String(meta.sleepStart)}</span>}
-        {meta.sleepEnd != null && <span>起床 {String(meta.sleepEnd)}</span>}
+      <div className="flex flex-wrap gap-3 p-3 rounded-xl bg-muted/60 border border-border text-xs font-mono">
+        {meta.sleepStart != null && (
+          <span className="text-muted-foreground">入睡 {String(meta.sleepStart)}</span>
+        )}
+        {meta.sleepEnd != null && (
+          <span className="text-muted-foreground">起床 {String(meta.sleepEnd)}</span>
+        )}
         {typeof meta.deepSleepMinutes === 'number' && (
           <span className="text-purple-400">深睡 {meta.deepSleepMinutes}min</span>
         )}
@@ -138,10 +205,16 @@ function MiBandData({ type, meta }: { type: string; meta: Record<string, unknown
   }
   if (type === 'steps') {
     return (
-      <div className="flex flex-wrap gap-3 mt-2 p-3 rounded-base bg-black/[0.03] dark:bg-white/[0.03] border border-border text-xs font-mono">
-        {typeof meta.steps === 'number' && <span className="text-green-400">{meta.steps} 步</span>}
-        {typeof meta.distance === 'number' && <span>{(meta.distance / 1000).toFixed(2)} km</span>}
-        {typeof meta.calories === 'number' && <span>{meta.calories} kcal</span>}
+      <div className="flex flex-wrap gap-3 p-3 rounded-xl bg-muted/60 border border-border text-xs font-mono">
+        {typeof meta.steps === 'number' && (
+          <span className="text-green-400">{meta.steps.toLocaleString()} 步</span>
+        )}
+        {typeof meta.distance === 'number' && (
+          <span className="text-muted-foreground">{(meta.distance / 1000).toFixed(2)} km</span>
+        )}
+        {typeof meta.calories === 'number' && (
+          <span className="text-muted-foreground">{meta.calories} kcal</span>
+        )}
       </div>
     )
   }

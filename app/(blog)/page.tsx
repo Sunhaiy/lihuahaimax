@@ -11,12 +11,11 @@ import { findPosts } from '@/lib/db/dao/postDao'
 import { findMoments } from '@/lib/db/dao/momentDao'
 import { getSetting } from '@/lib/db/dao/settingsDao'
 import { getActivityHeatmap } from '@/lib/db/dao/activityDao'
-import { Card, CardBody } from '@/components/ui/Card'
 import { Icon } from '@/components/ui/Icon'
 import { ActivityHeatmap } from '@/components/ui/ActivityHeatmap'
 import type { MomentRow } from '@/types/moment'
 import { SETTINGS_KEYS } from '@/lib/constants/settings'
-import { RiTimeLine, RiMessage2Line, RiArrowRightSLine } from '@remixicon/react'
+import { RiMessage2Line, RiArrowRightSLine, RiTimeLine } from '@remixicon/react'
 
 export const metadata: Metadata = {
   title: '梨花海 · 首页',
@@ -59,7 +58,7 @@ function getMomentPreview(moment: MomentRow): { text: string; mono: boolean } | 
 
 export default async function HomePage() {
   const [postsResult, momentsResult, heroBgSettings, activityData] = await Promise.all([
-    findPosts({ status: 'published', pageSize: 5 }),
+    findPosts({ status: 'published', pageSize: 6 }),
     findMoments({ publicOnly: true, pageSize: 10 }),
     getSetting(SETTINGS_KEYS.HERO_BG),
     getActivityHeatmap(365),
@@ -249,83 +248,156 @@ export default async function HomePage() {
                 <ActivityHeatmap data={activityData} />
 
                 <div className="mt-8">
-                  <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-foreground">最新文章</h2>
                     <Link href="/posts" className="text-sm text-ember hover:text-ember/70 transition-colors">
                       查看全部 →
                     </Link>
                   </div>
 
-                  <div className="space-y-2.5">
-                    {postsResult.data.length === 0 ? (
-                      <p className="text-muted-foreground text-sm py-8 text-center">暂无文章。</p>
-                    ) : (
-                      postsResult.data.map((post) => (
-                        <Card key={post.id} hoverable glow="ember">
-                          <CardBody className="py-3.5">
-                            <Link href={`/posts/${post.slug}`} className="block group">
-                              <div className="flex items-center gap-4">
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-semibold text-foreground group-hover:text-ember
-                                                 transition-colors truncate">
-                                    {post.title}
-                                  </h3>
-                                  {post.excerpt && (
-                                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                                      {post.excerpt}
-                                    </p>
-                                  )}
+                  {postsResult.data.length === 0 ? (
+                    <p className="text-muted-foreground text-sm py-8 text-center">暂无文章。</p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {postsResult.data.map((post) => (
+                        <Link key={post.id} href={`/posts/${post.slug}`} className="block group h-full">
+                          <div className="relative rounded-xl border border-border bg-card overflow-hidden
+                                          flex flex-col h-full
+                                          transition-all duration-300
+                                          hover:[border-color:rgba(255,138,107,0.35)]
+                                          before:absolute before:inset-0 before:-translate-x-full before:skew-x-[-20deg]
+                                          before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent
+                                          before:transition-transform before:duration-600 before:pointer-events-none before:z-10
+                                          hover:before:translate-x-full">
+
+                            {/* ── 封面区 ── */}
+                            <div className="aspect-[16/9] relative overflow-hidden flex-shrink-0">
+                              {post.cover_url ? (
+                                <img
+                                  src={post.cover_url}
+                                  alt={post.title}
+                                  className="w-full h-full object-cover
+                                             group-hover:scale-105 transition-transform duration-500"
+                                />
+                              ) : (
+                                /* 默认封面：多层渐变 + 装饰字 */
+                                <div className="w-full h-full relative
+                                                bg-gradient-to-br from-ember/12 via-card to-muted
+                                                flex items-center justify-center">
+                                  <span className="text-7xl font-bold leading-none select-none
+                                                   text-transparent bg-clip-text
+                                                   bg-gradient-to-br from-ember/30 to-ember/10">
+                                    {post.category?.charAt(0) ?? '文'}
+                                  </span>
+                                  {/* 网格纹理 */}
+                                  <div className="absolute inset-0 opacity-[0.03]"
+                                       style={{ backgroundImage: 'repeating-linear-gradient(0deg,currentColor 0,currentColor 1px,transparent 1px,transparent 32px),repeating-linear-gradient(90deg,currentColor 0,currentColor 1px,transparent 1px,transparent 32px)' }} />
                                 </div>
-                                <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+                              )}
+
+                              {/* 底部渐变遮罩（图片时更突显 badge） */}
+                              <div className="absolute inset-x-0 bottom-0 h-10
+                                              bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+
+                              {/* 分类 badge */}
+                              {post.category && (
+                                <span className="absolute top-2.5 left-2.5 z-10
+                                                 text-[10px] font-mono px-2 py-0.5 rounded-full
+                                                 bg-black/55 backdrop-blur-sm
+                                                 text-white/85 border border-white/10 leading-tight">
+                                  {post.category}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* ── 内容区（flex-1 撑满剩余高度） ── */}
+                            <div className="flex flex-col flex-1 px-4 pt-3.5 pb-4">
+                              <h3 className="font-semibold text-foreground group-hover:text-ember
+                                             transition-colors duration-200 line-clamp-2 leading-snug mb-1.5">
+                                {post.title}
+                              </h3>
+                              {post.excerpt && (
+                                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                                  {post.excerpt}
+                                </p>
+                              )}
+
+                              {/* tags + 日期 压到底部 */}
+                              <div className="flex items-center justify-between mt-auto pt-3">
+                                <div className="flex gap-1 flex-wrap">
                                   {post.tags.slice(0, 2).map((tag) => (
                                     <span key={tag}
                                       className="text-[10px] font-mono px-1.5 py-0.5 rounded
-                                                 bg-ember/10 text-ember border border-ember/20">
-                                      {tag}
+                                                 bg-muted text-muted-foreground">
+                                      #{tag}
                                     </span>
                                   ))}
-                                  <time className="text-xs text-muted-foreground font-mono whitespace-nowrap">
-                                    {post.published_at
-                                      ? new Date(post.published_at).toLocaleDateString('zh-CN')
-                                      : '草稿'}
-                                  </time>
                                 </div>
+                                <time className="text-[11px] font-mono text-muted-foreground/50 flex-shrink-0 ml-2">
+                                  {post.published_at
+                                    ? new Date(post.published_at).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+                                    : '草稿'}
+                                </time>
                               </div>
-                            </Link>
-                          </CardBody>
-                        </Card>
-                      ))
-                    )}
-                  </div>
+                            </div>
+
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* ── 右栏：个人介绍 + 数据统计 ── */}
               <div className="flex flex-col gap-3 lg:sticky lg:top-20">
+
                 {/* 头像 + 简介 */}
                 <div className="rounded-2xl border border-border bg-card p-5 flex flex-col items-center text-center">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-ember/40 to-ember/10
-                                  border border-ember/25 flex items-center justify-center mb-3 shrink-0">
-                    <span className="text-xl font-bold text-ember select-none">梨</span>
+                  {/* 头像（稍大，加在线指示） */}
+                  <div className="relative mb-3">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-ember/50 to-ember/10
+                                    border-2 border-ember/30 flex items-center justify-center shrink-0">
+                      <span className="text-2xl font-bold text-ember select-none">梨</span>
+                    </div>
+                    <div className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full
+                                    bg-emerald-500 border-2 border-card" />
                   </div>
-                  <p className="font-semibold text-sm text-foreground">梨花海</p>
+                  <p className="font-bold text-sm text-foreground">梨花海</p>
                   <p className="text-[11px] text-ember mt-0.5 font-mono tracking-wide">极客 · 二次元 · 代码诗人</p>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed mt-3">
-                    热爱 coding，追番打游戏，<br />记录凌晨 3 点的一切。
+                  <p className="text-[11px] text-muted-foreground leading-relaxed mt-2 mb-4">
+                    热爱 coding，追番打游戏，记录凌晨 3 点的一切。
                   </p>
+                  {/* 快捷导航 */}
+                  <div className="flex flex-wrap gap-1.5 justify-center">
+                    {[
+                      { href: '/posts',   label: '文章' },
+                      { href: '/moments', label: '瞬间' },
+                      { href: '/about',   label: '关于我' },
+                    ].map(({ href, label }) => (
+                      <Link key={href} href={href}
+                        className="text-[11px] font-mono px-3 py-1 rounded-full
+                                   border border-border bg-muted text-muted-foreground
+                                   hover:border-ember/40 hover:text-ember hover:bg-ember/5
+                                   transition-all duration-200">
+                        {label}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
 
-                {/* 数据统计 */}
+                {/* 数据统计（数字用 ember 加粗突显） */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl border border-border bg-card p-3 text-center">
-                    <p className="text-lg font-bold text-foreground">{postsResult.total}</p>
-                    <p className="text-[10px] text-muted-foreground">篇文章</p>
+                  <div className="rounded-xl border border-border bg-card p-4 text-center">
+                    <p className="text-2xl font-bold text-ember leading-none">{postsResult.total}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">篇文章</p>
                   </div>
-                  <div className="rounded-xl border border-border bg-card p-3 text-center">
-                    <p className="text-lg font-bold text-foreground">{momentsResult.total}</p>
-                    <p className="text-[10px] text-muted-foreground">条瞬间</p>
+                  <div className="rounded-xl border border-border bg-card p-4 text-center">
+                    <p className="text-2xl font-bold text-ember leading-none">{momentsResult.total}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">条瞬间</p>
                   </div>
                 </div>
+
               </div>
 
             </div>
