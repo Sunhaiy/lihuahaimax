@@ -41,6 +41,7 @@ export async function findPosts(params: PostQueryParams = {}): Promise<Paginated
     pageSize = 10,
     status,
     tag,
+    tags,
     category,
     keyword,
   } = params
@@ -53,18 +54,25 @@ export async function findPosts(params: PostQueryParams = {}): Promise<Paginated
     conditions.push(`status = $${idx++}`)
     values.push(status)
   }
+  // 单标签（向后兼容）
   if (tag) {
     conditions.push(`$${idx++} = ANY(tags)`)
     values.push(tag)
+  }
+  // 多标签 OR 筛选：posts 包含任意一个所选标签
+  if (tags && tags.length > 0) {
+    const placeholders = tags.map(() => `$${idx++}`).join(',')
+    conditions.push(`tags && ARRAY[${placeholders}]::text[]`)
+    values.push(...tags)
   }
   if (category) {
     conditions.push(`category = $${idx++}`)
     values.push(category)
   }
   if (keyword) {
-    conditions.push(`(title ILIKE $${idx++} OR excerpt ILIKE $${idx++})`)
+    conditions.push(`(title ILIKE $${idx} OR excerpt ILIKE $${idx + 1})`)
     values.push(`%${keyword}%`, `%${keyword}%`)
-    idx++ // 占位符已用两个
+    idx += 2
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
@@ -107,6 +115,18 @@ export async function findCategories(): Promise<{ category: string; count: numbe
      ORDER BY count DESC, category ASC`
   )
   return result.rows.map((r) => ({ category: r.category, count: Number(r.count) }))
+}
+
+export async function findLatestPostPerCategory(): Promise<
+  { category: string; title: string; slug: string }[]
+> {
+  const result = await query<{ category: string; title: string; slug: string }>(
+    `SELECT DISTINCT ON (category) category, title, slug
+     FROM posts
+     WHERE status = 'published'
+     ORDER BY category, published_at DESC NULLS LAST`
+  )
+  return result.rows
 }
 
 // ============================================================
@@ -203,6 +223,31 @@ export async function findAdjacentPosts(
     prev: prevResult.rows[0] ?? null,
     next: nextResult.rows[0] ?? null,
   }
+}
+
+/** 获取已发布文章的所有标签及数量 */
+export async function findAllTags(): Promise<{ tag: string; count: number }[]> {
+  const result = await query<{ tag: string; count: string }>(
+    `SELECT unnest(tags) AS tag, COUNT(*) AS count
+     FROM posts
+     WHERE status = 'published'
+     GROUP BY tag
+     ORDER BY count DESC, tag ASC`
+  )
+  return result.rows.map((r) => ({ tag: r.tag, count: Number(r.count) }))
+}
+
+/** 获取已发布文章的精简列表（用于归档页） */
+export async function findPostsForArchive(): Promise<
+  Pick<PostRow, 'id' | 'title' | 'slug' | 'category' | 'published_at'>[]
+> {
+  const result = await query<Pick<PostRow, 'id' | 'title' | 'slug' | 'category' | 'published_at'>>(
+    `SELECT id, title, slug, category, published_at
+     FROM posts
+     WHERE status = 'published'
+     ORDER BY published_at DESC NULLS LAST, created_at DESC`
+  )
+  return result.rows
 }
 
 /** 重命名分类（批量更新该分类下所有文章） */

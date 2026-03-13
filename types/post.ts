@@ -63,7 +63,8 @@ export interface PostQueryParams {
   page?: number
   pageSize?: number
   status?: PostStatus
-  tag?: string
+  tag?: string       // 单标签（向后兼容）
+  tags?: string[]    // 多标签 OR 筛选
   category?: string
   keyword?: string
 }

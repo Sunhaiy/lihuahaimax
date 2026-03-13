@@ -9,6 +9,7 @@ import { findMoments } from '@/lib/db/dao/momentDao'
 import { Icon } from '@/components/ui/Icon'
 import { RiHeart2Line, RiShareForwardLine, RiMapPin2Line } from '@remixicon/react'
 import type { MomentRow } from '@/types/moment'
+import { SHIMMER } from '@/lib/styles'
 
 export const metadata: Metadata = { title: '极客瞬间 · 梨花海' }
 export const revalidate = 30
@@ -27,15 +28,6 @@ function timeAgo(date: Date): string {
   return `${Math.floor(mo / 12)}年前`
 }
 
-const TYPE_CONFIG: Record<string, { label: string; color: string }> = {
-  text:      { label: '随想',     color: 'text-muted-foreground' },
-  image:     { label: '图片',     color: 'text-ocean' },
-  sleep:     { label: '睡眠记录', color: 'text-purple-400' },
-  steps:     { label: '步数记录', color: 'text-green-400' },
-  heartrate: { label: '心率数据', color: 'text-red-400' },
-  mood:      { label: '心情打卡', color: 'text-ember' },
-  link:      { label: '链接分享', color: 'text-ocean' },
-}
 
 export default async function MomentsPage() {
   const { data: moments } = await findMoments({ publicOnly: true, pageSize: 50 })
@@ -66,18 +58,13 @@ export default async function MomentsPage() {
 
 /* ── 单张瞬间卡 ─────────────────────────────────────── */
 function MomentCard({ moment }: { moment: MomentRow }) {
-  const conf = TYPE_CONFIG[moment.type] ?? { label: '其他', color: 'text-muted-foreground' }
-
   return (
     <div
-      className="group relative rounded-2xl border border-border bg-card overflow-hidden
+      className={`group relative rounded-2xl border border-border bg-card overflow-hidden
                  flex flex-col
-                 before:absolute before:inset-0 before:-translate-x-full before:skew-x-[-20deg]
-                 before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent
-                 before:transition-transform before:duration-500 before:pointer-events-none before:z-10
-                 hover:before:translate-x-full
                  transition-all duration-300
-                 hover:[border-color:rgba(255,138,107,0.35)]"
+                 hover:[border-color:rgba(255,138,107,0.35)]
+                 ${SHIMMER}`}
     >
       {/* ── 头部：头像 + 用户名 + 类型 + 时间 ── */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
@@ -87,10 +74,7 @@ function MomentCard({ moment }: { moment: MomentRow }) {
                           border border-ember/30 flex items-center justify-center">
             <span className="text-sm font-bold text-ember select-none leading-none">梨</span>
           </div>
-          <div className="leading-tight">
-            <p className="text-xs font-semibold text-foreground">梨花海</p>
-            <span className={`text-[9px] font-mono ${conf.color}`}>{conf.label}</span>
-          </div>
+          <p className="text-xs font-semibold text-foreground">梨花海</p>
         </div>
         <time className="text-[10px] font-mono text-muted-foreground flex-shrink-0">
           {timeAgo(new Date(moment.created_at))}
@@ -114,15 +98,15 @@ function MomentCard({ moment }: { moment: MomentRow }) {
       {/* ── 图片 ── */}
       {moment.images.length > 0 && (
         moment.images.length === 1 ? (
-          <div className="mx-4 mt-3 aspect-[4/3] rounded-xl overflow-hidden bg-muted flex-shrink-0">
+          <div className="mt-3 overflow-hidden">
             <img
               src={moment.images[0]}
               alt=""
-              className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+              className="w-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
             />
           </div>
         ) : (
-          <div className="mx-4 mt-3 grid grid-cols-2 gap-1 rounded-xl overflow-hidden flex-shrink-0">
+          <div className="mt-3 grid grid-cols-2 gap-0.5">
             {moment.images.slice(0, 4).map((url, j) => (
               <div key={j} className="relative aspect-square bg-muted overflow-hidden">
                 <img

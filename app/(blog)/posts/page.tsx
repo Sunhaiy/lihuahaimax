@@ -1,101 +1,165 @@
 /**
  * app/(blog)/posts/page.tsx
  *
- * 文章列表页 — Server Component + SSG/ISR。
+ * 文章列表页 — 推荐轮播 + 分类/标签筛选 + 三列卡片网格。
  */
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { findPosts } from '@/lib/db/dao/postDao'
+import { findPosts, findAllTags, findCategories } from '@/lib/db/dao/postDao'
+import { FeaturedCarousel } from '@/components/ui/FeaturedCarousel'
+import { PostsFilter } from '@/components/ui/PostsFilter'
+import { SHIMMER } from '@/lib/styles'
 
-export const metadata: Metadata = { title: '文章' }
+export const metadata: Metadata = { title: '文章 · 梨花海' }
 export const revalidate = 60
 
 export default async function PostsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; tag?: string; keyword?: string; category?: string }>
+  searchParams: Promise<{ page?: string; tags?: string; keyword?: string; category?: string }>
 }) {
-  const { page, tag, keyword, category } = await searchParams
-  const result = await findPosts({
-    status: 'published',
-    page: Number(page ?? 1),
-    pageSize: 12,
-    tag: tag ?? undefined,
-    category: category ?? undefined,
-    keyword: keyword ?? undefined,
-  })
+  const { page, tags: tagsParam, keyword, category } = await searchParams
+
+  const currentCategory = category ?? ''
+  const currentTags = tagsParam ? tagsParam.split(',').filter(Boolean) : []
+  const isFiltered = Boolean(currentCategory || currentTags.length || keyword)
+  const currentPage = Number(page ?? 1)
+
+  const [featuredResult, allTagsResult, categoriesResult, filteredResult] = await Promise.all([
+    findPosts({ status: 'published', pageSize: 9 }),
+    findAllTags(),
+    findCategories(),
+    findPosts({
+      status: 'published',
+      page: currentPage,
+      pageSize: 9,
+      tags: currentTags.length > 0 ? currentTags : undefined,
+      category: currentCategory || undefined,
+      keyword: keyword ?? undefined,
+    }),
+  ])
+
+  const carouselPosts = [
+    ...featuredResult.data.filter(p => p.cover_url),
+    ...featuredResult.data.filter(p => !p.cover_url),
+  ].slice(0, 9)
+
+  const totalPublished = featuredResult.total
+
+  function paginationHref(p: number) {
+    const params = new URLSearchParams()
+    params.set('page', String(p))
+    if (currentCategory) params.set('category', currentCategory)
+    if (currentTags.length) params.set('tags', currentTags.join(','))
+    if (keyword) params.set('keyword', keyword)
+    return `/posts?${params.toString()}`
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
-      <h1 className="text-3xl font-bold mb-2">
-        {category ? category : '文章'}
-      </h1>
-      <p className="text-muted-foreground text-sm mb-10">
-        共 {result.total} 篇 · 第 {result.page} / {result.totalPages} 页
-      </p>
 
-      {result.data.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground">
-          没有符合条件的文章。
+      {/* ── 推荐文章（无筛选时展示） ── */}
+      {!isFiltered && (
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-foreground">推荐文章</h2>
+          </div>
+          <FeaturedCarousel posts={carouselPosts} />
+        </section>
+      )}
+
+      {/* ── 筛选状态页头 ── */}
+      {isFiltered && (
+        <div className="mb-8">
+          <p className="text-xs font-mono text-ember tracking-[0.25em] uppercase mb-2">POSTS</p>
+          <h1 className="text-3xl font-bold text-foreground mb-1">
+            {currentCategory || (currentTags.length ? `#${currentTags[0]}` : '全部文章')}
+          </h1>
+          <p className="text-sm text-muted-foreground">共 {filteredResult.total} 篇</p>
         </div>
+      )}
+
+      {/* ── 筛选栏（客户端组件） ── */}
+      <PostsFilter
+        categories={categoriesResult}
+        tags={allTagsResult}
+        currentCategory={currentCategory}
+        currentTags={currentTags}
+        totalPublished={totalPublished}
+      />
+
+      {/* ── 文章网格 ── */}
+      {filteredResult.data.length === 0 ? (
+        <div className="text-center py-20 text-muted-foreground">没有符合条件的文章。</div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {result.data.map((post) => (
-            <Link key={post.id} href={`/posts/${post.slug}`} className="group block">
-              <article className="h-full border border-border rounded-card p-5
-                                  transition-all duration-300
-                                  hover:border-ocean/20 hover:shadow-[0_0_24px_rgba(14,165,233,0.06)]">
-                {post.cover_url && (
-                  <div className="aspect-video rounded-base overflow-hidden mb-4 bg-muted">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredResult.data.map((post) => (
+            <Link key={post.id} href={`/posts/${post.slug}`} className="group block h-full">
+              <div className={`relative rounded-xl overflow-hidden border border-border
+                               flex flex-col h-full
+                               hover:[border-color:rgba(255,138,107,0.35)]
+                               transition-all duration-300 ${SHIMMER}`}>
+                {/* 封面 */}
+                <div className="aspect-[16/10] overflow-hidden bg-muted flex-shrink-0">
+                  {post.cover_url ? (
                     <img
                       src={post.cover_url}
-                      alt=""
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      alt={post.title}
+                      className="w-full h-full object-cover
+                                 group-hover:scale-105 transition-transform duration-500"
                     />
-                  </div>
-                )}
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {post.tags.slice(0, 3).map((tag) => (
-                    <span key={tag} className="text-[10px] font-mono px-1.5 py-0.5 rounded
-                                               bg-ember/10 text-ember border border-ember/20">
-                      {tag}
-                    </span>
-                  ))}
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-ember/12 via-card to-muted
+                                    flex items-center justify-center relative">
+                      <span className="text-5xl font-bold select-none
+                                       text-transparent bg-clip-text
+                                       bg-gradient-to-br from-ember/30 to-ember/10">
+                        {post.category?.charAt(0) ?? '文'}
+                      </span>
+                      <div className="absolute inset-0 opacity-[0.03]"
+                           style={{ backgroundImage: 'repeating-linear-gradient(0deg,currentColor 0,currentColor 1px,transparent 1px,transparent 24px),repeating-linear-gradient(90deg,currentColor 0,currentColor 1px,transparent 1px,transparent 24px)' }} />
+                    </div>
+                  )}
                 </div>
-                <h2 className="font-semibold text-foreground group-hover:text-ember
-                               transition-colors mb-2 line-clamp-2">
-                  {post.title}
-                </h2>
-                {post.excerpt && (
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                    {post.excerpt}
-                  </p>
-                )}
-                <time className="text-xs text-muted-foreground font-mono">
-                  {post.published_at
-                    ? new Date(post.published_at).toLocaleDateString('zh-CN')
-                    : ''}
-                </time>
-              </article>
+                {/* 信息 */}
+                <div className="p-4 bg-card flex flex-col flex-1">
+                  <h3 className="font-semibold text-sm text-foreground
+                                 group-hover:text-ember transition-colors duration-200
+                                 line-clamp-2 leading-snug flex-1">
+                    {post.title}
+                  </h3>
+                  <div className="flex items-center justify-between mt-3">
+                    <time className="text-[11px] text-muted-foreground font-mono">
+                      {post.published_at
+                        ? new Date(post.published_at).toLocaleDateString('zh-CN')
+                        : ''}
+                    </time>
+                    {post.category && (
+                      <span className="text-[10px] font-mono text-muted-foreground/60">
+                        {post.category}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </Link>
           ))}
         </div>
       )}
 
-      {/* 简单分页 */}
-      {result.totalPages > 1 && (
-        <div className="flex justify-center gap-3 mt-12">
-          {Array.from({ length: result.totalPages }, (_, i) => i + 1).map((p) => (
+      {/* ── 分页 ── */}
+      {filteredResult.totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-12">
+          {Array.from({ length: filteredResult.totalPages }, (_, i) => i + 1).map((p) => (
             <Link
               key={p}
-              href={`/posts?page=${p}${tag ? `&tag=${tag}` : ''}${keyword ? `&keyword=${keyword}` : ''}`}
-              className={`w-9 h-9 flex items-center justify-center rounded-base text-sm
-                transition-colors
-                ${p === result.page
-                  ? 'bg-ocean text-white'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'
-                }`}
+              href={paginationHref(p)}
+              className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm
+                          border transition-colors
+                          ${p === filteredResult.page
+                            ? 'bg-foreground text-background border-foreground'
+                            : 'border-border text-muted-foreground hover:border-ember/40 hover:text-ember'}`}
             >
               {p}
             </Link>

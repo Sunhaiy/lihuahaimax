@@ -193,6 +193,25 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- ============================================================
+-- 作品表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS works (
+  id          SERIAL PRIMARY KEY,
+  title       TEXT        NOT NULL,
+  subtitle    TEXT,
+  description TEXT,
+  cover_url   TEXT        NOT NULL DEFAULT '',
+  tags        TEXT[]      NOT NULL DEFAULT '{}',
+  url         TEXT,
+  github_url  TEXT,
+  year        INTEGER,
+  sort_order  INTEGER     NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_works_sort ON works(sort_order ASC, created_at DESC);
+
 -- 绑定触发器
 DO $$
 BEGIN

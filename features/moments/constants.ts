@@ -9,10 +9,10 @@ import type { RemixiconComponentType } from '@remixicon/react'
 import {
   RiBarChart2Line,
   RiImageLine,
-  RiBedLine,
-  RiWalking2Line,
+  RiZzzLine,
+  RiWalkLine,
   RiHeartPulseLine,
-  RiSmileLine,
+  RiUserSmileLine,
   RiLinkM,
 } from '@remixicon/react'
 
@@ -45,13 +45,13 @@ export const MOMENT_TYPE_CONFIG: Record<
   },
   sleep: {
     label: '睡眠',
-    icon: RiBedLine,
+    icon: RiZzzLine,
     textColor: 'text-purple-400',
     bgColor: 'bg-purple-400/10',
   },
   steps: {
     label: '步数',
-    icon: RiWalking2Line,
+    icon: RiWalkLine,
     textColor: 'text-green-400',
     bgColor: 'bg-green-400/10',
   },
@@ -63,7 +63,7 @@ export const MOMENT_TYPE_CONFIG: Record<
   },
   mood: {
     label: '心情',
-    icon: RiSmileLine,
+    icon: RiUserSmileLine,
     textColor: 'text-ember',
     bgColor: 'bg-ember/10',
   },

@@ -14,10 +14,13 @@ import { useRef, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import {
-  RiCodeLine, RiToolsLine, RiPenLine, RiBookLine,
+  RiCodeLine, RiToolsLine, RiEditLine, RiBookLine,
   RiCpuLine, RiWifiLine, RiLayoutLine, RiServerLine,
   RiGitBranchLine, RiFolderLine,
   RiFilmLine, RiGamepadLine, RiCameraLine,
+  RiHome4Line, RiFileTextLine, RiFlashlightLine,
+  RiStarLine, RiLinksLine, RiUser3Line,
+  RiArchiveLine, RiPriceTag3Line, RiBriefcase4Line,
 } from '@remixicon/react'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
@@ -30,12 +33,12 @@ interface NavBarProps {
   categories: Category[]
 }
 
-type RemixIcon = React.ComponentType<{ size?: number; className?: string }>
+type RemixIcon = React.ComponentType<{ size?: number | string; className?: string }>
 
 const CATEGORY_ICONS: Record<string, RemixIcon> = {
   技术笔记: RiCodeLine,
   项目实战: RiToolsLine,
-  生活随笔: RiPenLine,
+  生活随笔: RiEditLine,
   读书笔记: RiBookLine,
   工具推荐: RiToolsLine,
   嵌入式:   RiCpuLine,
@@ -54,6 +57,13 @@ const COLLECTION_ITEMS = [
   { href: '/anime',   label: '动漫', Icon: RiFilmLine,    desc: '追番记录' },
   { href: '/games',   label: '游戏', Icon: RiGamepadLine, desc: '游玩足迹' },
   { href: '/gallery', label: '光影', Icon: RiCameraLine,  desc: '图片相册' },
+]
+
+const POST_SUB_PAGES = [
+  { href: '/posts',            label: '全部文章', Icon: RiFileTextLine  },
+  { href: '/posts/archive',    label: '归档',     Icon: RiArchiveLine   },
+  { href: '/posts/categories', label: '分类',     Icon: RiFolderLine    },
+  { href: '/posts/tags',       label: '标签',     Icon: RiPriceTag3Line },
 ]
 
 /* 下拉面板共用毛玻璃样式（渲染到 body 层，backdrop-blur 正常生效） */
@@ -124,8 +134,9 @@ export function NavBar({ categories }: NavBarProps) {
           {/* ── 导航链接 ───────────────────────────────── */}
           <div className="hidden sm:flex items-center gap-1">
 
-            <Link href="/" className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
+            <Link href="/" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
                                       rounded-base hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200">
+              <RiHome4Line size={14} />
               首页
             </Link>
 
@@ -133,40 +144,51 @@ export function NavBar({ categories }: NavBarProps) {
             <div ref={postTriggerRef} className="relative" onMouseEnter={openMenu} onMouseLeave={scheduleClose}>
               <Link
                 href="/posts"
-                className={`flex items-center px-3 py-1.5 text-sm rounded-base transition-all duration-200
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-base transition-all duration-200
                             ${postMenuOpen
                               ? 'text-foreground bg-black/5 dark:bg-white/5'
                               : 'text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'}`}
               >
+                <RiFileTextLine size={14} />
                 文章
               </Link>
             </div>
 
-            <Link href="/moments" className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
+            <Link href="/moments" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
                                              rounded-base hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200">
+              <RiFlashlightLine size={14} />
               瞬间
+            </Link>
+
+            <Link href="/works" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
+                                           rounded-base hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200">
+              <RiBriefcase4Line size={14} />
+              作品
             </Link>
 
             {/* 收藏（带二级菜单） */}
             <div ref={collectionTriggerRef} className="relative" onMouseEnter={openCollection} onMouseLeave={scheduleCloseCollection}>
               <button
                 type="button"
-                className={`px-3 py-1.5 text-sm rounded-base transition-all duration-200
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-base transition-all duration-200
                             ${collectionMenuOpen
                               ? 'text-foreground bg-black/5 dark:bg-white/5'
                               : 'text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'}`}
               >
+                <RiStarLine size={14} />
                 收藏
               </button>
             </div>
 
-            <Link href="/links" className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
+            <Link href="/links" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
                                            rounded-base hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200">
+              <RiLinksLine size={14} />
               友情链接
             </Link>
 
-            <Link href="/about" className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
+            <Link href="/about" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
                                            rounded-base hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200">
+              <RiUser3Line size={14} />
               关于
             </Link>
           </div>
@@ -191,7 +213,7 @@ export function NavBar({ categories }: NavBarProps) {
       </header>
 
       {/* ── 下拉面板 — Portal 到 body，脱离 header stacking context ── */}
-      {mounted && postMenuOpen && categories.length > 0 && createPortal(
+      {mounted && postMenuOpen && createPortal(
         <div
           style={{
             position: 'fixed',
@@ -203,38 +225,60 @@ export function NavBar({ categories }: NavBarProps) {
           onMouseEnter={openMenu}
           onMouseLeave={scheduleClose}
         >
-          <div className={`${PANEL_CLS} p-4 min-w-[280px]`}>
-            <p className="text-[10px] font-mono uppercase tracking-widest
-                          text-muted-foreground mb-3 select-none">文章分类</p>
-            <div className="grid grid-cols-2 gap-0.5">
-              {categories.map(({ category, count }) => {
-                const CatIcon = getCategoryIcon(category)
-                return (
-                  <Link
-                    key={category}
-                    href={`/posts?category=${encodeURIComponent(category)}`}
-                    onClick={() => setPostMenuOpen(false)}
-                    className="group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-ember/10 transition-colors"
-                  >
-                    <span className="text-muted-foreground group-hover:text-ember transition-colors flex-shrink-0">
-                      <CatIcon size={13} />
-                    </span>
-                    <span className="flex-1 min-w-0">
-                      <span className="block text-xs font-medium text-foreground group-hover:text-ember transition-colors truncate">
-                        {category}
-                      </span>
-                      <span className="block text-[10px] text-muted-foreground font-mono">{count} 篇</span>
-                    </span>
-                  </Link>
-                )
-              })}
+          <div className={`${PANEL_CLS} p-3 min-w-[260px]`}>
+
+            {/* 子页面快捷导航 */}
+            <div className="grid grid-cols-4 gap-0.5 mb-1">
+              {POST_SUB_PAGES.map(({ href, label, Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setPostMenuOpen(false)}
+                  className="group flex flex-col items-center gap-1 px-2 py-2.5 rounded-lg
+                             hover:bg-ember/10 transition-colors"
+                >
+                  <span className="text-muted-foreground group-hover:text-ember transition-colors">
+                    <Icon size={14} />
+                  </span>
+                  <span className="text-[10px] font-mono text-muted-foreground group-hover:text-ember
+                                    transition-colors whitespace-nowrap">
+                    {label}
+                  </span>
+                </Link>
+              ))}
             </div>
-            <div className="mt-3 pt-3 border-t border-border">
-              <Link href="/posts" onClick={() => setPostMenuOpen(false)}
-                className="flex items-center justify-between text-xs text-muted-foreground hover:text-ember transition-colors">
-                <span>全部文章</span><span>→</span>
-              </Link>
-            </div>
+
+            {/* 分类列表（有分类时显示） */}
+            {categories.length > 0 && (
+              <>
+                <div className="border-t border-border my-2" />
+                <p className="text-[10px] font-mono uppercase tracking-widest
+                              text-muted-foreground mb-2 px-1 select-none">文章分类</p>
+                <div className="grid grid-cols-2 gap-0.5">
+                  {categories.map(({ category, count }) => {
+                    const CatIcon = getCategoryIcon(category)
+                    return (
+                      <Link
+                        key={category}
+                        href={`/posts?category=${encodeURIComponent(category)}`}
+                        onClick={() => setPostMenuOpen(false)}
+                        className="group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-ember/10 transition-colors"
+                      >
+                        <span className="text-muted-foreground group-hover:text-ember transition-colors flex-shrink-0">
+                          <CatIcon size={13} />
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-xs font-medium text-foreground group-hover:text-ember transition-colors truncate">
+                            {category}
+                          </span>
+                          <span className="block text-[10px] text-muted-foreground font-mono">{count} 篇</span>
+                        </span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </>
+            )}
           </div>
         </div>,
         document.body

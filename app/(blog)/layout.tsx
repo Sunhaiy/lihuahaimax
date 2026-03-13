@@ -7,6 +7,7 @@
 
 import Link from 'next/link'
 import { NavBar } from '@/components/ui/NavBar'
+import { PageTransition } from '@/components/ui/PageTransition'
 import { findCategories } from '@/lib/db/dao/postDao'
 
 export default async function BlogLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +21,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
 
       {/* ── 主内容 ───────────────────────────────────────── */}
       <main className="flex-1 pt-16">
-        {children}
+        <PageTransition>{children}</PageTransition>
       </main>
 
       {/* ── 页脚 ─────────────────────────────────────────── */}

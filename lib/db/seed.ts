@@ -202,6 +202,353 @@ const POST_CONTENT_5 = doc(
   blockquote('意识不到偏误，才是最大的偏误。')
 )
 
+const POST_CONTENT_6 = doc(
+  h2('所有权：Rust 最核心的概念'),
+  para(
+    'Rust 没有垃圾回收器，也不需要手动 ',
+    code('malloc/free'),
+    '——它靠 ',
+    bold('所有权系统'),
+    ' 在编译期保证内存安全。核心规则只有三条：每个值有且只有一个所有者；所有者离开作用域时值被释放；值可以被借用（引用），但借用规则严格。'
+  ),
+  h3('移动语义 vs 克隆'),
+  codeBlock(
+    'rust',
+    `let s1 = String::from("hello");
+let s2 = s1; // s1 的所有权移动给 s2，s1 失效
+
+// println!("{}", s1); // ❌ 编译错误：s1 已被移出
+println!("{}", s2);   // ✅
+
+let s3 = s2.clone();  // 深拷贝，s2 和 s3 都有效
+println!("{} {}", s2, s3);`
+  ),
+  h3('借用与生命周期'),
+  para('不可变引用可以同时存在多个，但可变引用同一时刻只能有一个。编译器通过生命周期标注确保引用永远不会悬空。'),
+  codeBlock(
+    'rust',
+    `fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    if x.len() > y.len() { x } else { y }
+}
+// 'a 声明两个参数的生命周期至少和返回值一样长`
+  ),
+  h2('为什么值得学 Rust'),
+  para(
+    '在嵌入式场景，Rust 可以替代 C 同时获得内存安全；在服务端，',
+    bold('Tokio 异步运行时'),
+    ' 的性能媲美 Go。更重要的是：学会 Rust，你会从根本上理解内存管理，这对其他语言的编写也大有裨益。'
+  ),
+  blockquote('Rust 的学习曲线很陡，但爬上去之后视野完全不同了。')
+)
+
+const POST_CONTENT_7 = doc(
+  h2('为什么要用反向代理'),
+  para(
+    '将 Next.js / Node.js 应用暴露在 Nginx 后面，可以统一处理 HTTPS 证书、静态文件缓存、限流和负载均衡。本文记录一套用 ',
+    bold('Docker Compose + Nginx + Certbot'),
+    ' 自动续签 HTTPS 的完整方案。'
+  ),
+  h3('docker-compose.yml 结构'),
+  codeBlock(
+    'yaml',
+    `services:
+  app:
+    image: node:20-alpine
+    working_dir: /app
+    volumes: [./:/app]
+    command: node server.js
+    expose: ["3000"]
+
+  nginx:
+    image: nginx:alpine
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    depends_on: [app]
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt`
+  ),
+  h3('Nginx 配置片段'),
+  codeBlock(
+    'nginx',
+    `server {
+    listen 443 ssl;
+    server_name example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+
+    location / {
+        proxy_pass http://app:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+    }
+}`
+  ),
+  h3('自动续签'),
+  codeBlock(
+    'bash',
+    `# 添加到 crontab，每天检查一次
+0 3 * * * docker compose run --rm certbot renew && docker compose exec nginx nginx -s reload`
+  ),
+  blockquote('证书续签失败是生产事故的常见来源，务必配置邮件告警。')
+)
+
+const POST_CONTENT_8 = doc(
+  h2('EXPLAIN ANALYZE 基础'),
+  para(
+    '慢查询优化的第一步是读懂执行计划。',
+    code('EXPLAIN ANALYZE'),
+    ' 会实际执行查询并返回每个节点的预估成本与真实耗时，两者差距越大往往意味着统计信息过时。'
+  ),
+  codeBlock(
+    'sql',
+    `EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
+SELECT p.title, COUNT(c.id) AS comment_count
+FROM posts p
+LEFT JOIN comments c ON c.post_id = p.id
+WHERE p.status = 'published'
+GROUP BY p.id
+ORDER BY comment_count DESC
+LIMIT 20;`
+  ),
+  h3('常见性能杀手'),
+  para(bold('Seq Scan on 大表'), '——通常意味着缺少索引或查询条件无法命中现有索引。'),
+  para(bold('Hash Join vs Nested Loop'), '——小结果集用 Nested Loop；大表 join 大表时 Hash Join 更优，可以用 ', code('SET enable_nestloop=off'), ' 强制测试。'),
+  para(bold('Rows=1000 vs actual rows=500000'), '——统计信息失真，执行 ', code('ANALYZE table_name'), ' 刷新。'),
+  h3('部分索引与覆盖索引'),
+  codeBlock(
+    'sql',
+    `-- 部分索引：只索引已发布的文章，减少索引大小
+CREATE INDEX idx_posts_pub ON posts (published_at DESC)
+  WHERE status = 'published';
+
+-- 覆盖索引：查询只需要 title 和 slug，不回表
+CREATE INDEX idx_posts_cover ON posts (status, published_at DESC)
+  INCLUDE (title, slug);`
+  ),
+  blockquote('不要盲目加索引——每个索引都会拖慢写入速度，权衡之后再动手。')
+)
+
+const POST_CONTENT_9 = doc(
+  h2('条件类型入门'),
+  para(
+    'TypeScript 的条件类型形如 ',
+    code('T extends U ? X : Y'),
+    '——如果 T 可分配给 U，则结果为 X，否则为 Y。配合 ',
+    bold('infer'),
+    ' 关键字，可以从类型结构中"提取"出子类型，实现强大的类型推导。'
+  ),
+  codeBlock(
+    'typescript',
+    `// 提取函数返回值类型（标准库 ReturnType 的简化实现）
+type MyReturnType<T> = T extends (...args: any[]) => infer R ? R : never
+
+type Fn = (x: number) => string
+type R = MyReturnType<Fn>  // string`
+  ),
+  h3('分布式条件类型'),
+  para('当 T 为联合类型时，条件类型会自动分发到每个成员上：'),
+  codeBlock(
+    'typescript',
+    `type ToArray<T> = T extends any ? T[] : never
+type StrOrNumArr = ToArray<string | number>
+// => string[] | number[]
+
+// 如果不想分发，用元组包裹：
+type NoDistrib<T> = [T] extends [any] ? T[] : never
+type All = NoDistrib<string | number>
+// => (string | number)[]`
+  ),
+  h3('实战：DeepReadonly'),
+  codeBlock(
+    'typescript',
+    `type DeepReadonly<T> = {
+  readonly [K in keyof T]: T[K] extends object
+    ? DeepReadonly<T[K]>
+    : T[K]
+}`
+  ),
+  blockquote('类型体操的本质是在类型层面做"编程"，理解了 infer，TypeScript 的天花板高了一倍。')
+)
+
+const POST_CONTENT_10 = doc(
+  h2('凌晨两点的上海'),
+  para(
+    '城市在白天属于所有人，但深夜只属于少数漫游者。我习惯在写代码写到瓶颈时出门走走，带上耳机，让脚步带着思路自由漂移。'
+  ),
+  h3('武康路到安福路'),
+  para(
+    '梧桐树把路灯切成碎片，影子在石板路上摇晃。路过一家还开着灯的书店，老板坐在里面看书，也不知道是在等顾客还是只是需要一盏灯的陪伴。'
+  ),
+  h3('苏州河边'),
+  para('河风带着一点潮气，水面反射着对岸的霓虹，断断续续。我在一个废弃的集装箱码头坐了很久，脑子里突然想通了白天卡了三个小时的 bug——是状态更新时序问题。'),
+  h2('为什么要夜走'),
+  para('不是因为喜欢孤独，而是大脑在安静的环境里才能真正整理白天接收的信息。有些想法必须走出来，坐在屏幕前是等不到的。'),
+  blockquote('最好的 debug 工具有时候不是 console.log，而是一双鞋。')
+)
+
+const POST_CONTENT_11 = doc(
+  h2('写代码需要正确的背景音'),
+  para(
+    '我不是那种能在完全安静中工作的人，也承受不了歌词干扰思路。下面是 2025 年陪我敲了最多行代码的歌单，按场景分类。'
+  ),
+  h3('深度专注 — 纯器乐'),
+  para(bold('Ólafur Arnalds'), ' — 冰岛钢琴 + 弦乐，情绪干净，适合写需要高度集中的算法。'),
+  para(bold('Brian Eno'), ' — Ambient 系列，几乎没有旋律起伏，像空气一样存在。'),
+  para(bold('Nils Frahm'), ' — "All Melody" 专辑，钢琴与电子的边界模糊，循环听不腻。'),
+  h3('攻坚 Debug — 节奏感强'),
+  para(bold('Daft Punk'), ' — "Random Access Memories"，机械感与人情味并存，适合啃难题。'),
+  para(bold('Jon Hopkins'), ' — "Immunity"，开头安静、中段炸裂，节奏踩点很适合 refactor 时的节奏感。'),
+  h3('收尾 Review — 轻松'),
+  para(bold('Mac DeMarco'), ' — 慵懒吉他，适合代码写完在做 Code Review 的时候听。'),
+  para(bold('Khruangbin'), ' — 全球融合风，完全不喧宾夺主。'),
+  blockquote('找到属于自己的"编程态"音乐，效率能提升不止一倍。')
+)
+
+const POST_CONTENT_12 = doc(
+  h2('从认知革命讲起'),
+  para(
+    '赫拉利把人类史压缩为三场革命：约 7 万年前的 ',
+    bold('认知革命'),
+    '、约 1.2 万年前的 ',
+    bold('农业革命'),
+    '、约 500 年前的 ',
+    bold('科学革命'),
+    '。其中认知革命最让我着迷——智人开始能够相信"虚构的故事"，从而前所未有地大规模协作。'
+  ),
+  h3('虚构的力量'),
+  para('国家、货币、公司、法律——这些全是"虚构"，只存在于人类共同的想象中。狮子无法对你说"我承认美元的价值"，但全球 80 亿人可以。正是这种集体虚构让智人称霸地球。'),
+  h3('农业革命：人类最大的骗局？'),
+  para(
+    '赫拉利的颠覆性论点：农业革命对大多数个体来说是',
+    bold('生活质量下降'),
+    '。狩猎采集者每天劳动 3-4 小时，食物多样；农民却被土地绑死，饱受饥荒、疾病和剥削。受益的是基因复制——小麦、大米成了地球上最成功的植物。'
+  ),
+  h2('读后的一些困惑'),
+  para('书的前半部精彩，但到"幸福"那章开始变得模糊。历史分析是赫拉利的强项，当他转向主观感受时论证密度明显下降。'),
+  blockquote('这本书最大的价值不是给出答案，而是让你开始质疑那些从未质疑过的"理所当然"。')
+)
+
+const POST_CONTENT_13 = doc(
+  h2('为什么是树莓派'),
+  para(
+    '家里有几块闲置的硬盘，想组一个低功耗的 NAS 供内网访问。NUC 太贵，群晖有溢价——树莓派 5 的 ',
+    bold('USB 3.0'),
+    ' 带宽已经足够跑 SMB 共享，功耗仅 5-15W，非常适合 24 小时在线。'
+  ),
+  h3('硬件清单'),
+  para('树莓派 5（8GB 版）、官方主动散热套件、2.5" 硬盘 + USB 3.0 硬盘盒 × 2、64GB SD 卡（系统盘）。'),
+  h3('系统与 Samba 配置'),
+  codeBlock(
+    'bash',
+    `# 安装 Samba
+sudo apt update && sudo apt install samba -y
+
+# 创建共享目录
+sudo mkdir -p /mnt/nas/media /mnt/nas/backup
+sudo chown -R pi:pi /mnt/nas`
+  ),
+  codeBlock(
+    'bash',
+    `# /etc/samba/smb.conf 追加
+[NAS-Media]
+  path = /mnt/nas/media
+  read only = no
+  browsable = yes
+  valid users = pi
+
+[NAS-Backup]
+  path = /mnt/nas/backup
+  read only = no
+  browsable = yes
+  valid users = pi`
+  ),
+  codeBlock(
+    'bash',
+    `# 设置 Samba 用户密码
+sudo smbpasswd -a pi
+sudo systemctl restart smbd`
+  ),
+  h3('写速度测试'),
+  para('通过千兆网，SMB 写入速度稳定在 115 MB/s，对于家用场景完全够用。'),
+  blockquote('比买群晖省了 3000 块，顺便学了一遍 Linux 存储管理。')
+)
+
+const POST_CONTENT_14 = doc(
+  h2('rebase 是什么，什么时候用'),
+  para(
+    bold('git rebase'),
+    ' 将一系列提交"重新播放"到另一个基点上，历史线性清晰；而 ',
+    bold('git merge'),
+    ' 保留分支历史但引入 merge commit。团队协作时，特性分支在 PR 前通常 rebase 到 main，保持主干整洁。'
+  ),
+  codeBlock(
+    'bash',
+    `# 在 feature 分支上，把 main 的最新改动纳入
+git fetch origin
+git rebase origin/main
+
+# 解决冲突后继续
+git add .
+git rebase --continue`
+  ),
+  h3('cherry-pick 精准摘取'),
+  para('当你只需要某个分支的某几个提交，而不是全部合并时，', code('cherry-pick'), ' 是最优雅的方案：'),
+  codeBlock(
+    'bash',
+    `# 把 abc1234 这个提交应用到当前分支
+git cherry-pick abc1234
+
+# 摘取多个连续提交
+git cherry-pick abc1234^..def5678`
+  ),
+  h3('stash 的进阶用法'),
+  codeBlock(
+    'bash',
+    `# 给 stash 起名字（比默认的 WIP 好找得多）
+git stash push -m "fix: cookie 序列化临时方案"
+
+# 查看所有 stash
+git stash list
+
+# 恢复指定 stash 且保留在列表中
+git stash apply stash@{2}`
+  ),
+  blockquote('Git 是开发者最重要的时间机器，花时间学好值得。')
+)
+
+const POST_CONTENT_15 = doc(
+  h2('为什么要 DIY 键盘'),
+  para(
+    '用了三年的薄膜键盘终于寿终正寝，趁机入坑机械键盘。选择 DIY 而非成品，是因为想要完全自定义轴体手感、配列和重量——没有"完美的成品键盘"，只有"刚好适合你"的键盘。'
+  ),
+  h3('配列选择：65%'),
+  para('65% 配列（67 键）保留了方向键和右侧少量功能键，在紧凑和实用之间取得平衡。适合主力是代码编写、偶尔需要方向键导航的场景。'),
+  h3('轴体：凯华 Box 玫瑰红 v2'),
+  para('段落感适中，回弹利落，长时间码字不疲惫。比原厂青轴安静很多，不影响外人。入手后先做了润轴：'),
+  codeBlock(
+    'text',
+    `润滑剂：Krytox 205g0
+上轴工具：轴体开关器 + 小画笔
+润轴数量：67 个，约耗时 4 小时
+
+润发弹簧：Krytox GPL 105（油浴法，快很多）`
+  ),
+  h3('PCB 开焊与固件'),
+  para('使用 VIA 配置固件，支持实时改键无需刷写。把 Caps Lock 映射为 Ctrl，Fn + HJKL 映射为方向键，效率提升明显。'),
+  h2('成本与感受'),
+  para('PCB + 外壳 520 元，轴体 67 个约 80 元，键帽 200 元，合计约 800 元。成品同等手感可能要 1500+。'),
+  blockquote('第一次敲下润轴后的键盘时，那种"砰"感让我理解了为什么有人会收藏几十把键盘。')
+)
+
 // ──────────────────────────────────────────────────────────────
 // 主函数
 // ──────────────────────────────────────────────────────────────
@@ -225,7 +572,7 @@ async function seed() {
     await client.query(`
       TRUNCATE TABLE
         comments, gallery_items, links, settings,
-        animes, games, moments, posts
+        animes, games, moments, posts, works
       RESTART IDENTITY CASCADE
     `)
 
@@ -235,11 +582,21 @@ async function seed() {
       INSERT INTO posts
         (title, slug, content, excerpt, status, tags, category, view_count, published_at)
       VALUES
-        ($1,$2,$3,$4,'published','{ESP32,物联网,MQTT,C语言,嵌入式}','技术笔记',342,NOW() - INTERVAL '15 days'),
-        ($5,$6,$7,$8,'published','{Next.js,TypeScript,PostgreSQL,全栈,博客}','项目实战',218,NOW() - INTERVAL '10 days'),
-        ($9,$10,$11,$12,'published','{Arch Linux,Linux,Hyprland,Wayland,开源}','技术笔记',156,NOW() - INTERVAL '6 days'),
-        ($13,$14,$15,$16,'published','{旅行,敦煌,莫高窟,生活,攻略}','生活随笔',89,NOW() - INTERVAL '3 days'),
-        ($17,$18,$19,$20,'draft','{读书,认知,思维,随笔}','读书笔记',0,NULL)
+        ($1,$2,$3,$4,'published','{ESP32,物联网,MQTT,C语言,嵌入式}','技术笔记',342,NOW() - INTERVAL '45 days'),
+        ($5,$6,$7,$8,'published','{Next.js,TypeScript,PostgreSQL,全栈,博客}','项目实战',218,NOW() - INTERVAL '38 days'),
+        ($9,$10,$11,$12,'published','{Arch Linux,Linux,Hyprland,Wayland,开源}','技术笔记',156,NOW() - INTERVAL '30 days'),
+        ($13,$14,$15,$16,'published','{旅行,敦煌,莫高窟,生活,攻略}','生活随笔',89,NOW() - INTERVAL '22 days'),
+        ($17,$18,$19,$20,'draft','{读书,认知,思维,随笔}','读书笔记',0,NULL),
+        ($21,$22,$23,$24,'published','{Rust,所有权,内存安全,系统编程}','技术笔记',175,NOW() - INTERVAL '18 days'),
+        ($25,$26,$27,$28,'published','{Docker,Nginx,HTTPS,运维,部署}','技术笔记',203,NOW() - INTERVAL '14 days'),
+        ($29,$30,$31,$32,'published','{PostgreSQL,数据库,性能优化,SQL}','技术笔记',131,NOW() - INTERVAL '11 days'),
+        ($33,$34,$35,$36,'published','{TypeScript,类型系统,泛型,前端}','技术笔记',98,NOW() - INTERVAL '8 days'),
+        ($37,$38,$39,$40,'published','{生活,上海,夜晚,随想}','生活随笔',64,NOW() - INTERVAL '6 days'),
+        ($41,$42,$43,$44,'published','{音乐,歌单,编程,生活}','生活随笔',112,NOW() - INTERVAL '5 days'),
+        ($45,$46,$47,$48,'published','{读书,历史,人文,认知}','读书笔记',87,NOW() - INTERVAL '4 days'),
+        ($49,$50,$51,$52,'published','{树莓派,NAS,Linux,DIY,运维}','项目实战',146,NOW() - INTERVAL '3 days'),
+        ($53,$54,$55,$56,'published','{Git,版本控制,工作流,开发工具}','技术笔记',193,NOW() - INTERVAL '2 days'),
+        ($57,$58,$59,$60,'published','{键盘,DIY,硬件,生活}','生活随笔',78,NOW() - INTERVAL '1 day')
       RETURNING id
     `, [
       'ESP32-C3 开发实战：从零搭建 MQTT 物联网节点', 'esp32c3-mqtt-iot-node',
@@ -261,6 +618,46 @@ async function seed() {
       '读《清醒思考的艺术》：52 种思维陷阱', 'reading-art-of-clear-thinking',
       POST_CONTENT_5,
       '罗尔夫·多贝里总结的 52 种认知偏误。薄薄一本，每章两三页，但每一章都能击中你日常中某个不自知的时刻。',
+
+      'Rust 所有权模型入门：从移动语义到生命周期', 'rust-ownership-beginner',
+      POST_CONTENT_6,
+      '以实例拆解 Rust 最核心的三条所有权规则，以及借用、生命周期标注的实际含义。没有 GC，也没有手动内存管理，只有编译期的严格检查。',
+
+      'Docker + Nginx 反向代理 + Certbot 自动续签 HTTPS 完整方案', 'docker-nginx-certbot-https',
+      POST_CONTENT_7,
+      '用 Docker Compose 一键部署 Nginx 反向代理，配合 Certbot 每天自动检查并续签 Let\'s Encrypt 证书，零成本获得生产级 HTTPS。',
+
+      'PostgreSQL 慢查询优化实战：读懂 EXPLAIN ANALYZE', 'postgresql-explain-analyze-optimization',
+      POST_CONTENT_8,
+      'EXPLAIN ANALYZE 是 PostgreSQL 最强大的诊断工具。本文从执行计划的节点结构讲起，结合部分索引与覆盖索引实战优化慢查询。',
+
+      'TypeScript 高级类型体操：条件类型与 infer 关键字', 'typescript-conditional-types-infer',
+      POST_CONTENT_9,
+      '条件类型是 TypeScript 类型系统最强大的特性之一。从 ReturnType 的实现原理到 DeepReadonly，用实例讲清楚 infer 的正确使用姿势。',
+
+      '凌晨两点的上海：徒步是最好的 Debug 工具', 'shanghai-night-walk',
+      POST_CONTENT_10,
+      '写代码到卡壳，出门走了三个小时。武康路的梧桐、苏州河的夜风，以及在某个废弃码头突然想通的那个 bug。',
+
+      '2025 年编程配乐歌单：按场景分类的 40 首', 'coding-playlist-2025',
+      POST_CONTENT_11,
+      '深度专注、攻坚 Debug、收尾 Review 三种模式各自需要不同的背景音。分享这一年陪我敲了最多行代码的歌单。',
+
+      '读《人类简史》：那些颠覆我认知的论点', 'reading-sapiens-yuval-harari',
+      POST_CONTENT_12,
+      '赫拉利用三场革命重新解释了人类历史。最让我久久不能平静的，是农业革命那章——他说那可能是人类史上最大的骗局。',
+
+      '树莓派 5 搭建家用 NAS + Samba 共享：比群晖省了 3000 块', 'raspberry-pi-5-nas-samba',
+      POST_CONTENT_13,
+      '用树莓派 5 + USB 3.0 硬盘盒搭建低功耗家用 NAS，配置 Samba 内网访问，千兆网写速稳定在 115 MB/s，全程记录。',
+
+      'Git 进阶工作流：rebase、cherry-pick 与 stash 最佳实践', 'git-advanced-workflow',
+      POST_CONTENT_14,
+      '合并策略、精准摘取提交、临时存储工作区——这三件事用好了，Git 工作流能提升一个量级。',
+
+      'DIY 机械键盘全记录：轴体润滑、PCB 开焊与 VIA 配置', 'diy-mechanical-keyboard-build',
+      POST_CONTENT_15,
+      '65% 配列 + 凯华 Box 玫瑰红 v2，从选轴、润轴到焊接、固件配置的完整记录。成本约 800 元，体验超越同价位大多数成品。',
     ])
     const postIds = postsResult.rows.map((r: { id: number }) => r.id)
 
@@ -363,7 +760,19 @@ async function seed() {
         ('Excalidraw','https://excalidraw.com','手绘风格白板工具，画架构图一流','tool',5,TRUE)
     `)
 
-    // ── 9. 设置 ──────────────────────────────────────────────
+    // ── 9. 作品 ──────────────────────────────────────────────
+    console.log('[seed] 插入作品...')
+    await client.query(`
+      INSERT INTO works (title, subtitle, description, cover_url, tags, url, github_url, year, sort_order)
+      VALUES
+        ('梨花海博客系统', '个人数字中枢', '基于 Next.js 15 App Router 构建的全栈博客平台，涵盖文章、瞬间、ACG 追踪、图片相册等模块，后端原生 SQL + PostgreSQL，Tiptap 富文本编辑器，NextAuth v5 鉴权。', '', ARRAY['Next.js 15', 'TypeScript', 'PostgreSQL', 'Tiptap', 'NextAuth'], NULL, 'https://github.com', 2024, 1),
+        ('ESP32 智能家居网关', 'MQTT + HomeAssistant 本地化方案', '基于 ESP32-C3 的低功耗 IoT 网关，通过 MQTT 协议与各传感器节点通信，集成 Home Assistant 实现局域网内完全本地化的智能家居控制，无需云端依赖。', '', ARRAY['ESP32', 'C/C++', 'MQTT', 'FreeRTOS', 'HomeAssistant'], NULL, 'https://github.com', 2024, 2),
+        ('Arch Linux 自动配置脚本', 'dotfiles + 一键安装工具链', '个人 Arch Linux 全套 dotfiles，内含 Hyprland 窗口管理器、Waybar、Neovim 配置及一键安装脚本，可在 20 分钟内从零搭建出开箱即用的开发环境。', '', ARRAY['Bash', 'Lua', 'Hyprland', 'Neovim', 'Arch Linux'], NULL, 'https://github.com', 2023, 3),
+        ('番剧追踪 CLI 工具', '命令行快速记录追番进度', '用 Go 编写的命令行番剧管理工具，支持 Bangumi API 同步、本地 SQLite 缓存、进度追踪与评分，对终端用户极度友好。支持 zsh 自动补全。', '', ARRAY['Go', 'SQLite', 'Bangumi API', 'CLI', 'zsh'], NULL, 'https://github.com', 2023, 4),
+        ('树莓派 NAS + 媒体服务器', '家用私有云全套方案', '基于 Raspberry Pi 5 搭建的家用 NAS，使用 OpenMediaVault 管理存储，Jellyfin 提供媒体流服务，Tailscale 实现异地安全访问，PiHole 全局 DNS 广告过滤。', '', ARRAY['Raspberry Pi', 'OpenMediaVault', 'Jellyfin', 'Tailscale', 'Docker'], NULL, NULL, 2024, 5)
+    `)
+
+    // ── 10. 设置 ──────────────────────────────────────────────
     console.log('[seed] 插入设置...')
     await client.query(`
       INSERT INTO settings (key, value, description) VALUES
@@ -380,12 +789,13 @@ async function seed() {
     await client.query('COMMIT')
     console.log('')
     console.log('✅ 种子数据插入完成：')
-    console.log('   文章: 5 篇  (4 已发布 + 1 草稿)')
+    console.log('   文章: 15 篇  (14 已发布 + 1 草稿)')
     console.log('   评论: 6 条  (4 已审核 + 2 待审)')
     console.log('   瞬间: 11 条')
     console.log('   动漫: 6 部')
     console.log('   游戏: 6 款')
     console.log('   相册: 5 张')
+    console.log('   作品: 5 个')
     console.log('   友链: 10 条')
     console.log('   设置: 7 项')
   } catch (err) {

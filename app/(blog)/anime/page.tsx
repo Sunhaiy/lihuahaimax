@@ -1,88 +1,85 @@
 /**
  * app/(blog)/anime/page.tsx
  *
- * 动漫追踪 — 独立页面。
+ * 动漫追踪 — 全宽 Hero + 状态筛选卡片墙。
  */
 
 import type { Metadata } from 'next'
 import { findAnimes } from '@/lib/db/dao/acgDao'
+import { AnimeGrid } from '@/components/ui/AnimeGrid'
 
-export const metadata: Metadata = { title: '动漫追踪 · 梨花海' }
+export const metadata: Metadata = { title: '追番列表 · 梨花海' }
 export const revalidate = 3600
-
-const STATUS_LABELS: Record<string, string> = {
-  watching: '连载中', completed: '已完结', on_hold: '搁置', dropped: '弃坑', plan_to_watch: '想看',
-}
-
-const STATUS_COLOR: Record<string, string> = {
-  watching: 'text-emerald-400', completed: 'text-muted-foreground',
-  on_hold: 'text-yellow-400', dropped: 'text-red-400', plan_to_watch: 'text-ocean',
-}
 
 export default async function AnimePage() {
   const { data: animes } = await findAnimes({ pageSize: 200 })
 
-  const completed = animes.filter((a) => a.status === 'completed').length
-  const watching = animes.filter((a) => a.status === 'watching').length
-  const planToWatch = animes.filter((a) => a.status === 'plan_to_watch').length
+  /* 随机选一张有封面的动漫作为 Hero 背景 */
+  const coverPool = animes.filter(a => a.cover_url)
+  const heroBg = coverPool.length > 0
+    ? coverPool[Math.floor(Math.random() * coverPool.length)].cover_url!
+    : null
+
+  const total     = animes.length
+  const completed = animes.filter(a => a.status === 'completed').length
+  const watching  = animes.filter(a => a.status === 'watching').length
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12">
-      {/* 页头 */}
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold text-foreground mb-2">📺 动漫追踪</h1>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span><span className="text-foreground font-medium">{completed}</span> 部完结</span>
-          <span><span className="text-emerald-400 font-medium">{watching}</span> 部连载中</span>
-          <span><span className="text-ocean font-medium">{planToWatch}</span> 部计划</span>
-          <span><span className="text-foreground font-medium">{animes.length}</span> 部合计</span>
-        </div>
-      </div>
+    <div className="-mt-16">
 
-      {/* 海报墙 */}
-      <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-3">
-        {animes.map((anime) => (
-          <div key={anime.id} className="group relative">
-            <div className="aspect-[2/3] rounded-lg overflow-hidden bg-muted">
-              {anime.cover_url ? (
-                <img
-                  src={anime.cover_url}
-                  alt={anime.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center
-                                text-muted-foreground text-[10px] text-center p-2 leading-tight">
-                  {anime.title_cn ?? anime.title}
-                </div>
-              )}
+      {/* ══════════════════════════════════════════════════
+          Hero 全宽
+          ══════════════════════════════════════════════════ */}
+      <section className="relative h-72 sm:h-80 flex items-end overflow-hidden">
 
-              {/* 悬浮遮罩 */}
-              <div className="absolute inset-0 bg-black/85 rounded-lg opacity-0 group-hover:opacity-100
-                              transition-opacity duration-300 flex flex-col justify-end p-2">
-                <p className="text-white text-[10px] font-medium line-clamp-2 mb-1">
-                  {anime.title_cn ?? anime.title}
-                </p>
-                {anime.short_review && (
-                  <p className="text-gray-300 text-[9px] line-clamp-2 italic">{anime.short_review}</p>
-                )}
-                {anime.rating && (
-                  <span className="text-ember text-[10px] font-mono mt-1">★ {anime.rating}</span>
-                )}
-              </div>
-            </div>
+        {/* 背景：模糊封面 or 渐变 */}
+        {heroBg ? (
+          <img
+            src={heroBg}
+            alt=""
+            aria-hidden
+            className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-30 pointer-events-none"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-950/60 via-background to-background pointer-events-none" />
+        )}
 
-            {/* 状态标签 */}
-            <p className={`mt-1.5 text-[10px] text-center truncate font-mono ${STATUS_COLOR[anime.status] ?? 'text-muted-foreground'}`}>
-              {STATUS_LABELS[anime.status] ?? anime.status}
-            </p>
+        {/* 深色渐变遮罩 */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-black/20 pointer-events-none" />
+
+        {/* 内容区 */}
+        <div className="relative max-w-6xl mx-auto px-6 w-full pb-8">
+          <p className="text-xs font-mono text-ember tracking-[0.3em] uppercase mb-2">ANIME LIST</p>
+          <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-2">追番列表</h1>
+          <p className="text-sm text-muted-foreground mb-4">记录我的二次元之旅</p>
+
+          {/* 快速统计 */}
+          <div className="flex items-center gap-5 text-sm">
+            <span className="font-mono">
+              <span className="text-xl font-bold text-ember">{total}</span>
+              <span className="text-muted-foreground ml-1">部合计</span>
+            </span>
+            <span className="w-px h-4 bg-border" />
+            <span className="text-muted-foreground">
+              <span className="text-emerald-400 font-medium">{watching}</span> 在追
+            </span>
+            <span className="text-muted-foreground">
+              <span className="text-foreground font-medium">{completed}</span> 完结
+            </span>
           </div>
-        ))}
-      </div>
+        </div>
+      </section>
 
-      {animes.length === 0 && (
-        <p className="text-center text-muted-foreground py-20">暂无动漫记录</p>
-      )}
+      {/* ══════════════════════════════════════════════════
+          筛选 + 网格
+          ══════════════════════════════════════════════════ */}
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {animes.length === 0 ? (
+          <p className="text-center text-muted-foreground py-20">暂无动漫记录</p>
+        ) : (
+          <AnimeGrid animes={animes} />
+        )}
+      </div>
     </div>
   )
 }

@@ -13,6 +13,7 @@ import { getSetting } from '@/lib/db/dao/settingsDao'
 import { getActivityHeatmap } from '@/lib/db/dao/activityDao'
 import { Icon } from '@/components/ui/Icon'
 import { ActivityHeatmap } from '@/components/ui/ActivityHeatmap'
+import { PostCard } from '@/components/ui/PostCard'
 import type { MomentRow } from '@/types/moment'
 import { SETTINGS_KEYS } from '@/lib/constants/settings'
 import { RiMessage2Line, RiArrowRightSLine, RiTimeLine } from '@remixicon/react'
@@ -56,9 +57,16 @@ function getMomentPreview(moment: MomentRow): { text: string; mono: boolean } | 
   return null
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>
+}) {
+  const { page: pageParam } = await searchParams
+  const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
+
   const [postsResult, momentsResult, heroBgSettings, activityData] = await Promise.all([
-    findPosts({ status: 'published', pageSize: 6 }),
+    findPosts({ status: 'published', pageSize: 6, page }),
     findMoments({ publicOnly: true, pageSize: 10 }),
     getSetting(SETTINGS_KEYS.HERO_BG),
     getActivityHeatmap(365),
@@ -244,7 +252,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-8 items-start">
 
               {/* ── 左栏：活跃度 + 文章列表 ── */}
-              <div className="min-w-0">
+              <div className="min-w-0" id="latest-posts">
                 <ActivityHeatmap data={activityData} />
 
                 <div className="mt-8">
@@ -258,93 +266,35 @@ export default async function HomePage() {
                   {postsResult.data.length === 0 ? (
                     <p className="text-muted-foreground text-sm py-8 text-center">暂无文章。</p>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {postsResult.data.map((post) => (
-                        <Link key={post.id} href={`/posts/${post.slug}`} className="block group h-full">
-                          <div className="relative rounded-xl border border-border bg-card overflow-hidden
-                                          flex flex-col h-full
-                                          transition-all duration-300
-                                          hover:[border-color:rgba(255,138,107,0.35)]
-                                          before:absolute before:inset-0 before:-translate-x-full before:skew-x-[-20deg]
-                                          before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent
-                                          before:transition-transform before:duration-600 before:pointer-events-none before:z-10
-                                          hover:before:translate-x-full">
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {postsResult.data.map((post) => (
+                          <PostCard key={post.id} post={post} />
+                        ))}
+                      </div>
 
-                            {/* ── 封面区 ── */}
-                            <div className="aspect-[16/9] relative overflow-hidden flex-shrink-0">
-                              {post.cover_url ? (
-                                <img
-                                  src={post.cover_url}
-                                  alt={post.title}
-                                  className="w-full h-full object-cover
-                                             group-hover:scale-105 transition-transform duration-500"
-                                />
-                              ) : (
-                                /* 默认封面：多层渐变 + 装饰字 */
-                                <div className="w-full h-full relative
-                                                bg-gradient-to-br from-ember/12 via-card to-muted
-                                                flex items-center justify-center">
-                                  <span className="text-7xl font-bold leading-none select-none
-                                                   text-transparent bg-clip-text
-                                                   bg-gradient-to-br from-ember/30 to-ember/10">
-                                    {post.category?.charAt(0) ?? '文'}
-                                  </span>
-                                  {/* 网格纹理 */}
-                                  <div className="absolute inset-0 opacity-[0.03]"
-                                       style={{ backgroundImage: 'repeating-linear-gradient(0deg,currentColor 0,currentColor 1px,transparent 1px,transparent 32px),repeating-linear-gradient(90deg,currentColor 0,currentColor 1px,transparent 1px,transparent 32px)' }} />
-                                </div>
-                              )}
-
-                              {/* 底部渐变遮罩（图片时更突显 badge） */}
-                              <div className="absolute inset-x-0 bottom-0 h-10
-                                              bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-
-                              {/* 分类 badge */}
-                              {post.category && (
-                                <span className="absolute top-2.5 left-2.5 z-10
-                                                 text-[10px] font-mono px-2 py-0.5 rounded-full
-                                                 bg-black/55 backdrop-blur-sm
-                                                 text-white/85 border border-white/10 leading-tight">
-                                  {post.category}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* ── 内容区（flex-1 撑满剩余高度） ── */}
-                            <div className="flex flex-col flex-1 px-4 pt-3.5 pb-4">
-                              <h3 className="font-semibold text-foreground group-hover:text-ember
-                                             transition-colors duration-200 line-clamp-2 leading-snug mb-1.5">
-                                {post.title}
-                              </h3>
-                              {post.excerpt && (
-                                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                                  {post.excerpt}
-                                </p>
-                              )}
-
-                              {/* tags + 日期 压到底部 */}
-                              <div className="flex items-center justify-between mt-auto pt-3">
-                                <div className="flex gap-1 flex-wrap">
-                                  {post.tags.slice(0, 2).map((tag) => (
-                                    <span key={tag}
-                                      className="text-[10px] font-mono px-1.5 py-0.5 rounded
-                                                 bg-muted text-muted-foreground">
-                                      #{tag}
-                                    </span>
-                                  ))}
-                                </div>
-                                <time className="text-[11px] font-mono text-muted-foreground/50 flex-shrink-0 ml-2">
-                                  {post.published_at
-                                    ? new Date(post.published_at).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
-                                    : '草稿'}
-                                </time>
-                              </div>
-                            </div>
-
+                      {/* 分页 */}
+                      {postsResult.total > 6 && (() => {
+                        const totalPages = Math.ceil(postsResult.total / 6)
+                        return (
+                          <div className="flex justify-center gap-2 mt-8">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                              <Link
+                                key={p}
+                                href={`/?page=${p}#latest-posts`}
+                                className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm
+                                            border transition-colors
+                                            ${p === page
+                                              ? 'bg-foreground text-background border-foreground'
+                                              : 'border-border text-muted-foreground hover:border-ember/40 hover:text-ember'}`}
+                              >
+                                {p}
+                              </Link>
+                            ))}
                           </div>
-                        </Link>
-                      ))}
-                    </div>
+                        )
+                      })()}
+                    </>
                   )}
                 </div>
               </div>
