@@ -53,7 +53,7 @@ export function PostCard({ post }: PostCardProps) {
           {/* 分类 badge */}
           {post.category && (
             <span className="absolute top-2.5 left-2.5 z-10
-                             text-[10px] font-mono px-2 py-0.5 rounded-full
+                             text-[10px] font-medium px-2 py-0.5 rounded-full
                              bg-black/55 backdrop-blur-sm
                              text-white/85 border border-white/10 leading-tight">
               {post.category}
@@ -78,7 +78,7 @@ export function PostCard({ post }: PostCardProps) {
             <div className="flex gap-1 flex-wrap">
               {post.tags.slice(0, 2).map((tag) => (
                 <span key={tag}
-                  className="text-[10px] font-mono px-1.5 py-0.5 rounded
+                  className="text-[10px] font-medium px-1.5 py-0.5 rounded
                              bg-muted text-muted-foreground">
                   #{tag}
                 </span>

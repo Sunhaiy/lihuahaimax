@@ -1,12 +1,6 @@
-/**
- * app/(blog)/works/page.tsx
- *
- * 作品集页面 — Coverflow 轮播展示个人项目。
- */
-
 import type { Metadata } from 'next'
-import { findWorks } from '@/lib/db/dao/worksDao'
 import { WorksCarousel } from '@/components/ui/WorksCarousel'
+import { findWorks } from '@/lib/db/dao/worksDao'
 
 export const metadata: Metadata = { title: '作品 · 梨花海' }
 export const revalidate = 60
@@ -15,23 +9,27 @@ export default async function WorksPage() {
   const works = await findWorks()
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex flex-col">
-      {/* ── 页头 ── */}
-      <div className="max-w-5xl mx-auto px-6 pt-16 pb-10 text-center w-full">
-        <p className="text-xs font-mono text-ember tracking-[0.3em] uppercase mb-3">WORKS</p>
-        <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-3">作品</h1>
-        <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-          代码与创意的结晶 — 每一个项目都是一段完整的故事
+    <div className="min-h-[calc(100vh-64px)] px-4 pb-20 sm:px-6">
+      <div className="mx-auto w-full max-w-6xl pt-16 text-center">
+        <p className="text-[11px] font-mono uppercase tracking-[0.35em] text-sky-100/52">
+          Works Archive
+        </p>
+        <h1 className="mt-4 text-4xl font-semibold tracking-[-0.06em] text-foreground sm:text-5xl">
+          项目档案
+        </h1>
+        <p className="mx-auto mt-4 max-w-2xl text-sm leading-8 text-muted-foreground">
+          从作品卡片进入到完整项目详情，统一查看封面、状态、里程碑、贡献者与对外链接。
+          这部分已经升级为完整的项目实体，而不只是一个简单轮播。
         </p>
       </div>
 
-      {/* ── 分隔线 ── */}
-      <div className="w-px h-8 bg-gradient-to-b from-ember/40 to-transparent mx-auto mb-10" />
+      <div className="mx-auto my-10 h-8 w-px bg-gradient-to-b from-ember/40 to-transparent" />
 
-      {/* ── 轮播 ── */}
-      <div className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 w-full pb-20">
+      <div className="mx-auto flex-1 w-full max-w-6xl pb-20">
         {works.length === 0 ? (
-          <div className="text-center py-24 text-muted-foreground">暂无作品，敬请期待。</div>
+          <div className="rounded-[28px] border border-white/8 bg-card/70 py-24 text-center text-muted-foreground backdrop-blur-xl">
+            暂无项目，敬请期待。
+          </div>
         ) : (
           <WorksCarousel works={works} />
         )}

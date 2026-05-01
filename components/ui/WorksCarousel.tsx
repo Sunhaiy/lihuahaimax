@@ -1,44 +1,30 @@
-/**
- * components/ui/WorksCarousel.tsx
- *
- * Coverflow 风格的作品展示轮播 — 中央卡片全尺寸，左右渐缩。
- */
-
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { RiArrowLeftSLine, RiArrowRightSLine, RiGithubLine, RiExternalLinkLine } from '@remixicon/react'
-
-export interface WorkItem {
-  id: number
-  title: string
-  subtitle: string | null
-  description: string | null
-  cover_url: string
-  tags: string[]
-  url: string | null
-  github_url: string | null
-  year: number | null
-}
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
+import type { WorkListItem } from '@/types/work'
 
 interface Props {
-  works: WorkItem[]
+  works: WorkListItem[]
 }
 
 export function WorksCarousel({ works }: Props) {
   const [active, setActive] = useState(0)
 
-  const prev = useCallback(() => setActive(i => Math.max(0, i - 1)), [])
-  const next = useCallback(() => setActive(i => Math.min(works.length - 1, i + 1)), [works.length])
-
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'ArrowLeft')  prev()
-      if (e.key === 'ArrowRight') next()
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') {
+        setActive((current) => Math.max(0, current - 1))
+      }
+      if (event.key === 'ArrowRight') {
+        setActive((current) => Math.min(works.length - 1, current + 1))
+      }
     }
+
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [prev, next])
+  }, [works.length])
 
   if (works.length === 0) return null
 
@@ -46,207 +32,185 @@ export function WorksCarousel({ works }: Props) {
 
   return (
     <div className="w-full select-none">
-
-      {/* ── 轮播主体 ── */}
-      <div className="relative h-[360px] sm:h-[420px] overflow-hidden">
-
-        {works.map((work, idx) => {
-          const pos = idx - active   // -2, -1, 0, +1, +2
+      <div className="relative h-[420px] overflow-hidden sm:h-[480px]">
+        {works.map((work, index) => {
+          const pos = index - active
           const abs = Math.abs(pos)
           if (abs > 2) return null
 
-          /* 根据位置计算视觉属性 */
           let scale = 1
-          let tx = '0%'   // relative to container center
+          let offset = '0%'
           let opacity = 1
-          let zIdx = 10
+          let zIndex = 12
           let clickable = false
 
           if (abs === 1) {
-            scale   = 0.76
-            tx      = pos > 0 ? '62%' : '-62%'
-            opacity = 0.6
-            zIdx    = 5
+            scale = 0.8
+            offset = pos > 0 ? '64%' : '-64%'
+            opacity = 0.62
+            zIndex = 6
             clickable = true
-          } else if (abs === 2) {
-            scale   = 0.55
-            tx      = pos > 0 ? '108%' : '-108%'
-            opacity = 0.25
-            zIdx    = 1
+          }
+
+          if (abs === 2) {
+            scale = 0.6
+            offset = pos > 0 ? '112%' : '-112%'
+            opacity = 0.24
+            zIndex = 2
             clickable = true
           }
 
           return (
             <div
               key={work.id}
-              onClick={clickable ? () => setActive(idx) : undefined}
+              onClick={clickable ? () => setActive(index) : undefined}
               style={{
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
-                width: '62%',
+                width: 'min(68%, 820px)',
                 minWidth: 280,
-                transform: `translateX(calc(-50% + ${tx})) translateY(-50%) scale(${scale})`,
+                transform: `translateX(calc(-50% + ${offset})) translateY(-50%) scale(${scale})`,
                 opacity,
-                zIndex: zIdx,
-                transition: 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                zIndex,
+                transition: 'all 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
                 cursor: clickable ? 'pointer' : 'default',
-                transformOrigin: 'center center',
               }}
             >
-              <div className="rounded-2xl border border-border bg-card overflow-hidden
-                              shadow-[0_4px_40px_rgba(0,0,0,0.18)]">
-                {/* 封面图 */}
-                <div className="aspect-[16/9] bg-muted overflow-hidden">
+              <div className="overflow-hidden rounded-[28px] border border-white/10 bg-black/24 shadow-[0_18px_80px_rgba(2,6,23,0.35)] backdrop-blur-xl">
+                <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                   {work.cover_url ? (
                     <img
                       src={work.cover_url}
                       alt={work.title}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-ember/20 via-card to-muted
-                                    flex items-center justify-center relative overflow-hidden">
-                      {/* 网格装饰 */}
-                      <div className="absolute inset-0 opacity-[0.06]"
-                           style={{
-                             backgroundImage: 'repeating-linear-gradient(0deg,currentColor 0,currentColor 1px,transparent 1px,transparent 28px),repeating-linear-gradient(90deg,currentColor 0,currentColor 1px,transparent 1px,transparent 28px)',
-                           }} />
-                      <span className="relative text-[80px] font-black leading-none text-transparent
-                                        bg-clip-text bg-gradient-to-br from-ember/40 to-ember/10 select-none">
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-ember/20 via-card to-muted">
+                      <span className="text-[88px] font-black tracking-[-0.08em] text-ember/25">
                         {work.title.charAt(0)}
                       </span>
                     </div>
                   )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+                  <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5">
+                    <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.22em] text-slate-100/78">
+                      {work.year ?? 'Archive'}
+                    </span>
+                    <span className="rounded-full border border-sky-300/15 bg-sky-300/10 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-sky-100/80">
+                      /works/{work.slug}
+                    </span>
+                  </div>
+                  <div className="absolute inset-x-0 bottom-0 p-6">
+                    <p className="text-[11px] font-mono uppercase tracking-[0.32em] text-sky-100/52">
+                      Project Archive
+                    </p>
+                    <h3 className="mt-3 text-3xl font-semibold tracking-[-0.05em] text-white sm:text-4xl">
+                      {work.title}
+                    </h3>
+                    {work.subtitle ? (
+                      <p className="mt-2 text-sm text-slate-200/78">{work.subtitle}</p>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </div>
           )
         })}
 
-        {/* ── 左右箭头 ── */}
         <button
-          onClick={prev}
+          onClick={() => setActive((current) => Math.max(0, current - 1))}
           disabled={active === 0}
-          aria-label="上一个"
-          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20
-                     w-10 h-10 rounded-full border border-border bg-background/80 backdrop-blur-sm
-                     flex items-center justify-center
-                     text-muted-foreground hover:text-ember hover:border-ember/40
-                     disabled:opacity-25 disabled:cursor-not-allowed
-                     transition-all duration-200"
+          aria-label="上一项"
+          className="absolute left-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-background/70 text-muted-foreground backdrop-blur-md transition-all hover:border-sky-300/20 hover:text-sky-100 disabled:cursor-not-allowed disabled:opacity-25 sm:left-5"
         >
-          <RiArrowLeftSLine size={20} />
+          <MaterialSymbol icon="chevron_left" size={22} />
         </button>
-
         <button
-          onClick={next}
+          onClick={() => setActive((current) => Math.min(works.length - 1, current + 1))}
           disabled={active === works.length - 1}
-          aria-label="下一个"
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20
-                     w-10 h-10 rounded-full border border-border bg-background/80 backdrop-blur-sm
-                     flex items-center justify-center
-                     text-muted-foreground hover:text-ember hover:border-ember/40
-                     disabled:opacity-25 disabled:cursor-not-allowed
-                     transition-all duration-200"
+          aria-label="下一项"
+          className="absolute right-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-background/70 text-muted-foreground backdrop-blur-md transition-all hover:border-sky-300/20 hover:text-sky-100 disabled:cursor-not-allowed disabled:opacity-25 sm:right-5"
         >
-          <RiArrowRightSLine size={20} />
+          <MaterialSymbol icon="chevron_right" size={22} />
         </button>
       </div>
 
-      {/* ── 小圆点指示器 ── */}
-      <div className="flex justify-center gap-2 mt-6">
-        {works.map((_, idx) => (
+      <div className="mt-6 flex justify-center gap-2">
+        {works.map((work, index) => (
           <button
-            key={idx}
-            onClick={() => setActive(idx)}
-            aria-label={`跳转到第 ${idx + 1} 个`}
-            className={`rounded-full transition-all duration-300
-              ${idx === active
-                ? 'w-6 h-2 bg-ember'
-                : 'w-2 h-2 bg-border hover:bg-muted-foreground'}`}
+            key={work.id}
+            onClick={() => setActive(index)}
+            aria-label={`跳到 ${work.title}`}
+            className={`rounded-full transition-all duration-300 ${
+              index === active ? 'h-2 w-8 bg-ember' : 'h-2 w-2 bg-white/20 hover:bg-white/32'
+            }`}
           />
         ))}
       </div>
 
-      {/* ── 当前作品详情 ── */}
-      <div
-        key={activeWork.id}
-        className="mt-8 max-w-xl mx-auto text-center animate-fade-in"
-      >
-        {/* 年份 */}
-        {activeWork.year && (
-          <p className="text-xs font-mono text-ember tracking-[0.25em] uppercase mb-2">
-            {activeWork.year}
-          </p>
-        )}
-
-        {/* 标题 */}
-        <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
+      <div key={activeWork.id} className="mx-auto mt-8 max-w-3xl text-center animate-fade-in">
+        <p className="text-[11px] font-mono uppercase tracking-[0.32em] text-sky-100/46">
+          Project Focus
+        </p>
+        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl">
           {activeWork.title}
         </h2>
-
-        {/* 副标题 */}
-        {activeWork.subtitle && (
-          <p className="text-sm text-muted-foreground mb-4">{activeWork.subtitle}</p>
-        )}
-
-        {/* 描述 */}
-        {activeWork.description && (
-          <p className="text-sm text-muted-foreground leading-relaxed mb-5 max-w-lg mx-auto">
-            {activeWork.description}
+        {activeWork.summary || activeWork.description ? (
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-8 text-muted-foreground">
+            {activeWork.summary || activeWork.description}
           </p>
-        )}
+        ) : null}
 
-        {/* 技术标签 */}
-        {activeWork.tags.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-1.5 mb-6">
-            {activeWork.tags.map(tag => (
+        {activeWork.tags.length > 0 ? (
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {activeWork.tags.map((tag) => (
               <span
                 key={tag}
-                className="text-[11px] font-mono px-2.5 py-0.5 rounded-full
-                           bg-ember/10 text-ember border border-ember/20"
+                className="rounded-full border border-sky-300/12 bg-sky-300/8 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-sky-100/78"
               >
                 {tag}
               </span>
             ))}
           </div>
-        )}
+        ) : null}
 
-        {/* 链接按钮 */}
-        {(activeWork.github_url || activeWork.url) && (
-          <div className="flex justify-center gap-3">
-            {activeWork.github_url && (
-              <a
-                href={activeWork.github_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                           border border-border bg-card text-foreground
-                           hover:border-ember/40 hover:text-ember transition-all duration-200"
-              >
-                <RiGithubLine size={15} />
-                GitHub
-              </a>
-            )}
-            {activeWork.url && (
-              <a
-                href={activeWork.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                           bg-ember text-white hover:bg-ember/85 transition-all duration-200"
-              >
-                <RiExternalLinkLine size={15} />
-                在线演示
-              </a>
-            )}
-          </div>
-        )}
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <Link
+            href={`/works/${activeWork.slug}`}
+            className="inline-flex items-center gap-2 rounded-full bg-ember px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-ember/85"
+          >
+            <MaterialSymbol icon="deployed_code" size={18} />
+            查看项目详情
+          </Link>
+
+          {activeWork.primary_url ? (
+            <a
+              href={activeWork.primary_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-card/60 px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-sky-300/20 hover:text-sky-100"
+            >
+              <MaterialSymbol icon="open_in_new" size={18} />
+              {activeWork.primary_label || '访问链接'}
+            </a>
+          ) : null}
+
+          {activeWork.github_url || activeWork.secondary_url ? (
+            <a
+              href={activeWork.github_url || activeWork.secondary_url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-card/60 px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-sky-300/20 hover:text-sky-100"
+            >
+              <MaterialSymbol icon="code_blocks" size={18} />
+              {activeWork.secondary_label || '查看源码 / 外链'}
+            </a>
+          ) : null}
+        </div>
       </div>
 
-      {/* ── 导航数字 ── */}
-      <p className="text-center text-[11px] font-mono text-muted-foreground/50 mt-8">
+      <p className="mt-8 text-center text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground/50">
         {String(active + 1).padStart(2, '0')} / {String(works.length).padStart(2, '0')}
       </p>
     </div>

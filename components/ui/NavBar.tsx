@@ -1,27 +1,9 @@
-/**
- * components/ui/NavBar.tsx
- *
- * 博客顶部导航栏 — 客户端组件，支持分类二级下拉菜单。
- *
- * 注意：下拉面板通过 createPortal 渲染到 document.body，
- * 以规避 header 的 backdrop-filter 创建新 stacking context
- * 导致子元素 backdrop-blur 失效的 CSS 规范限制。
- */
-
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import {
-  RiCodeLine, RiToolsLine, RiEditLine, RiBookLine,
-  RiCpuLine, RiWifiLine, RiLayoutLine, RiServerLine,
-  RiGitBranchLine, RiFolderLine,
-  RiFilmLine, RiGamepadLine, RiCameraLine,
-  RiHome4Line, RiFileTextLine, RiFlashlightLine,
-  RiStarLine, RiLinksLine, RiUser3Line,
-  RiArchiveLine, RiPriceTag3Line, RiBriefcase4Line,
-} from '@remixicon/react'
+import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 interface Category {
@@ -33,186 +15,160 @@ interface NavBarProps {
   categories: Category[]
 }
 
-type RemixIcon = React.ComponentType<{ size?: number | string; className?: string }>
-
-const CATEGORY_ICONS: Record<string, RemixIcon> = {
-  技术笔记: RiCodeLine,
-  项目实战: RiToolsLine,
-  生活随笔: RiEditLine,
-  读书笔记: RiBookLine,
-  工具推荐: RiToolsLine,
-  嵌入式:   RiCpuLine,
-  物联网:   RiWifiLine,
-  前端:     RiLayoutLine,
-  后端:     RiServerLine,
-  开源:     RiGitBranchLine,
-  未分类:   RiFolderLine,
-}
-
-function getCategoryIcon(name: string): RemixIcon {
-  return CATEGORY_ICONS[name] ?? RiFolderLine
+const CATEGORY_ICONS: Record<string, string> = {
+  技术笔记: 'code',
+  项目实战: 'construction',
+  生活随笔: 'edit_note',
+  读书笔记: 'menu_book',
+  工具推荐: 'build',
+  嵌入式: 'memory',
+  物联网: 'wifi',
+  前端: 'web',
+  后端: 'dns',
+  开源: 'account_tree',
+  未分类: 'folder',
 }
 
 const COLLECTION_ITEMS = [
-  { href: '/anime',   label: '动漫', Icon: RiFilmLine,    desc: '追番记录' },
-  { href: '/games',   label: '游戏', Icon: RiGamepadLine, desc: '游玩足迹' },
-  { href: '/gallery', label: '光影', Icon: RiCameraLine,  desc: '图片相册' },
+  { href: '/anime', label: '动漫', icon: 'movie', desc: '追番记录' },
+  { href: '/games', label: '游戏', icon: 'sports_esports', desc: '游玩足迹' },
+  { href: '/gallery', label: '光影', icon: 'photo_camera', desc: '图片相册' },
 ]
 
 const POST_SUB_PAGES = [
-  { href: '/posts',            label: '全部文章', Icon: RiFileTextLine  },
-  { href: '/posts/archive',    label: '归档',     Icon: RiArchiveLine   },
-  { href: '/posts/categories', label: '分类',     Icon: RiFolderLine    },
-  { href: '/posts/tags',       label: '标签',     Icon: RiPriceTag3Line },
+  { href: '/posts', label: '全部文章', icon: 'article' },
+  { href: '/posts/archive', label: '归档', icon: 'inventory_2' },
+  { href: '/posts/categories', label: '分类', icon: 'folder' },
+  { href: '/posts/tags', label: '标签', icon: 'sell' },
 ]
 
-/* 下拉面板共用毛玻璃样式（渲染到 body 层，backdrop-blur 正常生效） */
-const PANEL_CLS = `rounded-xl border border-border
-                   bg-background/80 backdrop-blur-xl backdrop-saturate-150`
+const PANEL_CLS = 'rounded-xl border border-border bg-background/80 backdrop-blur-xl backdrop-saturate-150'
 
-interface MenuPos { centerX: number; bottom: number }
+interface MenuPos {
+  centerX: number
+  bottom: number
+}
+
+function getCategoryIcon(name: string) {
+  return CATEGORY_ICONS[name] ?? 'folder'
+}
 
 export function NavBar({ categories }: NavBarProps) {
   const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-
   const [postMenuOpen, setPostMenuOpen] = useState(false)
   const [collectionMenuOpen, setCollectionMenuOpen] = useState(false)
   const postTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const collectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
   const postTriggerRef = useRef<HTMLDivElement>(null)
   const collectionTriggerRef = useRef<HTMLDivElement>(null)
   const [postPos, setPostPos] = useState<MenuPos>({ centerX: 0, bottom: 0 })
   const [collectionPos, setCollectionPos] = useState<MenuPos>({ centerX: 0, bottom: 0 })
 
-  function openMenu() {
+  useEffect(() => setMounted(true), [])
+
+  function openPostMenu() {
     if (postTimer.current) clearTimeout(postTimer.current)
     if (postTriggerRef.current) {
-      const r = postTriggerRef.current.getBoundingClientRect()
-      setPostPos({ centerX: r.left + r.width / 2, bottom: r.bottom })
+      const rect = postTriggerRef.current.getBoundingClientRect()
+      setPostPos({ centerX: rect.left + rect.width / 2, bottom: rect.bottom })
     }
     setPostMenuOpen(true)
   }
-  function scheduleClose() {
-    postTimer.current = setTimeout(() => setPostMenuOpen(false), 250)
+
+  function closePostMenuLater() {
+    postTimer.current = setTimeout(() => setPostMenuOpen(false), 220)
   }
 
-  function openCollection() {
+  function openCollectionMenu() {
     if (collectionTimer.current) clearTimeout(collectionTimer.current)
     if (collectionTriggerRef.current) {
-      const r = collectionTriggerRef.current.getBoundingClientRect()
-      setCollectionPos({ centerX: r.left + r.width / 2, bottom: r.bottom })
+      const rect = collectionTriggerRef.current.getBoundingClientRect()
+      setCollectionPos({ centerX: rect.left + rect.width / 2, bottom: rect.bottom })
     }
     setCollectionMenuOpen(true)
   }
-  function scheduleCloseCollection() {
-    collectionTimer.current = setTimeout(() => setCollectionMenuOpen(false), 250)
+
+  function closeCollectionMenuLater() {
+    collectionTimer.current = setTimeout(() => setCollectionMenuOpen(false), 220)
   }
 
   return (
     <>
-      <header
-        className="fixed top-0 inset-x-0 z-50
-                   border-b border-border
-                   backdrop-blur-xl backdrop-saturate-150
-                   bg-background/80"
-      >
-        <nav className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-
-          {/* ── Logo ──────────────────────────────────── */}
-          <Link
-            href="/"
-            className="text-lg font-bold tracking-tight text-foreground hover:text-ember transition-colors"
-          >
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl backdrop-saturate-150">
+        <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
+          <Link href="/" className="text-lg font-semibold tracking-tight text-foreground transition-colors hover:text-ember">
             梨花海
-            <span className="ml-2 text-xs font-normal text-muted-foreground tracking-widest">
-              LIHUA HAI
-            </span>
+            <span className="ml-2 text-xs font-normal tracking-[0.22em] text-muted-foreground">LIHUA HAI</span>
           </Link>
 
-          {/* ── 导航链接 ───────────────────────────────── */}
-          <div className="hidden sm:flex items-center gap-1">
-
-            <Link href="/" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
-                                      rounded-base hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200">
-              <RiHome4Line size={14} />
+          <div className="hidden items-center gap-1 sm:flex">
+            <Link href="/" className="flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5">
+              <MaterialSymbol icon="home" size={16} />
               首页
             </Link>
 
-            {/* 文章（带分类下拉） */}
-            <div ref={postTriggerRef} className="relative" onMouseEnter={openMenu} onMouseLeave={scheduleClose}>
+            <div ref={postTriggerRef} className="relative" onMouseEnter={openPostMenu} onMouseLeave={closePostMenuLater}>
               <Link
                 href="/posts"
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-base transition-all duration-200
-                            ${postMenuOpen
-                              ? 'text-foreground bg-black/5 dark:bg-white/5'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'}`}
+                className={`flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm transition-all duration-200 ${
+                  postMenuOpen
+                    ? 'bg-black/5 text-foreground dark:bg-white/5'
+                    : 'text-muted-foreground hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5'
+                }`}
               >
-                <RiFileTextLine size={14} />
+                <MaterialSymbol icon="article" size={16} />
                 文章
               </Link>
             </div>
 
-            <Link href="/moments" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
-                                             rounded-base hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200">
-              <RiFlashlightLine size={14} />
+            <Link href="/moments" className="flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5">
+              <MaterialSymbol icon="bolt" size={16} fill />
               瞬间
             </Link>
 
-            <Link href="/works" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
-                                           rounded-base hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200">
-              <RiBriefcase4Line size={14} />
+            <Link href="/works" className="flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5">
+              <MaterialSymbol icon="deployed_code" size={16} />
               作品
             </Link>
 
-            {/* 收藏（带二级菜单） */}
-            <div ref={collectionTriggerRef} className="relative" onMouseEnter={openCollection} onMouseLeave={scheduleCloseCollection}>
+            <div ref={collectionTriggerRef} className="relative" onMouseEnter={openCollectionMenu} onMouseLeave={closeCollectionMenuLater}>
               <button
                 type="button"
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-base transition-all duration-200
-                            ${collectionMenuOpen
-                              ? 'text-foreground bg-black/5 dark:bg-white/5'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'}`}
+                className={`flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm transition-all duration-200 ${
+                  collectionMenuOpen
+                    ? 'bg-black/5 text-foreground dark:bg-white/5'
+                    : 'text-muted-foreground hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5'
+                }`}
               >
-                <RiStarLine size={14} />
+                <MaterialSymbol icon="star" size={16} />
                 收藏
               </button>
             </div>
 
-            <Link href="/links" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
-                                           rounded-base hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200">
-              <RiLinksLine size={14} />
+            <Link href="/links" className="flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5">
+              <MaterialSymbol icon="link" size={16} />
               友情链接
             </Link>
 
-            <Link href="/about" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground
-                                           rounded-base hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200">
-              <RiUser3Line size={14} />
+            <Link href="/about" className="flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5">
+              <MaterialSymbol icon="person" size={16} />
               关于
             </Link>
           </div>
 
-          {/* ── 右侧工具 ───────────────────────────────── */}
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <button
               type="button"
-              className="sm:hidden w-9 h-9 flex items-center justify-center rounded-base
-                         text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5"
               aria-label="打开菜单"
+              className="flex h-9 w-9 items-center justify-center rounded-base text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5 sm:hidden"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M1 2.5h14M1 8h14M1 13.5h14" stroke="currentColor"
-                      strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+              <MaterialSymbol icon="menu" size={18} />
             </button>
           </div>
-
         </nav>
       </header>
 
-      {/* ── 下拉面板 — Portal 到 body，脱离 header stacking context ── */}
       {mounted && postMenuOpen && createPortal(
         <div
           style={{
@@ -222,63 +178,56 @@ export function NavBar({ categories }: NavBarProps) {
             transform: 'translateX(-50%)',
             zIndex: 9999,
           }}
-          onMouseEnter={openMenu}
-          onMouseLeave={scheduleClose}
+          onMouseEnter={openPostMenu}
+          onMouseLeave={closePostMenuLater}
         >
-          <div className={`${PANEL_CLS} p-3 min-w-[260px]`}>
-
-            {/* 子页面快捷导航 */}
-            <div className="grid grid-cols-4 gap-0.5 mb-1">
-              {POST_SUB_PAGES.map(({ href, label, Icon }) => (
+          <div className={`${PANEL_CLS} min-w-[280px] p-3`}>
+            <div className="mb-1 grid grid-cols-4 gap-0.5">
+              {POST_SUB_PAGES.map((item) => (
                 <Link
-                  key={href}
-                  href={href}
+                  key={item.href}
+                  href={item.href}
                   onClick={() => setPostMenuOpen(false)}
-                  className="group flex flex-col items-center gap-1 px-2 py-2.5 rounded-lg
-                             hover:bg-ember/10 transition-colors"
+                  className="group flex flex-col items-center gap-1 rounded-lg px-2 py-2.5 transition-colors hover:bg-ember/10"
                 >
-                  <span className="text-muted-foreground group-hover:text-ember transition-colors">
-                    <Icon size={14} />
+                  <span className="text-muted-foreground transition-colors group-hover:text-ember">
+                    <MaterialSymbol icon={item.icon} size={15} />
                   </span>
-                  <span className="text-[10px] font-mono text-muted-foreground group-hover:text-ember
-                                    transition-colors whitespace-nowrap">
-                    {label}
+                  <span className="whitespace-nowrap text-[11px] font-medium text-muted-foreground transition-colors group-hover:text-ember">
+                    {item.label}
                   </span>
                 </Link>
               ))}
             </div>
 
-            {/* 分类列表（有分类时显示） */}
-            {categories.length > 0 && (
+            {categories.length > 0 ? (
               <>
-                <div className="border-t border-border my-2" />
-                <p className="text-[10px] font-mono uppercase tracking-widest
-                              text-muted-foreground mb-2 px-1 select-none">文章分类</p>
+                <div className="my-2 border-t border-border" />
+                <p className="mb-2 px-1 text-[10px] font-medium tracking-[0.16em] text-muted-foreground select-none">
+                  文章分类
+                </p>
                 <div className="grid grid-cols-2 gap-0.5">
-                  {categories.map(({ category, count }) => {
-                    const CatIcon = getCategoryIcon(category)
-                    return (
-                      <Link
-                        key={category}
-                        href={`/posts?category=${encodeURIComponent(category)}`}
-                        onClick={() => setPostMenuOpen(false)}
-                        className="group flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-ember/10 transition-colors"
-                      >
-                        <span className="text-muted-foreground group-hover:text-ember transition-colors flex-shrink-0">
-                          <CatIcon size={13} />
+                  {categories.map(({ category, count }) => (
+                    <Link
+                      key={category}
+                      href={`/posts?category=${encodeURIComponent(category)}`}
+                      onClick={() => setPostMenuOpen(false)}
+                      className="group flex items-center gap-2.5 rounded-lg px-3 py-2 transition-colors hover:bg-ember/10"
+                    >
+                      <span className="flex-shrink-0 text-muted-foreground transition-colors group-hover:text-ember">
+                        <MaterialSymbol icon={getCategoryIcon(category)} size={15} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-xs font-medium text-foreground transition-colors group-hover:text-ember">
+                          {category}
                         </span>
-                        <span className="flex-1 min-w-0">
-                          <span className="block text-xs font-medium text-foreground group-hover:text-ember transition-colors truncate">
-                            {category}
-                          </span>
-                          <span className="block text-[10px] text-muted-foreground font-mono">{count} 篇</span>
-                        </span>
-                      </Link>
-                    )
-                  })}
+                        <span className="block text-[10px] text-muted-foreground">{count} 篇</span>
+                      </span>
+                    </Link>
+                  ))}
                 </div>
               </>
-            )}
+            ) : null}
           </div>
         </div>,
         document.body
@@ -293,28 +242,29 @@ export function NavBar({ categories }: NavBarProps) {
             transform: 'translateX(-50%)',
             zIndex: 9999,
           }}
-          onMouseEnter={openCollection}
-          onMouseLeave={scheduleCloseCollection}
+          onMouseEnter={openCollectionMenu}
+          onMouseLeave={closeCollectionMenuLater}
         >
-          <div className={`${PANEL_CLS} p-3 min-w-[180px]`}>
-            <p className="text-[10px] font-mono uppercase tracking-widest
-                          text-muted-foreground mb-2 px-1 select-none">收藏夹</p>
+          <div className={`${PANEL_CLS} min-w-[196px] p-3`}>
+            <p className="mb-2 px-1 text-[10px] font-medium tracking-[0.16em] text-muted-foreground select-none">
+              收藏夹
+            </p>
             <div className="flex flex-col gap-0.5">
-              {COLLECTION_ITEMS.map(({ href, label, Icon, desc }) => (
+              {COLLECTION_ITEMS.map((item) => (
                 <Link
-                  key={href}
-                  href={href}
+                  key={item.href}
+                  href={item.href}
                   onClick={() => setCollectionMenuOpen(false)}
-                  className="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-ember/10 transition-colors"
+                  className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-ember/10"
                 >
-                  <span className="text-muted-foreground group-hover:text-ember transition-colors flex-shrink-0">
-                    <Icon size={15} />
+                  <span className="flex-shrink-0 text-muted-foreground transition-colors group-hover:text-ember">
+                    <MaterialSymbol icon={item.icon} size={16} />
                   </span>
                   <span>
-                    <span className="block text-xs font-medium text-foreground group-hover:text-ember transition-colors">
-                      {label}
+                    <span className="block text-xs font-medium text-foreground transition-colors group-hover:text-ember">
+                      {item.label}
                     </span>
-                    <span className="block text-[10px] text-muted-foreground">{desc}</span>
+                    <span className="block text-[10px] text-muted-foreground">{item.desc}</span>
                   </span>
                 </Link>
               ))}

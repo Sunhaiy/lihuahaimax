@@ -7,11 +7,21 @@ import { auth } from '@/auth'
 import { findLinks, insertLink } from '@/lib/db/dao/linkDao'
 import { z } from 'zod'
 
+function isUploadOrAbsoluteUrl(value: string) {
+  if (value.startsWith('/')) return true
+  try {
+    new URL(value)
+    return true
+  } catch {
+    return false
+  }
+}
+
 const createSchema = z.object({
   name: z.string().min(1).max(100),
   url: z.string().url(),
   description: z.string().optional(),
-  avatarUrl: z.string().url().optional(),
+  avatarUrl: z.string().trim().refine(isUploadOrAbsoluteUrl, 'Invalid avatar URL').optional(),
   category: z.enum(['friend', 'tool', 'resource', 'inspire', 'other']).optional(),
   sortOrder: z.number().int().optional(),
   isActive: z.boolean().optional(),

@@ -51,7 +51,7 @@ export function TOC({ headings }: TOCProps) {
 
   return (
     <nav aria-label="文章目录">
-      <p className="text-[11px] font-mono tracking-widest uppercase text-muted-foreground mb-3 select-none">
+      <p className="mb-3 select-none text-[11px] font-medium tracking-[0.16em] text-muted-foreground">
         目录
       </p>
       <ul className="space-y-1">

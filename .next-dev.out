@@ -1,0 +1,111 @@
+
+> lihuahaimax@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.2.2
+   - Local:        http://localhost:3000
+   - Network:      http://172.18.0.1:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 2.2s
+ ○ Compiling / ...
+ ✓ Compiled / in 4.6s (901 modules)
+ GET / 200 in 5085ms
+ GET / 200 in 148ms
+ GET / 200 in 170ms
+ GET / 200 in 265ms
+ GET /?page=2 200 in 71ms
+ GET /?page=3 200 in 50ms
+ ○ Compiling /posts ...
+ ✓ Compiled /posts/archive in 2.6s (790 modules)
+ GET /posts/archive 200 in 1207ms
+ GET /posts 200 in 3288ms
+ GET / 200 in 749ms
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 716ms (234 modules)
+ ○ Compiling /dashboard/comments ...
+ ✓ Compiled /dashboard/comments in 1471ms (961 modules)
+ GET /dashboard/comments 200 in 2068ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 550ms (964 modules)
+ GET /dashboard 200 in 775ms
+ ✓ Compiled /dashboard/posts in 260ms (973 modules)
+ GET /dashboard/posts 200 in 425ms
+ ○ Compiling /dashboard/editor ...
+ ✓ Compiled /dashboard/editor in 1903ms (1609 modules)
+ GET /dashboard/editor 200 in 2009ms
+ ✓ Compiled /api/categories in 391ms (1613 modules)
+ GET /api/categories 200 in 576ms
+ GET /api/categories 200 in 7ms
+ ✓ Compiled /api/upload/cover in 479ms (1598 modules)
+ POST /api/upload/cover 200 in 634ms
+ ✓ Compiled /api/posts in 253ms (1600 modules)
+ POST /api/posts 201 in 396ms
+ GET /dashboard/posts 200 in 109ms
+ GET /dashboard/posts 200 in 244ms
+ GET /?page=3 200 in 258ms
+ ○ Compiling /posts ...
+ ✓ Compiled /posts in 541ms (953 modules)
+ GET /posts 200 in 868ms
+ GET /posts 200 in 36ms
+ GET / 200 in 92ms
+ ○ Compiling /posts/[slug] ...
+ ✓ Compiled /posts/[slug] in 1401ms (1626 modules)
+ GET /posts/post-1777653555755 200 in 3557ms
+ ○ Compiling /api/posts/[id]/comments ...
+ ✓ Compiled /api/posts/[id]/comments in 544ms (1629 modules)
+ GET /api/posts/16/comments 200 in 1646ms
+ GET /api/posts/16/comments 200 in 22ms
+ ✓ Compiled /dashboard in 226ms (965 modules)
+ GET /dashboard 200 in 403ms
+ ○ Compiling /dashboard/acg ...
+ ✓ Compiled /dashboard/acg in 643ms (1659 modules)
+ GET /dashboard/acg 200 in 734ms
+ ✓ Compiled /api/acg/anime in 357ms (1662 modules)
+ GET /api/acg/anime? 200 in 494ms
+ POST /api/acg/anime 201 in 20ms
+ GET /api/acg/anime? 200 in 7ms
+ ✓ Compiled /dashboard/settings in 459ms (1671 modules)
+ GET /dashboard/settings 200 in 557ms
+ ✓ Compiled /api/settings/background-scene in 502ms (1679 modules)
+ GET /api/settings/background-scene 200 in 767ms
+ GET /api/settings/background-scene 200 in 11ms
+ POST /api/settings/background-scene 200 in 44ms
+ PATCH /api/settings/background-scene 200 in 13ms
+ GET /posts/post-1777653555755 200 in 590ms
+ GET /api/posts/16/comments 200 in 23ms
+ GET / 200 in 115ms
+ GET /api/settings/background-scene 200 in 15ms
+ PATCH /api/settings/background-scene 200 in 22ms
+ GET / 200 in 255ms
+ GET /api/settings/background-scene 200 in 21ms
+ PATCH /api/settings/background-scene 200 in 11ms
+ GET / 200 in 122ms
+ ○ Compiling /posts/archive ...
+ ✓ Compiled /posts/archive in 1004ms (961 modules)
+ GET /posts/archive 200 in 1359ms
+ ✓ Compiled /posts/categories in 467ms (1633 modules)
+ GET /posts/categories 200 in 789ms
+ ○ Compiling /works ...
+ ✓ Compiled /works in 577ms (1643 modules)
+ GET /works 200 in 691ms
+ ✓ Compiled /works/[slug] in 386ms (1648 modules)
+ GET /works/esp32-home-gateway 200 in 1280ms
+ GET /works 200 in 23ms
+ ✓ Compiled /games in 475ms (1309 modules)
+ GET /games 200 in 620ms
+ ○ Compiling /anime ...
+ ✓ Compiled /anime in 782ms (1317 modules)
+ GET /anime 200 in 1059ms
+ GET /games 200 in 42ms
+ ✓ Compiled /moments in 435ms (1325 modules)
+ GET /moments 200 in 656ms
+ ✓ Compiled /api/settings/background-scene in 319ms (649 modules)
+ GET /api/settings/background-scene 200 in 673ms
+ GET /api/settings/background-scene 200 in 10ms
+ GET / 200 in 271ms
+ ○ Compiling /posts ...
+ ✓ Compiled /posts in 601ms (654 modules)
+ GET /posts 200 in 968ms
+ GET /moments 200 in 84ms

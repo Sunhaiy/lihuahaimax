@@ -1,0 +1,151 @@
+import { SETTINGS_KEYS } from '@/lib/constants/settings'
+import { getSetting, setSetting } from '@/lib/db/dao/settingsDao'
+import type {
+  BackgroundSceneSettings,
+  SceneEnabledPage,
+  WeatherPreset,
+} from '@/types/work'
+
+export const DEFAULT_BACKGROUND_SCENE: BackgroundSceneSettings = {
+  image: {
+    url: null,
+    position: 'center center',
+    size: 'cover',
+    opacity: 0.42,
+  },
+  weather: {
+    preset: 'storm',
+    intensity: 0.62,
+    enabledPages: ['home', 'moments'],
+  },
+  filter: {
+    overlay: 0.58,
+    gradient: 0.72,
+    blur: 10,
+    noise: 0.08,
+    vignette: 0.42,
+  },
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value))
+}
+
+function isWeatherPreset(value: unknown): value is WeatherPreset {
+  return value === 'none' || value === 'storm'
+}
+
+function isEnabledPage(value: unknown): value is SceneEnabledPage {
+  return value === 'home' || value === 'moments' || value === 'works-detail'
+}
+
+export function normalizeBackgroundSceneSettings(
+  raw: unknown,
+  legacyHeroUrl?: string | null
+): BackgroundSceneSettings {
+  const source = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {}
+  const image = source.image && typeof source.image === 'object'
+    ? source.image as Record<string, unknown>
+    : {}
+  const weather = source.weather && typeof source.weather === 'object'
+    ? source.weather as Record<string, unknown>
+    : {}
+  const filter = source.filter && typeof source.filter === 'object'
+    ? source.filter as Record<string, unknown>
+    : {}
+
+  const url = typeof image.url === 'string'
+    ? image.url
+    : typeof legacyHeroUrl === 'string'
+      ? legacyHeroUrl
+      : DEFAULT_BACKGROUND_SCENE.image.url
+
+  const enabledPages = Array.isArray(weather.enabledPages)
+    ? weather.enabledPages.filter(isEnabledPage)
+    : DEFAULT_BACKGROUND_SCENE.weather.enabledPages
+
+  return {
+    image: {
+      url,
+      position: typeof image.position === 'string' ? image.position : DEFAULT_BACKGROUND_SCENE.image.position,
+      size: typeof image.size === 'string' ? image.size : DEFAULT_BACKGROUND_SCENE.image.size,
+      opacity: clamp(
+        typeof image.opacity === 'number' ? image.opacity : DEFAULT_BACKGROUND_SCENE.image.opacity,
+        0,
+        1
+      ),
+    },
+    weather: {
+      preset: isWeatherPreset(weather.preset) ? weather.preset : DEFAULT_BACKGROUND_SCENE.weather.preset,
+      intensity: clamp(
+        typeof weather.intensity === 'number' ? weather.intensity : DEFAULT_BACKGROUND_SCENE.weather.intensity,
+        0,
+        1
+      ),
+      enabledPages: enabledPages.length > 0 ? enabledPages : DEFAULT_BACKGROUND_SCENE.weather.enabledPages,
+    },
+    filter: {
+      overlay: clamp(
+        typeof filter.overlay === 'number' ? filter.overlay : DEFAULT_BACKGROUND_SCENE.filter.overlay,
+        0,
+        1
+      ),
+      gradient: clamp(
+        typeof filter.gradient === 'number' ? filter.gradient : DEFAULT_BACKGROUND_SCENE.filter.gradient,
+        0,
+        1
+      ),
+      blur: clamp(
+        typeof filter.blur === 'number' ? filter.blur : DEFAULT_BACKGROUND_SCENE.filter.blur,
+        0,
+        24
+      ),
+      noise: clamp(
+        typeof filter.noise === 'number' ? filter.noise : DEFAULT_BACKGROUND_SCENE.filter.noise,
+        0,
+        1
+      ),
+      vignette: clamp(
+        typeof filter.vignette === 'number' ? filter.vignette : DEFAULT_BACKGROUND_SCENE.filter.vignette,
+        0,
+        1
+      ),
+    },
+  }
+}
+
+export async function getBackgroundSceneSettings(): Promise<BackgroundSceneSettings> {
+  const [scene, legacyHero] = await Promise.all([
+    getSetting(SETTINGS_KEYS.BACKGROUND_SCENE),
+    getSetting<{ url?: string | null }>(SETTINGS_KEYS.HERO_BG),
+  ])
+
+  return normalizeBackgroundSceneSettings(
+    scene,
+    typeof legacyHero?.url === 'string' ? legacyHero.url : null
+  )
+}
+
+export async function persistBackgroundSceneSettings(scene: BackgroundSceneSettings) {
+  await Promise.all([
+    setSetting(
+      SETTINGS_KEYS.BACKGROUND_SCENE,
+      scene,
+      'Global background scene configuration'
+    ),
+    setSetting(
+      SETTINGS_KEYS.HERO_BG,
+      { url: scene.image.url },
+      'Legacy hero background mirror'
+    ),
+  ])
+
+  return scene
+}
+
+export function isSceneWeatherEnabled(
+  scene: BackgroundSceneSettings,
+  page: SceneEnabledPage
+) {
+  return scene.weather.preset !== 'none' && scene.weather.enabledPages.includes(page)
+}

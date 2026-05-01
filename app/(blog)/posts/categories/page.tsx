@@ -135,7 +135,7 @@ export default async function CategoriesPage() {
                                 group-hover:text-ember transition-colors duration-200">
                   {category}
                 </h2>
-                <p className="text-sm font-mono text-muted-foreground mt-1">
+                <p className="mt-1 text-sm text-muted-foreground">
                   <span className="text-ember font-semibold">{count}</span> 篇文章
                 </p>
               </div>
@@ -143,7 +143,7 @@ export default async function CategoriesPage() {
               {/* 最新文章预览 */}
               {latest && (
                 <div className="relative mt-5 pt-4 border-t border-border/60">
-                  <p className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-widest mb-1">
+                  <p className="mb-1 text-[10px] font-medium tracking-[0.16em] text-muted-foreground/60">
                     最新
                   </p>
                   <p className="text-xs text-muted-foreground leading-snug line-clamp-1
@@ -198,14 +198,14 @@ export default async function CategoriesPage() {
                                 group-hover:text-ember transition-colors duration-200">
                   {category}
                 </h2>
-                <p className="text-xs font-mono text-muted-foreground mt-0.5">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   <span className="text-ember font-semibold">{count}</span> 篇
                 </p>
               </div>
 
               {latest && (
                 <div className="relative mt-4 pt-3 border-t border-border/60">
-                  <p className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-widest mb-1">
+                  <p className="mb-1 text-[10px] font-medium tracking-[0.16em] text-muted-foreground/60">
                     最新
                   </p>
                   <p className="text-xs text-muted-foreground line-clamp-2 leading-snug
@@ -262,7 +262,7 @@ export default async function CategoriesPage() {
                                 group-hover:text-ember transition-colors duration-200">
                   {category}
                 </h3>
-                <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
                   <span className="text-ember/80">{count}</span> 篇
                 </p>
               </div>

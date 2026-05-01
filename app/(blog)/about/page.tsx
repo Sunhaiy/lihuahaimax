@@ -34,7 +34,7 @@ export default function AboutPage() {
         </div>
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-1">梨花海</h1>
-          <p className="text-ember font-mono text-sm tracking-wide mb-3">
+          <p className="mb-3 text-sm font-medium tracking-[0.08em] text-ember">
             极客 · 二次元 · 代码诗人
           </p>
           <p className="text-muted-foreground text-sm leading-relaxed max-w-lg">
@@ -76,7 +76,7 @@ export default function AboutPage() {
             <div className="space-y-4">
               {SKILLS.map(({ cat, items }) => (
                 <div key={cat}>
-                  <p className="text-xs font-mono text-ember mb-2">{cat}</p>
+                  <p className="mb-2 text-xs font-medium text-ember">{cat}</p>
                   <div className="flex flex-wrap gap-2">
                     {items.map((item) => (
                       <span

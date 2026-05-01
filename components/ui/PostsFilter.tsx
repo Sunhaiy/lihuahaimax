@@ -51,7 +51,7 @@ export function PostsFilter({ categories, tags, currentCategory, currentTags, to
     <div className="mb-8 space-y-2.5">
       {/* ── 分类行 ── */}
       <div className="flex items-center gap-1.5 flex-wrap">
-        <span className="text-[10px] text-muted-foreground font-mono w-8 flex-shrink-0">分类</span>
+        <span className="w-8 flex-shrink-0 text-[10px] font-medium text-muted-foreground">分类</span>
         <button
           onClick={() => router.push('/posts')}
           className={`text-xs px-3 py-1 rounded-full border transition-colors
@@ -77,7 +77,7 @@ export function PostsFilter({ categories, tags, currentCategory, currentTags, to
 
       {/* ── 标签行 ── */}
       <div className="flex items-start gap-1.5">
-        <span className="text-[10px] text-muted-foreground font-mono w-8 flex-shrink-0 pt-1">标签</span>
+        <span className="w-8 flex-shrink-0 pt-1 text-[10px] font-medium text-muted-foreground">标签</span>
         <div className="flex flex-wrap gap-1.5 flex-1">
           {visibleTags.map(({ tag: t, count }) => (
             <button
@@ -118,7 +118,7 @@ export function PostsFilter({ categories, tags, currentCategory, currentTags, to
 
       {/* ── 当前筛选状态提示 ── */}
       {isFiltered && (
-        <p className="text-[11px] text-muted-foreground font-mono pl-9">
+        <p className="pl-9 text-[11px] text-muted-foreground">
           {[
             currentCategory && `分类：${currentCategory}`,
             currentTags.length && `标签：${currentTags.join(' + ')}`,

@@ -5,7 +5,8 @@
  */
 
 export const SETTINGS_KEYS = {
-  HERO_BG: 'hero_bg',
+  HERO_BG: 'site.hero_bg',
+  BACKGROUND_SCENE: 'site.background_scene',
 } as const
 
 export type SettingsKey = typeof SETTINGS_KEYS[keyof typeof SETTINGS_KEYS]

@@ -100,7 +100,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                   <Link
                     key={tag}
                     href={`/posts?tag=${encodeURIComponent(tag)}`}
-                    className="text-xs font-mono px-3 py-1 rounded-full
+                    className="rounded-full px-3 py-1 text-xs font-medium
                                bg-white/10 border border-white/20 text-white/80
                                hover:bg-white/20 transition-colors backdrop-blur-sm"
                   >
@@ -182,7 +182,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm text-foreground mb-0.5">梨花海</p>
-                <p className="text-[11px] text-ember font-mono tracking-wide mb-2">极客 · 二次元 · 代码诗人</p>
+                <p className="mb-2 text-[11px] font-medium tracking-[0.08em] text-ember">极客 · 二次元 · 代码诗人</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   热爱 coding，追番打游戏，记录凌晨 3 点的一切。
                 </p>
@@ -201,7 +201,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                     <RiArrowLeftSLine size={18} className="shrink-0 mt-0.5 text-muted-foreground
                                                             group-hover:text-ember transition-colors" />
                     <div className="min-w-0">
-                      <p className="text-[10px] text-muted-foreground mb-1 font-mono">上一篇</p>
+                      <p className="mb-1 text-[10px] font-medium text-muted-foreground">上一篇</p>
                       <p className="text-sm font-medium text-foreground group-hover:text-ember
                                     transition-colors line-clamp-2">
                         {adjacent.prev.title}
@@ -219,7 +219,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                     <RiArrowRightSLine size={18} className="shrink-0 mt-0.5 text-muted-foreground
                                                              group-hover:text-ember transition-colors" />
                     <div className="min-w-0">
-                      <p className="text-[10px] text-muted-foreground mb-1 font-mono">下一篇</p>
+                      <p className="mb-1 text-[10px] font-medium text-muted-foreground">下一篇</p>
                       <p className="text-sm font-medium text-foreground group-hover:text-ember
                                     transition-colors line-clamp-2">
                         {adjacent.next.title}

@@ -71,6 +71,7 @@ const config: Config = {
       typography: {
         DEFAULT: {
           css: {
+            fontFamily: 'var(--font-inter), system-ui, sans-serif',
             '--tw-prose-body':          'hsl(var(--foreground))',
             '--tw-prose-headings':      'hsl(var(--foreground))',
             '--tw-prose-lead':          'hsl(var(--muted-foreground))',
@@ -107,6 +108,7 @@ const config: Config = {
             'code::before': { content: 'none' },
             'code::after':  { content: 'none' },
             code: {
+              fontFamily: 'var(--font-mono), monospace',
               color: '#FF8A6B',
               backgroundColor: 'rgba(255,138,107,0.08)',
               border: '1px solid rgba(255,138,107,0.15)',
@@ -117,12 +119,14 @@ const config: Config = {
             },
             // pre 交给我们自定义的 .code-block 处理，这里只做基础重置
             pre: {
+              fontFamily: 'var(--font-mono), monospace',
               backgroundColor: 'transparent',
               padding: '0',
               borderRadius: '0',
               border: 'none',
             },
             'pre code': {
+              fontFamily: 'var(--font-mono), monospace',
               backgroundColor: 'transparent',
               border: 'none',
               padding: '0',

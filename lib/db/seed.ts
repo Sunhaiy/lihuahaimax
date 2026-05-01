@@ -763,41 +763,157 @@ async function seed() {
     // ── 9. 作品 ──────────────────────────────────────────────
     console.log('[seed] 插入作品...')
     await client.query(`
-      INSERT INTO works (title, subtitle, description, cover_url, tags, url, github_url, year, sort_order)
+      INSERT INTO works (slug, title, subtitle, description, cover_url, tags, url, github_url, year, sort_order)
       VALUES
-        ('梨花海博客系统', '个人数字中枢', '基于 Next.js 15 App Router 构建的全栈博客平台，涵盖文章、瞬间、ACG 追踪、图片相册等模块，后端原生 SQL + PostgreSQL，Tiptap 富文本编辑器，NextAuth v5 鉴权。', '', ARRAY['Next.js 15', 'TypeScript', 'PostgreSQL', 'Tiptap', 'NextAuth'], NULL, 'https://github.com', 2024, 1),
-        ('ESP32 智能家居网关', 'MQTT + HomeAssistant 本地化方案', '基于 ESP32-C3 的低功耗 IoT 网关，通过 MQTT 协议与各传感器节点通信，集成 Home Assistant 实现局域网内完全本地化的智能家居控制，无需云端依赖。', '', ARRAY['ESP32', 'C/C++', 'MQTT', 'FreeRTOS', 'HomeAssistant'], NULL, 'https://github.com', 2024, 2),
-        ('Arch Linux 自动配置脚本', 'dotfiles + 一键安装工具链', '个人 Arch Linux 全套 dotfiles，内含 Hyprland 窗口管理器、Waybar、Neovim 配置及一键安装脚本，可在 20 分钟内从零搭建出开箱即用的开发环境。', '', ARRAY['Bash', 'Lua', 'Hyprland', 'Neovim', 'Arch Linux'], NULL, 'https://github.com', 2023, 3),
-        ('番剧追踪 CLI 工具', '命令行快速记录追番进度', '用 Go 编写的命令行番剧管理工具，支持 Bangumi API 同步、本地 SQLite 缓存、进度追踪与评分，对终端用户极度友好。支持 zsh 自动补全。', '', ARRAY['Go', 'SQLite', 'Bangumi API', 'CLI', 'zsh'], NULL, 'https://github.com', 2023, 4),
-        ('树莓派 NAS + 媒体服务器', '家用私有云全套方案', '基于 Raspberry Pi 5 搭建的家用 NAS，使用 OpenMediaVault 管理存储，Jellyfin 提供媒体流服务，Tailscale 实现异地安全访问，PiHole 全局 DNS 广告过滤。', '', ARRAY['Raspberry Pi', 'OpenMediaVault', 'Jellyfin', 'Tailscale', 'Docker'], NULL, NULL, 2024, 5)
+        ('lihuahai-stack', 'Lihuahai Stack', 'Personal digital operating system', 'A Next.js 15 full-stack site that combines writing, moments, ACG tracking, gallery modules, and project storytelling in one cohesive platform.', '/hero.png', ARRAY['Next.js 15', 'TypeScript', 'PostgreSQL', 'Tiptap', 'NextAuth'], NULL, 'https://github.com', 2024, 1),
+        ('esp32-home-gateway', 'ESP32 Home Gateway', 'MQTT + Home Assistant local bridge', 'A low-power ESP32-C3 gateway that links edge sensors through MQTT and keeps the automation stack local-first and resilient.', '/hero.png', ARRAY['ESP32', 'C/C++', 'MQTT', 'FreeRTOS', 'Home Assistant'], NULL, 'https://github.com', 2024, 2),
+        ('arch-linux-dotfiles', 'Arch Linux Dotfiles', 'Automated workstation bootstrap', 'A reproducible Arch Linux setup with Hyprland, Waybar, Neovim, and scripts that make a fresh machine usable fast.', '/hero.png', ARRAY['Bash', 'Lua', 'Hyprland', 'Neovim', 'Arch Linux'], NULL, 'https://github.com', 2023, 3),
+        ('bangumi-cli', 'Bangumi CLI', 'Terminal-first watch tracker', 'A Go-based CLI for tracking anime progress with Bangumi sync, SQLite cache, ratings, and shell-friendly workflows.', '/hero.png', ARRAY['Go', 'SQLite', 'Bangumi API', 'CLI', 'zsh'], NULL, 'https://github.com', 2023, 4),
+        ('raspberry-pi-media-hub', 'Raspberry Pi Media Hub', 'Home NAS and media services', 'A Raspberry Pi 5 home stack that combines storage, Jellyfin streaming, remote access, and DNS filtering into one manageable setup.', '/hero.png', ARRAY['Raspberry Pi', 'OpenMediaVault', 'Jellyfin', 'Tailscale', 'Docker'], NULL, NULL, 2024, 5)
     `)
 
-    // ── 10. 设置 ──────────────────────────────────────────────
-    console.log('[seed] 插入设置...')
+    await client.query(`
+      UPDATE works
+      SET
+        slug = CASE sort_order
+          WHEN 1 THEN 'lihuahai-stack'
+          WHEN 2 THEN 'esp32-home-gateway'
+          WHEN 3 THEN 'arch-linux-dotfiles'
+          WHEN 4 THEN 'bangumi-cli'
+          WHEN 5 THEN 'raspberry-pi-media-hub'
+          ELSE slug
+        END,
+        summary = CASE sort_order
+          WHEN 1 THEN 'A personal full-stack hub that combines posts, moments, media, and project storytelling in one consistent UI system.'
+          WHEN 2 THEN 'A local-first ESP32-C3 gateway focused on stable device messaging, low power usage, and Home Assistant integration.'
+          WHEN 3 THEN 'A reproducible Arch Linux workspace with opinionated automation for shells, editors, and desktop tooling.'
+          WHEN 4 THEN 'A terminal-first Bangumi tracker with offline cache, lightweight interaction, and fast episode logging.'
+          WHEN 5 THEN 'A private Raspberry Pi media and remote access stack designed for home use and easy long-term maintenance.'
+          ELSE summary
+        END,
+        content = CASE sort_order
+          WHEN 1 THEN 'This project started as a small blog and slowly turned into a full personal operating system on the web. The goal is not only to publish writing, but also to host moments, archives, project details, and lightweight media workflows.' || E'\n\n' || 'The current iteration connects typography, weather scenes, background layers, works detail pages, and dashboard controls into one visual system so the content model and the interface finally move together.'
+          WHEN 2 THEN 'The gateway is built around ESP32-C3 nodes and a local MQTT network. It is meant to keep device automation dependable even when the public internet is unavailable.' || E'\n\n' || 'On the product side, the detail page highlights node structure, implementation milestones, and contributor roles so the hardware story reads clearly on the web.'
+          WHEN 3 THEN 'The aim is not just to sync dotfiles, but to package an entire workstation flow into something repeatable. That includes package setup, shell defaults, editor presets, and desktop polish.' || E'\n\n' || 'The new project model makes it easier to explain versioning, rollout progress, and the practical tradeoffs behind the setup.'
+          WHEN 4 THEN 'This tool leans hard into a clean terminal experience. Fast lookup, offline cache, keyboard-first interaction, and low-noise status updates are the main design goals.' || E'\n\n' || 'The new detail page keeps room for links, pricing, and onboarding CTAs while still feeling like a product archive instead of a storefront.'
+          WHEN 5 THEN 'This stack is better explained through deployment structure than through a short card description. It combines storage, media streaming, remote access, and network filtering into one maintainable home setup.' || E'\n\n' || 'Because of that, the detail page keeps milestones and contributor metadata visible so the whole rollout can be understood at a glance.'
+          ELSE content
+        END,
+        seal = CASE sort_order
+          WHEN 1 THEN 'Flagship'
+          WHEN 2 THEN 'Lab'
+          WHEN 3 THEN 'Ops'
+          WHEN 4 THEN 'CLI'
+          WHEN 5 THEN 'Infra'
+          ELSE seal
+        END,
+        status_text = CASE sort_order
+          WHEN 1 THEN 'IN_PROGRESS'
+          WHEN 2 THEN 'ACTIVE'
+          WHEN 3 THEN 'MAINTAINED'
+          WHEN 4 THEN 'SHIPPING'
+          WHEN 5 THEN 'STABLE'
+          ELSE status_text
+        END,
+        progress_text = CASE sort_order
+          WHEN 1 THEN '4 / 6'
+          WHEN 2 THEN '3 / 5'
+          WHEN 3 THEN '2 / 3'
+          WHEN 4 THEN '1 / 2'
+          WHEN 5 THEN '5 / 5'
+          ELSE progress_text
+        END,
+        version_text = CASE sort_order
+          WHEN 1 THEN 'v2.6.0'
+          WHEN 2 THEN 'v1.3.2'
+          WHEN 3 THEN 'v1.1.0'
+          WHEN 4 THEN 'v0.9.4'
+          WHEN 5 THEN 'v1.0.0'
+          ELSE version_text
+        END,
+        price = CASE sort_order
+          WHEN 2 THEN '299'
+          WHEN 4 THEN '49'
+          ELSE NULL
+        END,
+        original_price = CASE sort_order
+          WHEN 2 THEN '399'
+          ELSE NULL
+        END,
+        primary_url = CASE sort_order
+          WHEN 1 THEN COALESCE(github_url, url, 'https://github.com')
+          WHEN 2 THEN 'https://github.com'
+          WHEN 3 THEN 'https://github.com'
+          WHEN 4 THEN 'https://github.com'
+          WHEN 5 THEN 'https://github.com'
+          ELSE COALESCE(url, github_url, 'https://github.com')
+        END,
+        primary_label = CASE sort_order
+          WHEN 1 THEN 'Open repository'
+          WHEN 2 THEN 'View node topology'
+          WHEN 3 THEN 'Browse setup notes'
+          WHEN 4 THEN 'Read CLI examples'
+          WHEN 5 THEN 'Open deployment map'
+          ELSE 'View details'
+        END,
+        secondary_url = github_url,
+        secondary_label = 'Source code / external link',
+        hero_image_url = COALESCE(NULLIF(cover_url, ''), '/hero.png'),
+        contributors_json = CASE sort_order
+          WHEN 1 THEN '[{"name":"Lihua Hai","role":"Design / Full-stack","avatar_url":null}]'::jsonb
+          WHEN 2 THEN '[{"name":"Lihua Hai","role":"Firmware","avatar_url":null},{"name":"Aze","role":"Automation","avatar_url":null}]'::jsonb
+          WHEN 3 THEN '[{"name":"Lihua Hai","role":"Maintainer","avatar_url":null}]'::jsonb
+          WHEN 4 THEN '[{"name":"Lihua Hai","role":"Go / Product","avatar_url":null}]'::jsonb
+          WHEN 5 THEN '[{"name":"Lihua Hai","role":"Infra","avatar_url":null},{"name":"Faye","role":"Ops Review","avatar_url":null}]'::jsonb
+          ELSE contributors_json
+        END,
+        milestones_json = CASE sort_order
+          WHEN 1 THEN '[{"date":"2026-03","title":"Content model refresh","desc":"Expanded works into a complete project entity with slug, contributors, milestones, CTAs, and long-form detail content.","link":null},{"date":"2026-04","title":"Scene system integration","desc":"Added reusable background, weather, and filter layers for Moments and project detail pages.","link":null},{"date":"2026-05","title":"Dashboard scene controls","desc":"Moved background configuration into a dedicated dashboard control surface.","link":null}]'::jsonb
+          WHEN 2 THEN '[{"date":"2025-12","title":"Messaging contract locked","desc":"Finalized MQTT topic structure between the gateway and edge nodes.","link":null},{"date":"2026-02","title":"Home Assistant integration","desc":"Added local discovery and reliable device state reporting.","link":null}]'::jsonb
+          WHEN 3 THEN '[{"date":"2025-10","title":"Installer automation","desc":"Compressed a fresh workstation setup into a scripted twenty-minute flow.","link":null},{"date":"2026-01","title":"Theme tokens aligned","desc":"Unified shell, editor, and desktop visuals with a shared variable system.","link":null}]'::jsonb
+          WHEN 4 THEN '[{"date":"2026-01","title":"Offline cache shipped","desc":"Switched day-to-day querying to an offline-first model.","link":null},{"date":"2026-02","title":"Terminal UX polish","desc":"Improved rating, status switching, and shell completion.","link":null}]'::jsonb
+          WHEN 5 THEN '[{"date":"2025-11","title":"Media services online","desc":"Brought Jellyfin and OpenMediaVault into a stable shared deployment.","link":null},{"date":"2026-01","title":"Remote access hardened","desc":"Added Tailscale and DNS filtering for safer external access.","link":null}]'::jsonb
+          ELSE milestones_json
+        END,
+        gallery_json = '[]'::jsonb,
+        is_published = TRUE
+    `)
+
+    console.log('[seed] inserting settings...')
     await client.query(`
       INSERT INTO settings (key, value, description) VALUES
-        ('site.name',      '"梨花海"', '站点名称'),
-        ('site.slogan',    '"用代码记录生活"', '站点口号'),
-        ('site.bio',       '"嵌入式工程师 / 全栈玩家 / 开源爱好者 / 喜欢用代码解决生活里的小问题"', '个人简介'),
-        ('site.avatar',    'null', '头像 URL'),
-        ('site.hero_bg',   'null', '首页 Hero 背景图 URL'),
-        ('site.github',    '"https://github.com"', 'GitHub 主页'),
-        ('site.email',     '"hello@lihuahai.dev"', '联系邮箱')
+        ('site.name',      '"Lihua Hai"', 'Site name'),
+        ('site.slogan',    '"Build a life in public"', 'Site slogan'),
+        ('site.bio',       '"Embedded engineer, full-stack builder, and open-source tinkerer."', 'Short biography'),
+        ('site.avatar',    'null', 'Avatar URL'),
+        ('site.hero_bg',   'null', 'Legacy hero background image URL'),
+        ('site.github',    '"https://github.com"', 'GitHub profile URL'),
+        ('site.email',     '"hello@lihuahai.dev"', 'Contact email')
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+    `)
+
+    await client.query(`
+      INSERT INTO settings (key, value, description) VALUES
+        (
+          'site.background_scene',
+          '{"image":{"url":null,"position":"center center","size":"cover","opacity":0.42},"weather":{"preset":"storm","intensity":0.62,"enabledPages":["home","moments"]},"filter":{"overlay":0.58,"gradient":0.72,"blur":10,"noise":0.08,"vignette":0.42}}',
+          'Global background scene settings'
+        )
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
     `)
 
     await client.query('COMMIT')
     console.log('')
-    console.log('✅ 种子数据插入完成：')
-    console.log('   文章: 15 篇  (14 已发布 + 1 草稿)')
-    console.log('   评论: 6 条  (4 已审核 + 2 待审)')
-    console.log('   瞬间: 11 条')
-    console.log('   动漫: 6 部')
-    console.log('   游戏: 6 款')
-    console.log('   相册: 5 张')
-    console.log('   作品: 5 个')
-    console.log('   友链: 10 条')
-    console.log('   设置: 7 项')
+    console.log('[seed] completed successfully')
+    console.log('   posts: 15 (14 published + 1 draft)')
+    console.log('   comments: 6 (4 approved + 2 pending)')
+    console.log('   moments: 11')
+    console.log('   anime: 6')
+    console.log('   games: 6')
+    console.log('   gallery: 5')
+    console.log('   works: 5')
+    console.log('   links: 10')
+    console.log('   settings: 8')
   } catch (err) {
     await client.query('ROLLBACK')
     console.error('[seed] 失败，已回滚：', err)

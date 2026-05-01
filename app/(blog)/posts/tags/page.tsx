@@ -45,7 +45,7 @@ export default async function TagsPage() {
           {/* ── 热门标签 — CSS 横向条形图 ── */}
           {top10.length > 0 && (
             <section>
-              <h2 className="text-xs font-mono text-muted-foreground tracking-widest uppercase mb-4">
+              <h2 className="mb-4 text-xs font-medium tracking-[0.16em] text-muted-foreground">
                 热门标签
               </h2>
               <div className="space-y-2.5">
@@ -58,7 +58,7 @@ export default async function TagsPage() {
                       className="group flex items-center gap-3"
                     >
                       {/* 标签名 */}
-                      <span className="text-xs font-mono text-muted-foreground group-hover:text-ember
+                      <span className="text-xs font-medium text-muted-foreground group-hover:text-ember
                                         transition-colors w-24 text-right flex-shrink-0 truncate">
                         #{tag}
                       </span>
@@ -84,7 +84,7 @@ export default async function TagsPage() {
 
           {/* ── 标签云 ── */}
           <section>
-            <h2 className="text-xs font-mono text-muted-foreground tracking-widest uppercase mb-4">
+            <h2 className="mb-4 text-xs font-medium tracking-[0.16em] text-muted-foreground">
               全部标签
             </h2>
             <div className="flex flex-wrap gap-2 items-baseline rounded-xl border border-border
@@ -98,7 +98,7 @@ export default async function TagsPage() {
                     key={tag}
                     href={`/posts?tag=${encodeURIComponent(tag)}`}
                     style={{ fontSize: `${size}px`, opacity }}
-                    className="font-mono text-muted-foreground hover:text-ember hover:opacity-100
+                    className="font-medium text-muted-foreground hover:text-ember hover:opacity-100
                                 transition-all duration-200 leading-relaxed"
                     title={`${count} 篇`}
                   >

@@ -1,26 +1,17 @@
-/* JetBrains Mono — 通过 jsDelivr 加载（国内可访问） */
-@import url('https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5/index.css');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 字体回退栈 */
 :root {
-  --font-inter: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont,
-    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
-    sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas',
-    'SF Mono', ui-monospace, monospace;
+  --font-inter: 'Inter Variable', 'Noto Sans SC', 'SF Pro Display', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'Roboto Mono Variable', 'JetBrains Mono', 'Fira Code', 'Cascadia Code',
+    'Consolas', 'SF Mono', 'Noto Sans SC', ui-monospace, monospace;
+  --font-symbols: 'Material Symbols Rounded Variable';
 }
 
-/* ============================================================
-   CSS 变量 — 颜色系统 (HSL)
-   深色优先；.dark 类由 next-themes 控制
-   ============================================================ */
 @layer base {
   :root {
-    /* 浅色模式 */
     --background: 210 40% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
@@ -30,36 +21,32 @@
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 199 89% 48%;
-    --ember: 12 100% 71%;    /* #FF8A6B — 珊瑚橙，全模式通用 */
+    --ember: 12 100% 71%;
+    --scene-image-dim: 0.45;
+    --scene-overlay-opacity: 0.55;
+    --scene-blur: 10px;
+    --scene-accent: 199 89% 48%;
+    --scene-lightning-glow: 210 100% 88%;
   }
 
   .dark {
-    /* ── 极致暗黑夜间主题 — Zinc 冷灰系 ───────────────────
-       设计规范：
-         背景底色   #09090B  →  hsl(240 10%  4%)
-         卡片/面板  #121217  →  hsl(240 12%  8%)
-         边框/分割  #27272A  →  hsl(240  4% 16%)
-         主文本     #EDEDEF  →  hsl(240  1% 93%)
-         次要文本   #A1A1AA  →  hsl(240  3% 65%)
-         强调橙   #FF8A6B  →  hsl(var(--ember))
-       ─────────────────────────────────────────────────── */
-    --background:       240 10%  4%;   /* #09090B — zinc-950  */
-    --foreground:       240  1% 93%;   /* #EDEDEF — 珍珠灰白  */
-    --card:             240 12%  8%;   /* #121217 — surface   */
-    --card-foreground:  240  1% 93%;
-    --muted:            240  4% 16%;   /* #27272A — zinc-800  */
-    --muted-foreground: 240  4% 65%;   /* #A1A1AA — zinc-400  */
-    --border:           240  4% 16%;   /* #27272A — 极细边框  */
-    --input:            240  4% 16%;
-    --ring:             199 89% 48%;   /* ocean 蓝 — 焦点环   */
-    --ember:             12 100% 71%;  /* #FF8A6B — 珊瑚橙    */
+    --background: 240 10% 4%;
+    --foreground: 240 1% 93%;
+    --card: 240 12% 8%;
+    --card-foreground: 240 1% 93%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 4% 65%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 199 89% 48%;
+    --ember: 12 100% 71%;
+    --scene-image-dim: 0.62;
+    --scene-overlay-opacity: 0.68;
+    --scene-blur: 14px;
+    --scene-accent: 199 89% 48%;
+    --scene-lightning-glow: 210 100% 92%;
   }
-}
 
-/* ============================================================
-   全局基础样式
-   ============================================================ */
-@layer base {
   * {
     @apply border-border;
     box-sizing: border-box;
@@ -70,6 +57,7 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-family: var(--font-inter);
   }
 
   .dark {
@@ -78,16 +66,38 @@
 
   body {
     @apply bg-background text-foreground font-sans;
+    min-height: 100vh;
     font-size: 16px;
     line-height: 1.75;
+    background-image:
+      radial-gradient(circle at top, hsl(var(--ember) / 0.08), transparent 42%),
+      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
   }
 
-  h1, h2 {
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    letter-spacing: inherit;
+  }
+
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+  }
+
+  h1,
+  h2 {
     line-height: 1.2;
     letter-spacing: -0.02em;
   }
 
-  h3, h4 {
+  h3,
+  h4 {
     line-height: 1.3;
     letter-spacing: -0.01em;
   }
@@ -96,48 +106,104 @@
     @apply transition-colors duration-200;
   }
 
-  /* 滚动条 — 随主题自适应 */
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   ::-webkit-scrollbar-thumb {
-    background: #D4D4D8;
+    background: #d4d4d8;
     border-radius: 9999px;
   }
-  ::-webkit-scrollbar-thumb:hover { background: #A1A1AA; }
 
-  .dark ::-webkit-scrollbar-thumb { background: #27272A; }
-  .dark ::-webkit-scrollbar-thumb:hover { background: #3F3F46; }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a1a1aa;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #27272a;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #3f3f46;
+  }
+
+  .material-symbols-rounded {
+    font-family: var(--font-symbols);
+    font-style: normal;
+    font-weight: 400;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'liga';
+  }
 }
 
-/* ============================================================
-   发光边框交互系统
-   零阴影原则：层级靠 border 颜色变化 + 橙红 ring 体现
-   ============================================================ */
 @layer utilities {
-  /* 悬浮橙红发光边框 */
   .glow-ember {
     @apply border border-border transition-all duration-200;
   }
+
   .glow-ember:hover {
     border-color: hsl(var(--ember) / 0.5);
     box-shadow: 0 0 0 1px hsl(var(--ember) / 0.15);
   }
 
-  /* 悬浮海蓝发光边框（链接 / 系统提示） */
   .glow-ocean {
     @apply border border-border transition-all duration-200;
   }
+
   .glow-ocean:hover {
     border-color: rgba(14, 165, 233, 0.5);
     box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.12);
   }
+
+  .masonry-2 {
+    column-count: 2;
+    column-gap: 1rem;
+  }
+
+  .masonry-3 {
+    column-count: 3;
+    column-gap: 1rem;
+  }
+
+  .masonry-4 {
+    column-count: 4;
+    column-gap: 1rem;
+  }
+
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .masonry-3,
+    .masonry-4 {
+      column-count: 2;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .masonry-2,
+    .masonry-3,
+    .masonry-4 {
+      column-count: 1;
+    }
+  }
 }
 
-/* ============================================================
-   Tiptap 编辑器 / 文章 Prose 样式
-   ============================================================ */
 @layer components {
-  /* 代码块（Tiptap CodeBlockLowlight 生成 .code-block class） */
   .code-block {
     @apply my-6 overflow-x-auto p-5 font-mono text-sm leading-relaxed;
     background: #282c34;
@@ -146,114 +212,124 @@
     border: 1px solid hsl(var(--border));
   }
 
-  /* lowlight / highlight.js 语法高亮 token 颜色（Atom One Dark） */
   .code-block .hljs-keyword,
   .code-block .hljs-operator,
-  .code-block .hljs-selector-tag { color: #c678dd; }
+  .code-block .hljs-selector-tag {
+    color: #c678dd;
+  }
 
   .code-block .hljs-string,
   .code-block .hljs-addition,
-  .code-block .hljs-selector-attr { color: #98c379; }
+  .code-block .hljs-selector-attr {
+    color: #98c379;
+  }
 
   .code-block .hljs-comment,
-  .code-block .hljs-quote { color: #5c6370; font-style: italic; }
+  .code-block .hljs-quote {
+    color: #5c6370;
+    font-style: italic;
+  }
 
   .code-block .hljs-number,
   .code-block .hljs-literal,
-  .code-block .hljs-bool { color: #d19a66; }
+  .code-block .hljs-bool {
+    color: #d19a66;
+  }
 
   .code-block .hljs-function,
   .code-block .hljs-title,
-  .code-block .hljs-title.function_ { color: #61afef; }
+  .code-block .hljs-title.function_ {
+    color: #61afef;
+  }
 
   .code-block .hljs-type,
   .code-block .hljs-class,
-  .code-block .hljs-built_in { color: #e5c07b; }
+  .code-block .hljs-built_in {
+    color: #e5c07b;
+  }
 
   .code-block .hljs-variable,
   .code-block .hljs-template-variable,
-  .code-block .hljs-attr { color: #e06c75; }
+  .code-block .hljs-attr {
+    color: #e06c75;
+  }
 
-  .code-block .hljs-meta { color: #56b6c2; }
-  .code-block .hljs-punctuation { color: #abb2bf; }
+  .code-block .hljs-meta {
+    color: #56b6c2;
+  }
 
-  /* 代码块语言标签（CodeBlockLowlight 在顶部渲染的 data-language） */
+  .code-block .hljs-punctuation {
+    color: #abb2bf;
+  }
+
   .code-block[data-language]::before {
     content: attr(data-language);
     display: block;
+    margin-bottom: 12px;
     font-size: 10px;
     font-family: var(--font-mono);
     color: #5c6370;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    margin-bottom: 12px;
   }
 
-  /* ProseMirror placeholder */
   .ProseMirror p.is-editor-empty:first-child::before {
     content: attr(data-placeholder);
     @apply text-muted-foreground pointer-events-none float-left h-0;
   }
 
-  /* 节点选中高亮 */
   .ProseMirror-selectednode {
     outline: 2px dashed rgba(14, 165, 233, 0.5);
     outline-offset: 2px;
   }
 
-  /* 编辑器内图片 */
   .editor-image {
     @apply max-w-full my-4 mx-auto block rounded-xl;
   }
-  /* prose 内图片（前台渲染） */
+
   .prose img {
     @apply mx-auto rounded-xl;
   }
-}
 
-/* ============================================================
-   SSH 终端（前台渲染）
-   ============================================================ */
-@layer components {
   .ssh-terminal-render {
     @apply my-6 font-mono text-sm overflow-hidden;
     border-radius: 12px;
-    border: 1px solid #27272A;
+    border: 1px solid #27272a;
   }
 
   .ssh-terminal-render .terminal-bar {
     @apply flex items-center gap-2 px-4 py-2;
-    background: #18181B;
-    border-bottom: 1px solid #27272A;
+    background: #18181b;
+    border-bottom: 1px solid #27272a;
   }
 
   .ssh-terminal-render .terminal-body {
     @apply p-4 leading-relaxed;
-    background: #09090B;
-    color: #A1A1AA;
+    background: #09090b;
+    color: #a1a1aa;
   }
 
-  .ssh-terminal-render .cmd-prompt  { @apply text-green-400; }
-  .ssh-terminal-render .cmd-text    { color: #EDEDEF; }
-  .ssh-terminal-render .cmd-output  { @apply block mt-1 mb-3; color: #71717A; }
+  .ssh-terminal-render .cmd-prompt {
+    @apply text-green-400;
+  }
 
-  /* 打字光标 */
+  .ssh-terminal-render .cmd-text {
+    color: #edefef;
+  }
+
+  .ssh-terminal-render .cmd-output {
+    @apply block mt-1 mb-3;
+    color: #71717a;
+  }
+
   .terminal-cursor {
     @apply inline-block w-2 h-4 bg-ocean align-middle ml-0.5;
     animation: blink 1s step-end infinite;
   }
 
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
+  .game-card-flip {
+    perspective: 800px;
   }
-}
-
-/* ============================================================
-   3D 游戏卡带翻转
-   ============================================================ */
-@layer components {
-  .game-card-flip { perspective: 800px; }
 
   .game-card-inner {
     position: relative;
@@ -261,7 +337,9 @@
     transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .game-card-flip:hover .game-card-inner { transform: rotateY(180deg); }
+  .game-card-flip:hover .game-card-inner {
+    transform: rotateY(180deg);
+  }
 
   .game-card-front,
   .game-card-back {
@@ -275,24 +353,106 @@
 
   .game-card-back {
     transform: rotateY(180deg);
-    @apply flex flex-col items-center justify-center p-4;
-    @apply bg-card border border-border;
+    @apply flex flex-col items-center justify-center p-4 bg-card border border-border;
+  }
+
+  .scene-terminal-grid {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+
+  .scene-scanlines::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.02),
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+    opacity: 0.32;
+    pointer-events: none;
+  }
+
+  .scene-noise::after {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.08) 0 0.7px, transparent 0.8px),
+      radial-gradient(circle at 80% 40%, rgba(255, 255, 255, 0.04) 0 0.7px, transparent 0.8px),
+      radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.05) 0 0.7px, transparent 0.8px);
+    background-size: 22px 22px;
+    mix-blend-mode: soft-light;
+    pointer-events: none;
   }
 }
 
-/* ============================================================
-   瀑布流布局
-   ============================================================ */
-@layer utilities {
-  .masonry-2 { column-count: 2; column-gap: 1rem; }
-  .masonry-3 { column-count: 3; column-gap: 1rem; }
-  .masonry-4 { column-count: 4; column-gap: 1rem; }
-  .masonry-item { break-inside: avoid; margin-bottom: 1rem; }
-
-  @media (max-width: 768px) {
-    .masonry-3, .masonry-4 { column-count: 2; }
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
   }
-  @media (max-width: 480px) {
-    .masonry-2, .masonry-3, .masonry-4 { column-count: 1; }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes scene-rain-fall {
+  0% {
+    transform: translate3d(0, 0, 0) skewX(-16deg);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate3d(-8px, 115vh, 0) skewX(-16deg);
+    opacity: 0;
+  }
+}
+
+@keyframes scene-lightning-flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 0.04;
+  }
+
+  20% {
+    opacity: 0.18;
+  }
+
+  34% {
+    opacity: 0.03;
+  }
+
+  45% {
+    opacity: 0.12;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes scene-monitor-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.22), 0 0 28px rgba(56, 189, 248, 0.12);
+  }
+
+  50% {
+    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.32), 0 0 48px rgba(56, 189, 248, 0.18);
   }
 }

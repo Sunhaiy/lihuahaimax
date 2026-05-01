@@ -6,6 +6,13 @@
 
 import type { Metadata, Viewport } from 'next'
 import { ThemeProvider } from 'next-themes'
+import '@fontsource-variable/inter'
+import '@fontsource-variable/roboto-mono'
+import '@fontsource-variable/material-symbols-rounded'
+import '@fontsource/noto-sans-sc/chinese-simplified-400.css'
+import '@fontsource/noto-sans-sc/chinese-simplified-500.css'
+import '@fontsource/noto-sans-sc/chinese-simplified-600.css'
+import '@fontsource/noto-sans-sc/chinese-simplified-700.css'
 import './globals.css'
 
 // Google Fonts 在国内网络环境下不可用，改用本地系统字体
@@ -39,7 +46,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body>
+      <body className="font-sans antialiased bg-background text-foreground">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

@@ -6,24 +6,24 @@
 
 import { query } from '@/lib/db'
 
-export interface SettingsRecord {
+export interface SettingsRecord<T = unknown> {
   key: string
-  value: Record<string, unknown>
+  value: T
   description: string | null
   updated_at: string
 }
 
-export async function getSetting(key: string): Promise<Record<string, unknown> | null> {
-  const result = await query<SettingsRecord>('SELECT value FROM settings WHERE key = $1', [key])
+export async function getSetting<T = Record<string, unknown>>(key: string): Promise<T | null> {
+  const result = await query<SettingsRecord<T>>('SELECT value FROM settings WHERE key = $1', [key])
   return result.rows[0]?.value ?? null
 }
 
-export async function setSetting(
+export async function setSetting<T>(
   key: string,
-  value: Record<string, unknown>,
+  value: T,
   description?: string
-): Promise<SettingsRecord> {
-  const result = await query<SettingsRecord>(
+): Promise<SettingsRecord<T>> {
+  const result = await query<SettingsRecord<T>>(
     `INSERT INTO settings (key, value, description, updated_at)
      VALUES ($1, $2, $3, NOW())
      ON CONFLICT (key) DO UPDATE

@@ -210,7 +210,52 @@ CREATE TABLE IF NOT EXISTS works (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE works ADD COLUMN IF NOT EXISTS slug TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS summary TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS hero_image_url TEXT NOT NULL DEFAULT '';
+ALTER TABLE works ADD COLUMN IF NOT EXISTS seal TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS status_text TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS progress_text TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS version_text TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS price TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS original_price TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS primary_url TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS primary_label TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS secondary_url TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS secondary_label TEXT;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS contributors_json JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS milestones_json JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS gallery_json JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE works ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+UPDATE works
+SET slug = (
+  CASE
+    WHEN NULLIF(TRIM(BOTH '-' FROM regexp_replace(lower(title), '[^a-z0-9]+', '-', 'g')), '') IS NULL
+      THEN 'work'
+    ELSE NULLIF(TRIM(BOTH '-' FROM regexp_replace(lower(title), '[^a-z0-9]+', '-', 'g')), '')
+  END
+) || '-' || id
+WHERE slug IS NULL OR slug = '';
+
+UPDATE works
+SET summary = COALESCE(summary, description)
+WHERE summary IS NULL;
+
+UPDATE works
+SET hero_image_url = CASE
+  WHEN hero_image_url = '' THEN cover_url
+  ELSE hero_image_url
+END
+WHERE hero_image_url = '' OR hero_image_url IS NULL;
+
+ALTER TABLE works ALTER COLUMN slug SET NOT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_works_sort ON works(sort_order ASC, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_works_slug ON works (slug);
+CREATE INDEX IF NOT EXISTS idx_works_published_sort ON works (is_published, sort_order ASC, created_at DESC);
 
 -- 绑定触发器
 DO $$
@@ -236,6 +281,14 @@ BEGIN
   ) THEN
     CREATE TRIGGER trg_games_updated_at
       BEFORE UPDATE ON games
+      FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'trg_works_updated_at'
+  ) THEN
+    CREATE TRIGGER trg_works_updated_at
+      BEFORE UPDATE ON works
       FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
   END IF;
 END;
