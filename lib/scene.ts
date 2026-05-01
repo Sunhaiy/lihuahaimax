@@ -1,5 +1,6 @@
 import { SETTINGS_KEYS } from '@/lib/constants/settings'
 import { getSetting, setSetting } from '@/lib/db/dao/settingsDao'
+import { normalizeHexColor } from '@/lib/scene-color'
 import type {
   BackgroundSceneSettings,
   SceneEnabledPage,
@@ -11,19 +12,20 @@ export const DEFAULT_BACKGROUND_SCENE: BackgroundSceneSettings = {
     url: null,
     position: 'center center',
     size: 'cover',
-    opacity: 0.42,
+    opacity: 0.56,
   },
   weather: {
     preset: 'storm',
     intensity: 0.62,
-    enabledPages: ['home', 'moments'],
+    enabledPages: ['all'],
   },
   filter: {
-    overlay: 0.58,
-    gradient: 0.72,
-    blur: 10,
+    overlay: 0.34,
+    gradient: 0.12,
+    tintColor: '#e2e8f0',
+    blur: 8,
     noise: 0.08,
-    vignette: 0.42,
+    vignette: 0.22,
   },
 }
 
@@ -36,7 +38,7 @@ function isWeatherPreset(value: unknown): value is WeatherPreset {
 }
 
 function isEnabledPage(value: unknown): value is SceneEnabledPage {
-  return value === 'home' || value === 'moments' || value === 'works-detail'
+  return value === 'all' || value === 'home' || value === 'moments' || value === 'works-detail'
 }
 
 export function normalizeBackgroundSceneSettings(
@@ -95,6 +97,10 @@ export function normalizeBackgroundSceneSettings(
         0,
         1
       ),
+      tintColor: normalizeHexColor(
+        filter.tintColor,
+        DEFAULT_BACKGROUND_SCENE.filter.tintColor
+      ),
       blur: clamp(
         typeof filter.blur === 'number' ? filter.blur : DEFAULT_BACKGROUND_SCENE.filter.blur,
         0,
@@ -147,5 +153,8 @@ export function isSceneWeatherEnabled(
   scene: BackgroundSceneSettings,
   page: SceneEnabledPage
 ) {
-  return scene.weather.preset !== 'none' && scene.weather.enabledPages.includes(page)
+  return (
+    scene.weather.preset !== 'none' &&
+    (scene.weather.enabledPages.includes('all') || scene.weather.enabledPages.includes(page))
+  )
 }

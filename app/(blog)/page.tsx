@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { SceneBackground } from '@/components/scene/SceneBackground'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { ActivityHeatmap } from '@/components/ui/ActivityHeatmap'
 import { PostCard } from '@/components/ui/PostCard'
@@ -8,6 +7,7 @@ import { findPosts } from '@/lib/db/dao/postDao'
 import { findMoments } from '@/lib/db/dao/momentDao'
 import { getActivityHeatmap } from '@/lib/db/dao/activityDao'
 import { getBackgroundSceneSettings } from '@/lib/scene'
+import { toRgba } from '@/lib/scene-color'
 import type { MomentRow } from '@/types/moment'
 
 export const metadata: Metadata = {
@@ -72,56 +72,56 @@ export default async function HomePage({
   const hasSceneImage = Boolean(scene.image.url)
 
   return (
-    <SceneBackground scene={scene} page="home" className="min-h-screen">
+    <>
       <section className="relative -mt-16 flex min-h-[100svh] flex-col overflow-hidden">
         <div
           aria-hidden
           className="absolute inset-0"
           style={{
             background: hasSceneImage
-              ? 'linear-gradient(180deg, rgba(2, 6, 23, 0.28) 0%, rgba(2, 6, 23, 0.22) 38%, rgba(2, 6, 23, 0.72) 100%)'
-              : 'linear-gradient(180deg, rgba(2, 6, 23, 0.12) 0%, rgba(2, 6, 23, 0.08) 45%, rgba(2, 6, 23, 0.42) 100%)',
+              ? 'linear-gradient(180deg, hsl(var(--background) / 0.34) 0%, hsl(var(--background) / 0.26) 38%, hsl(var(--background) / 0.78) 100%)'
+              : 'linear-gradient(180deg, hsl(var(--background) / 0.18) 0%, hsl(var(--background) / 0.12) 45%, hsl(var(--background) / 0.46) 100%)',
           }}
         />
         <div
           aria-hidden
           className="absolute left-1/2 top-28 h-72 w-72 -translate-x-1/2 rounded-full blur-[120px]"
-          style={{ background: 'radial-gradient(circle, rgba(56, 189, 248, 0.18), transparent 70%)' }}
+          style={{ background: `radial-gradient(circle, ${toRgba(scene.filter.tintColor, Math.max(0.02, scene.filter.gradient * 0.08))}, transparent 70%)` }}
         />
 
         <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-28 sm:px-8 lg:px-10">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-xs font-medium tracking-[0.24em] text-white/55">
+            <p className="scene-copy-subtle text-xs font-medium tracking-[0.24em]">
               欢迎来到
             </p>
-            <h1 className="mt-5 text-6xl font-semibold tracking-[-0.08em] text-white sm:text-8xl">
+            <h1 className="scene-copy mt-5 text-6xl font-semibold tracking-[-0.08em] sm:text-8xl">
               梨花海
             </h1>
-            <div className="mt-6 inline-flex max-w-2xl flex-wrap items-center justify-center gap-2 rounded-full border border-white/10 bg-black/18 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.22em] text-white/62 backdrop-blur-md">
+            <div className="scene-chip mt-6 max-w-2xl flex-wrap justify-center gap-2 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.22em] backdrop-blur-md">
               <span>INTER VARIABLE</span>
-              <span className="text-white/24">/</span>
+              <span className="text-hero-subtle/40">/</span>
               <span>ROBOTO MONO VARIABLE</span>
               <span className="text-white/24">/</span>
               <span>MATERIAL SYMBOLS</span>
             </div>
-            <p className="mx-auto mt-8 max-w-xl text-base leading-8 text-white/72">
+            <p className="scene-copy-muted mx-auto mt-8 max-w-xl text-base leading-8">
               极客视角的个人数字中枢，记录代码与生活、追番与游戏，以及凌晨 3 点的每一场雷雨。
             </p>
           </div>
 
           {momentsResult.data.length > 0 ? (
             <div className="mt-auto pt-16">
-              <div className="mx-auto max-w-5xl rounded-[30px] border border-white/10 bg-black/24 p-4 shadow-[0_24px_90px_rgba(2,6,23,0.35)] backdrop-blur-xl">
+              <div className="scene-panel mx-auto max-w-5xl rounded-[30px] p-4">
                 <div className="mb-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2.5">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/74">
+                    <span className="scene-icon-badge h-8 w-8 rounded-2xl">
                       <MaterialSymbol icon="chat_bubble" size={16} />
                     </span>
                     <span className="text-sm font-medium text-white/88">瞬间</span>
                   </div>
                   <Link
                     href="/moments"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/64 transition-colors hover:bg-white/12 hover:text-white"
+                    className="scene-action h-8 w-8 justify-center"
                     aria-label="查看全部瞬间"
                   >
                     <MaterialSymbol icon="arrow_forward" size={16} />
@@ -136,12 +136,12 @@ export default async function HomePage({
                       <Link
                         key={moment.id}
                         href="/moments"
-                        className="group relative flex min-h-[148px] w-60 flex-shrink-0 flex-col justify-between overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.04] p-4 transition-colors hover:bg-white/[0.06]"
+                        className="scene-panel-soft group relative flex min-h-[148px] w-60 flex-shrink-0 flex-col justify-between overflow-hidden rounded-[22px] p-4 transition-colors hover:border-primary/24 hover:bg-hero-panel/70"
                       >
                         <div className="scene-terminal-grid absolute inset-0 opacity-[0.03]" />
                         <div className="relative z-10">
                           {moment.images.length > 0 ? (
-                            <div className="mb-3 aspect-[16/9] overflow-hidden rounded-[16px] border border-white/8 bg-black/25">
+                            <div className="mb-3 aspect-[16/9] overflow-hidden rounded-[16px] border border-hero-border/16 bg-background/30">
                               <img
                                 src={moment.images[0]}
                                 alt=""
@@ -152,7 +152,7 @@ export default async function HomePage({
 
                           {preview ? (
                             <p
-                              className={`line-clamp-4 text-xs leading-6 text-white/78 whitespace-pre-line ${
+                              className={`scene-copy-muted line-clamp-4 text-xs leading-6 whitespace-pre-line ${
                                 preview.mono ? 'font-mono' : ''
                               }`}
                             >
@@ -163,7 +163,7 @@ export default async function HomePage({
                           )}
                         </div>
 
-                        <div className="relative z-10 mt-4 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.18em] text-white/42">
+                        <div className="scene-copy-subtle relative z-10 mt-4 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.18em]">
                           <span className="inline-flex items-center gap-1.5">
                             <MaterialSymbol icon="schedule" size={13} />
                             {new Date(moment.created_at).toLocaleString('zh-CN', {
@@ -173,7 +173,7 @@ export default async function HomePage({
                               minute: '2-digit',
                             })}
                           </span>
-                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/8 text-white/50 transition-colors group-hover:bg-white/14 group-hover:text-white/84">
+                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-hero-panel/70 text-hero-subtle transition-colors group-hover:bg-primary/16 group-hover:text-hero">
                             <MaterialSymbol icon="arrow_outward" size={13} />
                           </span>
                         </div>
@@ -187,7 +187,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      <section className="relative z-10 rounded-t-[2rem] border-t border-white/5 bg-background/94 backdrop-blur-2xl">
+      <section className="relative z-10 rounded-t-[2rem] border-t border-hero-border/16 bg-background/96 backdrop-blur-2xl">
         <div className="mx-auto max-w-6xl px-4">
           <div className="grid grid-cols-1 items-start gap-8 pb-20 pt-14 lg:grid-cols-[1fr_240px]">
             <div className="min-w-0" id="latest-posts">
@@ -278,6 +278,6 @@ export default async function HomePage({
           </div>
         </div>
       </section>
-    </SceneBackground>
+    </>
   )
 }

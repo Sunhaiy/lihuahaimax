@@ -5,6 +5,7 @@ import useSWR from 'swr'
 import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
+import { toRgba } from '@/lib/scene-color'
 import type { BackgroundSceneSettings, SceneEnabledPage } from '@/types/work'
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json())
@@ -34,6 +35,7 @@ function readApiError(payload: unknown, fallback: string) {
 }
 
 const ENABLED_PAGES: Array<{ key: SceneEnabledPage; label: string; description: string }> = [
+  { key: 'all', label: '所有公共页面', description: '给首页、文章、分类、标签、友链、关于、作品等公开页面统一启用天气。' },
   { key: 'home', label: '首页 Hero', description: '推荐启用风暴天气，让首页与 Moments 共用统一氛围。' },
   { key: 'moments', label: 'Moments', description: '风暴效果主展示页，雨滴和闪电会最明显。' },
   { key: 'works-detail', label: '项目详情', description: '后续可复用到详情页场景。' },
@@ -358,10 +360,20 @@ export default function SettingsPage() {
             <SectionHeader
               icon="filter"
               title="滤镜层"
-              description="统一控制暗度、渐变、噪点、模糊和边缘压暗。"
+              description="统一控制暗度、氛围色、渐变、噪点、模糊和边缘压暗。"
             />
 
             <div className="grid gap-4 sm:grid-cols-2">
+              <ColorField
+                label="氛围色"
+                value={form.filter.tintColor}
+                onChange={(value) =>
+                  updateForm((current) => ({
+                    ...current,
+                    filter: { ...current.filter, tintColor: value },
+                  }))
+                }
+              />
               <SliderField
                 label="叠层浓度"
                 value={form.filter.overlay}
@@ -440,7 +452,7 @@ export default function SettingsPage() {
                 style={{
                   backgroundImage: form.image.url
                     ? `linear-gradient(180deg, rgba(2,6,23,${form.filter.overlay}) 0%, rgba(2,6,23,${Math.min(0.9, form.filter.overlay + form.filter.gradient * 0.24)}) 100%), url(${form.image.url})`
-                    : 'radial-gradient(circle at top, rgba(56,189,248,0.16), transparent 40%)',
+                    : `radial-gradient(circle at top, ${toRgba(form.filter.tintColor, 0.16)}, transparent 40%)`,
                   backgroundPosition: form.image.position,
                   backgroundSize: form.image.size,
                   opacity: form.image.opacity,
@@ -448,6 +460,12 @@ export default function SettingsPage() {
               >
                 <div className="absolute inset-0 scene-terminal-grid opacity-[0.04]" />
                 <div className="absolute inset-0 scene-noise" style={{ opacity: form.filter.noise }} />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: `radial-gradient(circle at top, ${toRgba(form.filter.tintColor, form.filter.gradient * 0.18)} 0%, transparent 42%)`,
+                  }}
+                />
                 <div
                   className="absolute inset-0"
                   style={{
@@ -462,7 +480,7 @@ export default function SettingsPage() {
                       Layer Stack
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {['Image', form.weather.preset, 'Filter'].map((item) => (
+                      {['Image', form.weather.preset, 'Filter', form.filter.tintColor].map((item) => (
                         <span
                           key={item}
                           className="rounded-full border border-sky-300/15 bg-sky-400/10 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-sky-100/80"
@@ -496,6 +514,7 @@ export default function SettingsPage() {
               </p>
               <ul className="mt-3 space-y-2 text-sm leading-7 text-muted-foreground">
                 <li>建议背景图宽度至少 1920px，风暴天气会在图片上叠加雨滴、闪电与暗场滤镜。</li>
+                <li>如果觉得页面像蒙了一层蓝色，优先调低“渐变强度”，或者把“氛围色”改成更中性的灰白色。</li>
                 <li>如果只想保留背景图和滤镜，把天气预设改为 <span className="font-mono text-foreground">none</span> 即可。</li>
                 <li>当前 `hero_bg` 兼容键会自动镜像为同一张图，旧页面不会断。</li>
               </ul>
@@ -572,6 +591,34 @@ function SliderField({
           value={value}
           onChange={(event) => onChange(Number(event.target.value))}
           className="mt-3 w-full accent-[hsl(var(--ember))]"
+        />
+      </div>
+    </Field>
+  )
+}
+
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <Field label={label}>
+      <div className="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+        <input
+          type="color"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="h-11 w-14 cursor-pointer rounded-xl border border-white/8 bg-transparent p-1"
+        />
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={`${INPUT_CLASS} h-11 flex-1`}
         />
       </div>
     </Field>

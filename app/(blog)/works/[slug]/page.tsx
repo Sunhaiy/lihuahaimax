@@ -1,11 +1,9 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { SceneBackground } from '@/components/scene/SceneBackground'
 import { Button } from '@/components/ui/Button'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { findWorkBySlug } from '@/lib/db/dao/worksDao'
-import { getBackgroundSceneSettings } from '@/lib/scene'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -27,10 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function WorkDetailPage({ params }: PageProps) {
   const { slug } = await params
-  const [work, scene] = await Promise.all([
-    findWorkBySlug(slug),
-    getBackgroundSceneSettings(),
-  ])
+  const work = await findWorkBySlug(slug)
 
   if (!work) notFound()
 
@@ -42,7 +37,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
       : []
 
   return (
-    <SceneBackground scene={scene} page="works-detail" className="min-h-[calc(100vh-64px)]">
+    <>
       <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-14 sm:px-6">
         <div className="pointer-events-none absolute bottom-0 right-0 hidden translate-y-8 select-none text-[180px] font-black tracking-[-0.08em] text-white/[0.03] xl:block">
           {work.slug.toUpperCase()}
@@ -298,7 +293,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
           </aside>
         </div>
       </div>
-    </SceneBackground>
+    </>
   )
 }
 

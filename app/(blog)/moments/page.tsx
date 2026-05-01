@@ -1,9 +1,7 @@
 import type { Metadata } from 'next'
-import { SceneBackground } from '@/components/scene/SceneBackground'
 import { MomentsStatusHeader } from '@/components/scene/MomentsStatusHeader'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { findMoments } from '@/lib/db/dao/momentDao'
-import { getBackgroundSceneSettings } from '@/lib/scene'
 import { SHIMMER } from '@/lib/styles'
 import type { MomentRow } from '@/types/moment'
 
@@ -30,18 +28,15 @@ function timeAgo(date: Date): string {
 }
 
 export default async function MomentsPage() {
-  const [{ data: moments }, scene] = await Promise.all([
-    findMoments({ publicOnly: true, pageSize: 50 }),
-    getBackgroundSceneSettings(),
-  ])
+  const { data: moments } = await findMoments({ publicOnly: true, pageSize: 50 })
 
   return (
-    <SceneBackground scene={scene} page="moments" className="min-h-[calc(100vh-64px)]">
+    <>
       <MomentsStatusHeader />
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-16">
         {moments.length === 0 ? (
-          <div className="rounded-[28px] border border-white/10 bg-black/20 px-8 py-24 text-center text-sm text-slate-300/72 backdrop-blur-lg">
+          <div className="scene-panel rounded-[28px] px-8 py-24 text-center text-sm scene-copy-muted">
             暂无瞬间，等下一场雨落下来。
           </div>
         ) : (
@@ -52,21 +47,21 @@ export default async function MomentsPage() {
           </div>
         )}
       </div>
-    </SceneBackground>
+    </>
   )
 }
 
 function MomentCard({ moment }: { moment: MomentRow }) {
   return (
     <article
-      className={`group relative overflow-hidden rounded-[26px] border border-white/10 bg-black/24 backdrop-blur-xl transition-all duration-300 hover:border-sky-300/20 ${SHIMMER}`}
+      className={`scene-panel group relative overflow-hidden rounded-[26px] transition-all duration-300 hover:border-primary/24 ${SHIMMER}`}
     >
       <div className="scene-terminal-grid absolute inset-0 opacity-[0.035]" />
 
       <div className="relative z-10 px-5 pt-5 pb-4 sm:px-6">
         <header className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-sky-300/15 bg-sky-300/10 text-sky-100 shadow-[0_0_24px_rgba(56,189,248,0.18)]">
+            <div className="scene-icon-badge h-11 w-11 rounded-2xl">
               <span className="text-base font-semibold">梨</span>
             </div>
             <div>
@@ -76,13 +71,13 @@ function MomentCard({ moment }: { moment: MomentRow }) {
               </p>
             </div>
           </div>
-          <time className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.22em] text-slate-300/58">
+          <time className="scene-chip px-3 py-1 text-[11px] font-mono uppercase tracking-[0.22em]">
             {timeAgo(new Date(moment.created_at))}
           </time>
         </header>
 
         {moment.content ? (
-          <p className="mt-4 text-[15px] leading-8 text-slate-100/88 whitespace-pre-line">
+          <p className="scene-copy-muted mt-4 whitespace-pre-line text-[15px] leading-8">
             {moment.content}
           </p>
         ) : null}
@@ -95,7 +90,7 @@ function MomentCard({ moment }: { moment: MomentRow }) {
 
         {moment.images.length > 0 ? (
           moment.images.length === 1 ? (
-            <div className="mt-4 overflow-hidden rounded-[22px] border border-white/8 bg-black/30">
+            <div className="mt-4 overflow-hidden rounded-[22px] border border-hero-border/16 bg-background/30">
               <img
                 src={moment.images[0]}
                 alt=""
@@ -107,7 +102,7 @@ function MomentCard({ moment }: { moment: MomentRow }) {
               {moment.images.slice(0, 4).map((url, index) => (
                 <div
                   key={index}
-                  className="relative aspect-square overflow-hidden rounded-[18px] border border-white/8 bg-black/30"
+                  className="relative aspect-square overflow-hidden rounded-[18px] border border-hero-border/16 bg-background/30"
                 >
                   <img
                     src={url}
@@ -115,7 +110,7 @@ function MomentCard({ moment }: { moment: MomentRow }) {
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                   {index === 3 && moment.images.length > 4 ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/58">
                       <span className="text-white font-semibold">+{moment.images.length - 4}</span>
                     </div>
                   ) : null}
@@ -134,10 +129,10 @@ function MomentCard({ moment }: { moment: MomentRow }) {
         ) : null}
       </div>
 
-      <footer className="relative z-10 mt-4 flex items-center gap-3 border-t border-white/8 px-5 py-3 sm:px-6">
+      <footer className="relative z-10 mt-4 flex items-center gap-3 border-t border-hero-border/16 px-5 py-3 sm:px-6">
         <ActionChip icon="share" label="分享" />
         <ActionChip icon="favorite" label="喜欢" />
-        <span className="ml-auto text-[11px] font-mono uppercase tracking-[0.22em] text-slate-300/42">
+        <span className="scene-copy-subtle ml-auto text-[11px] font-mono uppercase tracking-[0.22em]">
           {new Date(moment.created_at).toLocaleDateString('zh-CN', {
             month: '2-digit',
             day: '2-digit',
@@ -150,7 +145,7 @@ function MomentCard({ moment }: { moment: MomentRow }) {
 
 function MetaBadge({ icon, label }: { icon: string; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-300/12 bg-sky-300/8 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.16em] text-sky-100/75">
+    <span className="scene-chip-primary gap-1.5 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.16em]">
       <MaterialSymbol icon={icon} size={14} />
       {label}
     </span>
@@ -159,7 +154,7 @@ function MetaBadge({ icon, label }: { icon: string; label: string }) {
 
 function ActionChip({ icon, label }: { icon: string; label: string }) {
   return (
-    <button className="inline-flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.04] px-3 py-1.5 text-[11px] font-mono uppercase tracking-[0.18em] text-slate-300/60 transition-colors hover:border-sky-300/20 hover:text-sky-100/82">
+    <button className="scene-action px-3 py-1.5 text-[11px] font-mono uppercase tracking-[0.18em]">
       <MaterialSymbol icon={icon} size={14} />
       {label}
     </button>
@@ -169,11 +164,11 @@ function ActionChip({ icon, label }: { icon: string; label: string }) {
 function MiBandData({ type, meta }: { type: string; meta: Record<string, unknown> }) {
   if (type === 'sleep') {
     return (
-      <div className="rounded-[20px] border border-white/8 bg-white/[0.04] p-4">
-        <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-slate-300/52">
+      <div className="rounded-[20px] border border-hero-border/16 bg-hero-panel/52 p-4">
+        <p className="scene-copy-subtle text-[11px] font-mono uppercase tracking-[0.24em]">
           Sleep Telemetry
         </p>
-        <div className="mt-3 flex flex-wrap gap-3 text-xs font-mono text-slate-200/78">
+        <div className="scene-copy-muted mt-3 flex flex-wrap gap-3 text-xs font-mono">
           {meta.sleepStart != null ? <span>入睡 {String(meta.sleepStart)}</span> : null}
           {meta.sleepEnd != null ? <span>起床 {String(meta.sleepEnd)}</span> : null}
           {typeof meta.deepSleepMinutes === 'number' ? (
@@ -189,11 +184,11 @@ function MiBandData({ type, meta }: { type: string; meta: Record<string, unknown
 
   if (type === 'steps') {
     return (
-      <div className="rounded-[20px] border border-white/8 bg-white/[0.04] p-4">
-        <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-slate-300/52">
+      <div className="rounded-[20px] border border-hero-border/16 bg-hero-panel/52 p-4">
+        <p className="scene-copy-subtle text-[11px] font-mono uppercase tracking-[0.24em]">
           Motion Telemetry
         </p>
-        <div className="mt-3 flex flex-wrap gap-3 text-xs font-mono text-slate-200/78">
+        <div className="scene-copy-muted mt-3 flex flex-wrap gap-3 text-xs font-mono">
           {typeof meta.steps === 'number' ? (
             <span className="text-sky-200">{meta.steps.toLocaleString()} 步</span>
           ) : null}

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const enabledPageSchema = z.enum(['home', 'moments', 'works-detail'])
+const enabledPageSchema = z.enum(['all', 'home', 'moments', 'works-detail'])
 
 function isUrl(value: string | null | undefined) {
   if (!value) return true
@@ -28,6 +28,7 @@ export const backgroundSceneSchema = z.object({
   filter: z.object({
     overlay: z.number().min(0).max(1),
     gradient: z.number().min(0).max(1),
+    tintColor: z.string().trim().regex(/^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/),
     blur: z.number().min(0).max(24),
     noise: z.number().min(0).max(1),
     vignette: z.number().min(0).max(1),

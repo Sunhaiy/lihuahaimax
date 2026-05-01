@@ -1,5 +1,5 @@
 export type WeatherPreset = 'none' | 'storm'
-export type SceneEnabledPage = 'home' | 'moments' | 'works-detail'
+export type SceneEnabledPage = 'all' | 'home' | 'moments' | 'works-detail'
 
 export interface BackgroundSceneSettings {
   image: {
@@ -16,6 +16,7 @@ export interface BackgroundSceneSettings {
   filter: {
     overlay: number
     gradient: number
+    tintColor: string
     blur: number
     noise: number
     vignette: number

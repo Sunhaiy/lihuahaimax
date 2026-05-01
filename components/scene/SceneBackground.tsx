@@ -3,6 +3,7 @@
 import { SceneContentLayer } from './SceneContentLayer'
 import { SceneFilterLayer } from './SceneFilterLayer'
 import { SceneWeatherLayer } from './SceneWeatherLayer'
+import { toRgba } from '@/lib/scene-color'
 import type { BackgroundSceneSettings, SceneEnabledPage } from '@/types/work'
 
 interface SceneBackgroundProps {
@@ -17,7 +18,10 @@ function isSceneWeatherEnabled(
   scene: BackgroundSceneSettings,
   page: SceneEnabledPage
 ) {
-  return scene.weather.preset !== 'none' && scene.weather.enabledPages.includes(page)
+  return scene.weather.preset !== 'none' && (
+    scene.weather.enabledPages.includes('all') ||
+    scene.weather.enabledPages.includes(page)
+  )
 }
 
 export function SceneBackground({
@@ -36,7 +40,9 @@ export function SceneBackground({
         <div
           className="absolute inset-0"
           style={{
-            backgroundImage: hasImage ? `url(${scene.image.url})` : 'radial-gradient(circle at top, rgba(56, 189, 248, 0.16), transparent 40%)',
+            backgroundImage: hasImage
+              ? `url(${scene.image.url})`
+              : `radial-gradient(circle at top, ${toRgba(scene.filter.tintColor, 0.16)}, transparent 40%)`,
             backgroundPosition: scene.image.position,
             backgroundSize: scene.image.size,
             opacity: scene.image.opacity,
@@ -45,7 +51,7 @@ export function SceneBackground({
         />
         <div
           className="absolute inset-0"
-          style={{ background: `rgba(2, 6, 23, ${0.32 + scene.image.opacity * 0.35})` }}
+          style={{ background: `hsl(var(--background) / ${0.14 + scene.image.opacity * 0.18})` }}
         />
         <div className="absolute inset-0 scene-terminal-grid opacity-[0.03]" />
         <SceneFilterLayer scene={scene} />

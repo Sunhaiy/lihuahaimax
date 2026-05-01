@@ -896,7 +896,7 @@ async function seed() {
       INSERT INTO settings (key, value, description) VALUES
         (
           'site.background_scene',
-          '{"image":{"url":null,"position":"center center","size":"cover","opacity":0.42},"weather":{"preset":"storm","intensity":0.62,"enabledPages":["home","moments"]},"filter":{"overlay":0.58,"gradient":0.72,"blur":10,"noise":0.08,"vignette":0.42}}',
+          '{"image":{"url":null,"position":"center center","size":"cover","opacity":0.56},"weather":{"preset":"storm","intensity":0.62,"enabledPages":["all"]},"filter":{"overlay":0.34,"gradient":0.12,"tintColor":"#e2e8f0","blur":8,"noise":0.08,"vignette":0.22}}',
           'Global background scene settings'
         )
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()

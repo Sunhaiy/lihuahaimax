@@ -13,6 +13,18 @@ const config: Config = {
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        primary: {
+          DEFAULT: 'hsl(var(--primary) / <alpha-value>)',
+          foreground: 'hsl(var(--primary-foreground) / <alpha-value>)',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary) / <alpha-value>)',
+          foreground: 'hsl(var(--secondary-foreground) / <alpha-value>)',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent) / <alpha-value>)',
+          foreground: 'hsl(var(--accent-foreground) / <alpha-value>)',
+        },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
@@ -21,9 +33,28 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        surface: {
+          DEFAULT: 'hsl(var(--surface) / <alpha-value>)',
+          foreground: 'hsl(var(--surface-foreground) / <alpha-value>)',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        line: {
+          DEFAULT: 'hsl(var(--line) / <alpha-value>)',
+          strong: 'hsl(var(--line-strong) / <alpha-value>)',
+        },
+        hero: {
+          DEFAULT: 'hsl(var(--hero-foreground) / <alpha-value>)',
+          muted: 'hsl(var(--hero-muted) / <alpha-value>)',
+          subtle: 'hsl(var(--hero-subtle) / <alpha-value>)',
+          panel: 'hsl(var(--hero-panel) / <alpha-value>)',
+          border: 'hsl(var(--hero-panel-border) / <alpha-value>)',
+        },
+        weather: {
+          rain: 'hsl(var(--weather-rain) / <alpha-value>)',
+          flash: 'hsl(var(--weather-flash) / <alpha-value>)',
+        },
         ocean: {
           DEFAULT: '#0EA5E9',
           50: '#f0f9ff',

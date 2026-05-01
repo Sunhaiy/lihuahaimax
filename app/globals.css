@@ -20,30 +20,64 @@
     --muted-foreground: 215 16% 47%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 199 89% 48%;
-    --ember: 12 100% 71%;
+    --ring: 192 84% 45%;
+    --primary: 192 84% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 32% 96%;
+    --secondary-foreground: 215 25% 27%;
+    --accent: 24 94% 64%;
+    --accent-foreground: 24 38% 18%;
+    --surface: 0 0% 100%;
+    --surface-foreground: 222 47% 11%;
+    --line: 214 28% 84%;
+    --line-strong: 214 22% 72%;
+    --hero-foreground: 222 47% 11%;
+    --hero-muted: 215 22% 28%;
+    --hero-subtle: 215 16% 42%;
+    --hero-panel: 0 0% 100%;
+    --hero-panel-border: 214 28% 78%;
+    --weather-rain: 198 94% 74%;
+    --weather-flash: 210 100% 97%;
+    --ember: var(--accent);
     --scene-image-dim: 0.45;
     --scene-overlay-opacity: 0.55;
     --scene-blur: 10px;
-    --scene-accent: 199 89% 48%;
+    --scene-accent: var(--primary);
     --scene-lightning-glow: 210 100% 88%;
   }
 
   .dark {
-    --background: 240 10% 4%;
-    --foreground: 240 1% 93%;
-    --card: 240 12% 8%;
-    --card-foreground: 240 1% 93%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 4% 65%;
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 199 89% 48%;
-    --ember: 12 100% 71%;
+    --background: 220 28% 8%;
+    --foreground: 210 20% 96%;
+    --card: 220 24% 11%;
+    --card-foreground: 210 20% 96%;
+    --muted: 218 18% 15%;
+    --muted-foreground: 214 14% 72%;
+    --border: 217 18% 20%;
+    --input: 217 18% 20%;
+    --ring: 190 88% 56%;
+    --primary: 190 88% 56%;
+    --primary-foreground: 220 28% 8%;
+    --secondary: 216 20% 16%;
+    --secondary-foreground: 210 22% 92%;
+    --accent: 26 96% 68%;
+    --accent-foreground: 24 40% 16%;
+    --surface: 220 22% 13%;
+    --surface-foreground: 210 25% 97%;
+    --line: 215 18% 28%;
+    --line-strong: 212 18% 40%;
+    --hero-foreground: 210 24% 97%;
+    --hero-muted: 212 18% 82%;
+    --hero-subtle: 212 14% 66%;
+    --hero-panel: 220 24% 12%;
+    --hero-panel-border: 192 42% 38%;
+    --weather-rain: 196 100% 88%;
+    --weather-flash: 210 100% 98%;
+    --ember: var(--accent);
     --scene-image-dim: 0.62;
     --scene-overlay-opacity: 0.68;
     --scene-blur: 14px;
-    --scene-accent: 199 89% 48%;
+    --scene-accent: var(--primary);
     --scene-lightning-glow: 210 100% 92%;
   }
 
@@ -70,7 +104,8 @@
     font-size: 16px;
     line-height: 1.75;
     background-image:
-      radial-gradient(circle at top, hsl(var(--ember) / 0.08), transparent 42%),
+      radial-gradient(circle at top, hsl(var(--primary) / 0.1), transparent 38%),
+      radial-gradient(circle at 85% 12%, hsl(var(--accent) / 0.08), transparent 24%),
       linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
   }
 
@@ -116,20 +151,20 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #d4d4d8;
+    background: hsl(var(--line));
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #a1a1aa;
+    background: hsl(var(--line-strong));
   }
 
   .dark ::-webkit-scrollbar-thumb {
-    background: #27272a;
+    background: hsl(var(--line));
   }
 
   .dark ::-webkit-scrollbar-thumb:hover {
-    background: #3f3f46;
+    background: hsl(var(--line-strong));
   }
 
   .material-symbols-rounded {
@@ -163,8 +198,87 @@
   }
 
   .glow-ocean:hover {
-    border-color: rgba(14, 165, 233, 0.5);
-    box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.12);
+    border-color: hsl(var(--primary) / 0.48);
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.12);
+  }
+
+  .scene-copy {
+    color: hsl(var(--hero-foreground));
+    text-shadow: 0 1px 0 rgba(2, 6, 23, 0.16);
+  }
+
+  .scene-copy-muted {
+    color: hsl(var(--hero-muted));
+  }
+
+  .scene-copy-subtle {
+    color: hsl(var(--hero-subtle));
+  }
+
+  .scene-panel {
+    border: 1px solid hsl(var(--hero-panel-border) / 0.28);
+    background: hsl(var(--hero-panel) / 0.78);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow:
+      0 24px 90px rgba(2, 6, 23, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .scene-panel-soft {
+    border: 1px solid hsl(var(--hero-panel-border) / 0.22);
+    background: hsl(var(--hero-panel) / 0.62);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow:
+      0 16px 48px rgba(2, 6, 23, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .scene-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--hero-panel-border) / 0.22);
+    background: hsl(var(--hero-panel) / 0.6);
+    color: hsl(var(--hero-muted));
+  }
+
+  .scene-chip-primary {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--primary) / 0.2);
+    background: hsl(var(--primary) / 0.12);
+    color: hsl(var(--hero-foreground));
+    box-shadow: 0 0 24px hsl(var(--primary) / 0.14);
+  }
+
+  .scene-icon-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid hsl(var(--primary) / 0.2);
+    background: hsl(var(--primary) / 0.12);
+    color: hsl(var(--hero-foreground));
+    box-shadow: 0 0 24px hsl(var(--primary) / 0.16);
+  }
+
+  .scene-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--hero-panel-border) / 0.18);
+    background: hsl(var(--hero-panel) / 0.58);
+    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+    color: hsl(var(--hero-subtle));
+  }
+
+  .scene-action:hover {
+    border-color: hsl(var(--primary) / 0.28);
+    color: hsl(var(--hero-foreground));
+    background: hsl(var(--hero-panel) / 0.74);
   }
 
   .masonry-2 {

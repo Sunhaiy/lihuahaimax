@@ -26,15 +26,15 @@ function eyeClass(expression: Expression) {
 function mouthClass(expression: Expression) {
   switch (expression) {
     case 'happy':
-      return 'h-[3px] w-[48px] rounded-full bg-[#f2b94b]'
+      return 'h-[3px] w-[48px] rounded-full bg-accent shadow-[0_0_10px_hsl(var(--accent)/0.55)]'
     case 'surprised':
-      return 'h-[16px] w-[16px] rounded-full bg-transparent border-[3px] border-[#f2b94b]'
+      return 'h-[16px] w-[16px] rounded-full border-[3px] border-accent bg-transparent shadow-[0_0_10px_hsl(var(--accent)/0.35)]'
     case 'error':
-      return 'h-[3px] w-[42px] rotate-[-12deg] rounded-full bg-[#f2b94b]'
+      return 'h-[3px] w-[42px] rotate-[-12deg] rounded-full bg-accent shadow-[0_0_10px_hsl(var(--accent)/0.55)]'
     case 'loading':
-      return 'h-[3px] w-[56px] rounded-full bg-[#f2b94b] animate-pulse'
+      return 'h-[3px] w-[56px] rounded-full bg-accent shadow-[0_0_10px_hsl(var(--accent)/0.55)] animate-pulse'
     default:
-      return 'h-[3px] w-[40px] rounded-full bg-[#f2b94b]'
+      return 'h-[3px] w-[40px] rounded-full bg-accent shadow-[0_0_10px_hsl(var(--accent)/0.55)]'
   }
 }
 
@@ -55,14 +55,14 @@ export function MomentsStatusHeader() {
     <header className="mx-auto flex max-w-5xl justify-center px-4 pb-10 pt-14 sm:px-6">
       <div className="flex flex-col items-center">
         <div className="relative flex flex-col items-center transition-transform duration-300 hover:-translate-y-1">
-          <div className="relative flex h-[176px] w-[214px] items-center justify-center rounded-[28px] border-[4px] border-[#2a2a2a] bg-[#1a1a1a] shadow-[0_10px_0_#0a0a0a,0_0_26px_rgba(242,185,75,0.12)]">
+          <div className="relative flex h-[176px] w-[214px] items-center justify-center rounded-[28px] border-[4px] border-line/80 bg-surface/95 shadow-[0_10px_0_hsl(var(--line)/0.82),0_0_30px_hsl(var(--accent)/0.14)]">
             <div className="absolute -top-9 left-0 right-0">
-              <div className="absolute left-[52px] h-9 w-1 rotate-[-30deg] rounded-full bg-[#2a2a2a]" />
-              <div className="absolute right-[52px] h-9 w-1 rotate-[30deg] rounded-full bg-[#2a2a2a]" />
+              <div className="absolute left-[52px] h-9 w-1 rotate-[-30deg] rounded-full bg-line" />
+              <div className="absolute right-[52px] h-9 w-1 rotate-[30deg] rounded-full bg-line" />
             </div>
 
-            <div className="relative h-[128px] w-[162px] overflow-hidden rounded-[18px] border-2 border-[#222] bg-[#050505] shadow-[inset_0_0_20px_rgba(0,0,0,1)]">
-              <div className="absolute inset-0 shadow-[inset_0_0_15px_rgba(242,185,75,0.2)]" />
+            <div className="relative h-[128px] w-[162px] overflow-hidden rounded-[18px] border-2 border-line bg-background shadow-[inset_0_0_20px_rgba(0,0,0,1)]">
+              <div className="absolute inset-0 shadow-[inset_0_0_22px_hsl(var(--accent)/0.16)]" />
               <div
                 className="absolute inset-0 opacity-30"
                 style={{
@@ -74,10 +74,10 @@ export function MomentsStatusHeader() {
               <div className="relative z-10 flex h-full flex-col items-center justify-center gap-5">
                 <div className="flex items-center gap-6">
                   <span
-                    className={`${eyeClass(expression)} bg-[#f2b94b] shadow-[0_0_10px_#f2b94b] transition-all duration-300`}
+                    className={`${eyeClass(expression)} bg-accent shadow-[0_0_12px_hsl(var(--accent)/0.58)] transition-all duration-300`}
                   />
                   <span
-                    className={`${eyeClass(expression)} bg-[#f2b94b] shadow-[0_0_10px_#f2b94b] transition-all duration-300`}
+                    className={`${eyeClass(expression)} bg-accent shadow-[0_0_12px_hsl(var(--accent)/0.58)] transition-all duration-300`}
                   />
                 </div>
                 <span className={`${mouthClass(expression)} transition-all duration-300`} />
@@ -85,13 +85,13 @@ export function MomentsStatusHeader() {
             </div>
           </div>
 
-          <div className="h-3 w-[72px] rounded-b-[12px] bg-[#1a1a1a]" />
+          <div className="h-3 w-[72px] rounded-b-[12px] bg-surface/95" />
         </div>
 
-        <p className="mt-5 text-[11px] font-mono uppercase tracking-[0.3em] text-[#6b7280]">
+        <p className="scene-copy-subtle mt-5 text-[11px] font-mono uppercase tracking-[0.3em]">
           TERMINAL_STATUS: {expression.toUpperCase()}
         </p>
-        <p className="mt-4 max-w-2xl text-center text-sm leading-7 text-slate-300/72">
+        <p className="scene-copy-muted mt-4 max-w-2xl text-center text-sm leading-7">
           把一闪而过的想法、失眠后的凌晨、手环里的睡眠曲线和突然落下的大雨，
           一起收进这片持续闪烁的终端屏幕里。
         </p>

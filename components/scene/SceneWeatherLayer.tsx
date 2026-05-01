@@ -82,15 +82,15 @@ export function SceneWeatherLayer({
           <span
             key={`${drop.left}-${index}`}
             className="absolute -top-[140px] w-[1.5px]"
-            style={{
-              left: drop.left,
-              height: drop.height,
-              opacity: drop.opacity,
-              background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.86))',
-              mixBlendMode: 'screen',
-              animation: `scene-rain-fall ${drop.duration} linear infinite`,
-              animationDelay: drop.delay,
-            }}
+              style={{
+                left: drop.left,
+                height: drop.height,
+                opacity: drop.opacity,
+                background: 'linear-gradient(to bottom, transparent, hsl(var(--weather-rain) / 0.86))',
+                mixBlendMode: 'screen',
+                animation: `scene-rain-fall ${drop.duration} linear infinite`,
+                animationDelay: drop.delay,
+              }}
           />
         ))}
       </div>
@@ -99,18 +99,19 @@ export function SceneWeatherLayer({
         <div
           className={`absolute inset-0 transition-opacity duration-75 ${isFlashing ? 'opacity-100' : 'opacity-0'}`}
           style={{
-            background: 'rgba(255, 255, 255, 0.14)',
+            background: 'hsl(var(--weather-flash) / 0.14)',
             animation: isFlashing ? 'scene-lightning-flash 0.25s ease-out forwards' : undefined,
           }}
         />
 
         {isFlashing ? (
           <div
-            className="absolute top-0 bottom-0 z-[6] w-[2px] blur-[1px]"
+            className="absolute top-0 bottom-0 z-[6] w-[3px] blur-[1.5px]"
             style={{
               left: `${boltPos}%`,
-              background: '#fff',
-              boxShadow: '0 0 20px #fff, 0 0 40px #fff, 0 0 80px rgba(242, 185, 75, 0.65)',
+              background: 'hsl(var(--weather-flash))',
+              boxShadow:
+                '0 0 20px hsl(var(--weather-flash) / 0.96), 0 0 44px hsl(var(--weather-rain) / 0.44), 0 0 86px hsl(var(--primary) / 0.24)',
               transform: 'skewX(-15deg)',
             }}
           />
