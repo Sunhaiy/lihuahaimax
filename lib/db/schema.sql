@@ -57,8 +57,32 @@ CREATE TABLE IF NOT EXISTS moments (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE moments
+  ADD COLUMN IF NOT EXISTS share_count INTEGER NOT NULL DEFAULT 0;
+
 CREATE INDEX IF NOT EXISTS idx_moments_created ON moments (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_moments_type    ON moments (type);
+
+CREATE TABLE IF NOT EXISTS moment_likes (
+  id          SERIAL PRIMARY KEY,
+  moment_id   INTEGER     NOT NULL REFERENCES moments(id) ON DELETE CASCADE,
+  visitor_key TEXT        NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (moment_id, visitor_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_moment_likes_moment ON moment_likes (moment_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS moment_comments (
+  id          SERIAL PRIMARY KEY,
+  moment_id   INTEGER     NOT NULL REFERENCES moments(id) ON DELETE CASCADE,
+  author_name TEXT        NOT NULL,
+  content     TEXT        NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_moment_comments_moment
+  ON moment_comments (moment_id, created_at DESC);
 
 -- ============================================================
 -- 动漫表

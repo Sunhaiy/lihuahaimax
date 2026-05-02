@@ -1,9 +1,3 @@
-/**
- * app/layout.tsx
- *
- * 根布局 — 全局字体、主题 Provider、Meta 默认值。
- */
-
 import type { Metadata, Viewport } from 'next'
 import { ThemeProvider } from 'next-themes'
 import '@fontsource-variable/inter'
@@ -13,27 +7,34 @@ import '@fontsource/noto-sans-sc/chinese-simplified-400.css'
 import '@fontsource/noto-sans-sc/chinese-simplified-500.css'
 import '@fontsource/noto-sans-sc/chinese-simplified-600.css'
 import '@fontsource/noto-sans-sc/chinese-simplified-700.css'
+import { DEFAULT_SITE_PROFILE, getSiteProfile } from '@/lib/site'
 import './globals.css'
 
-// Google Fonts 在国内网络环境下不可用，改用本地系统字体
-// CSS 变量 --font-inter 在 globals.css 中有回退定义
+export async function generateMetadata(): Promise<Metadata> {
+  const profile = await getSiteProfile().catch(() => DEFAULT_SITE_PROFILE)
+  const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000')
 
-export const metadata: Metadata = {
-  title: {
-    default: '梨花海 · Lihua Hai',
-    template: '%s | 梨花海',
-  },
-  description: '极客视角的个人数字中枢。文章、瞬间、ACG、光影相册。',
-  authors: [{ name: '梨花海' }],
-  openGraph: {
-    type: 'website',
-    locale: 'zh_CN',
-    siteName: '梨花海',
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  return {
+    metadataBase,
+    title: {
+      default: `${profile.siteName} · ${profile.siteNameEn}`,
+      template: `%s | ${profile.siteName}`,
+    },
+    description: profile.bio,
+    authors: [{ name: profile.ownerName }],
+    openGraph: {
+      type: 'website',
+      locale: 'zh_CN',
+      siteName: profile.siteName,
+      title: profile.siteName,
+      description: profile.bio,
+      images: profile.avatarUrl ? [profile.avatarUrl] : [],
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  }
 }
 
 export const viewport: Viewport = {
@@ -46,7 +47,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body className="font-sans antialiased bg-background text-foreground">
+      <body className="bg-background font-sans antialiased text-foreground">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

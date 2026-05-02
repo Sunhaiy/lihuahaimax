@@ -106,7 +106,7 @@ export default async function AcgPage() {
                   <p className="text-sm font-semibold text-foreground text-center mb-3">{game.title}</p>
                   <div className="space-y-1 text-xs text-muted-foreground font-mono text-center">
                     <p>{game.platform.toUpperCase()}</p>
-                    <p className="text-ocean">{GAME_STATUS_LABELS[game.status]}</p>
+                    <p className="text-primary">{GAME_STATUS_LABELS[game.status]}</p>
                     {game.play_hours && <p>{game.play_hours}h</p>}
                     {game.rating && <p className="text-ember">★ {game.rating}</p>}
                   </div>

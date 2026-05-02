@@ -17,8 +17,8 @@ interface CardProps {
 
 export function Card({ children, className = '', hoverable = false, glow = 'none', onClick }: CardProps) {
   const glowCls = {
-    ember: 'hover:[border-color:rgba(255,138,107,0.5)] hover:[box-shadow:0_0_0_1px_rgba(255,138,107,0.12)]',
-    ocean: 'hover:[border-color:rgba(14,165,233,0.5)] hover:[box-shadow:0_0_0_1px_rgba(14,165,233,0.10)]',
+    ember: 'hover:[border-color:hsl(var(--ember)/0.5)] hover:[box-shadow:0_0_0_1px_hsl(var(--ember)/0.12)]',
+    ocean: 'hover:[border-color:hsl(var(--primary)/0.5)] hover:[box-shadow:0_0_0_1px_hsl(var(--primary)/0.1)]',
     none:  '',
   }[glow]
 

@@ -7,10 +7,20 @@ import { auth } from '@/auth'
 import { findAnimeById, updateAnime, deleteAnime } from '@/lib/db/dao/acgDao'
 import { z } from 'zod'
 
+function isUploadOrAbsoluteUrl(value: string) {
+  if (value.startsWith('/')) return true
+  try {
+    new URL(value)
+    return true
+  } catch {
+    return false
+  }
+}
+
 const updateSchema = z.object({
   title: z.string().min(1).optional(),
   titleCn: z.string().optional(),
-  coverUrl: z.string().url().optional(),
+  coverUrl: z.string().trim().refine(isUploadOrAbsoluteUrl, 'Invalid cover URL').optional(),
   type: z.enum(['tv', 'movie', 'ova', 'special']).optional(),
   episodesTotal: z.number().int().positive().optional(),
   episodesWatched: z.number().int().min(0).optional(),

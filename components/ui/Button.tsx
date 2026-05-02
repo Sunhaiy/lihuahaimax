@@ -24,7 +24,7 @@ const variantClasses: Record<Variant, string> = {
   // 主题强调色 #FF8A6B — 关键操作按钮，带珊瑚橙微发光
   primary:
     'bg-ember text-white hover:bg-ember-600' +
-    ' [box-shadow:0_0_0_1px_rgba(255,138,107,0.2)] hover:[box-shadow:0_0_16px_rgba(255,138,107,0.35),0_0_0_1px_rgba(255,138,107,0.3)]',
+    ' [box-shadow:0_0_0_1px_hsl(var(--ember)/0.22)] hover:[box-shadow:0_0_16px_hsl(var(--ember)/0.32),0_0_0_1px_hsl(var(--ember)/0.3)]',
   // 次要按钮：zinc 边框，hover 时边框微亮
   secondary:
     'bg-transparent text-foreground border border-border hover:border-zinc-400 dark:hover:border-zinc-600 hover:bg-black/[0.03] dark:hover:bg-white/[0.03]',
@@ -44,7 +44,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = 'primary', size = 'md', loading = false, fullWidth = false, asChild = false, className = '', disabled, children, ...props }, ref) => {
     const cls = [
       'inline-flex items-center justify-center rounded-base font-sans font-medium',
-      'transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/50',
+      'transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
       'disabled:opacity-50 disabled:cursor-not-allowed',
       variantClasses[variant],
       sizeClasses[size],

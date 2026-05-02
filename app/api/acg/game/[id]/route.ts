@@ -7,10 +7,24 @@ import { auth } from '@/auth'
 import { findGameById, updateGame, deleteGame } from '@/lib/db/dao/acgDao'
 import { z } from 'zod'
 
+function isUploadOrAbsoluteUrl(value: string) {
+  if (value.startsWith('/')) return true
+  try {
+    new URL(value)
+    return true
+  } catch {
+    return false
+  }
+}
+
 const updateSchema = z.object({
   title: z.string().min(1).optional(),
-  coverUrl: z.string().url().optional(),
-  cartridgeImageUrl: z.string().url().optional(),
+  coverUrl: z.string().trim().refine(isUploadOrAbsoluteUrl, 'Invalid cover URL').optional(),
+  cartridgeImageUrl: z
+    .string()
+    .trim()
+    .refine(isUploadOrAbsoluteUrl, 'Invalid cartridge image URL')
+    .optional(),
   platform: z.enum(['pc', 'ps5', 'ps4', 'switch', 'xbox', 'mobile', 'other']).optional(),
   status: z.enum(['playing', 'completed', 'abandoned', 'plan_to_play', 'platinum']).optional(),
   playHours: z.number().min(0).optional(),

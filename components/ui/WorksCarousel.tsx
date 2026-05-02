@@ -77,7 +77,7 @@ export function WorksCarousel({ works }: Props) {
                 cursor: clickable ? 'pointer' : 'default',
               }}
             >
-              <div className="overflow-hidden rounded-[28px] border border-white/10 bg-black/24 shadow-[0_18px_80px_rgba(2,6,23,0.35)] backdrop-blur-xl">
+              <div className="overflow-hidden rounded-[28px] border border-border/70 bg-card/90 shadow-[0_18px_80px_rgba(2,6,23,0.22)] backdrop-blur-xl">
                 <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                   {work.cover_url ? (
                     <img
@@ -86,8 +86,8 @@ export function WorksCarousel({ works }: Props) {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-ember/20 via-card to-muted">
-                      <span className="text-[88px] font-black tracking-[-0.08em] text-ember/25">
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/18 via-card to-muted">
+                      <span className="text-[88px] font-black tracking-[-0.08em] text-primary/25">
                         {work.title.charAt(0)}
                       </span>
                     </div>
@@ -97,12 +97,12 @@ export function WorksCarousel({ works }: Props) {
                     <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.22em] text-slate-100/78">
                       {work.year ?? 'Archive'}
                     </span>
-                    <span className="rounded-full border border-sky-300/15 bg-sky-300/10 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-sky-100/80">
+                    <span className="rounded-full border border-primary/16 bg-primary/12 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-white/78">
                       /works/{work.slug}
                     </span>
                   </div>
                   <div className="absolute inset-x-0 bottom-0 p-6">
-                    <p className="text-[11px] font-mono uppercase tracking-[0.32em] text-sky-100/52">
+                    <p className="text-[11px] font-mono uppercase tracking-[0.32em] text-white/46">
                       Project Archive
                     </p>
                     <h3 className="mt-3 text-3xl font-semibold tracking-[-0.05em] text-white sm:text-4xl">
@@ -122,7 +122,7 @@ export function WorksCarousel({ works }: Props) {
           onClick={() => setActive((current) => Math.max(0, current - 1))}
           disabled={active === 0}
           aria-label="上一项"
-          className="absolute left-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-background/70 text-muted-foreground backdrop-blur-md transition-all hover:border-sky-300/20 hover:text-sky-100 disabled:cursor-not-allowed disabled:opacity-25 sm:left-5"
+          className="absolute left-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/82 text-muted-foreground backdrop-blur-md transition-all hover:border-primary/24 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-25 sm:left-5"
         >
           <MaterialSymbol icon="chevron_left" size={22} />
         </button>
@@ -130,7 +130,7 @@ export function WorksCarousel({ works }: Props) {
           onClick={() => setActive((current) => Math.min(works.length - 1, current + 1))}
           disabled={active === works.length - 1}
           aria-label="下一项"
-          className="absolute right-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-background/70 text-muted-foreground backdrop-blur-md transition-all hover:border-sky-300/20 hover:text-sky-100 disabled:cursor-not-allowed disabled:opacity-25 sm:right-5"
+          className="absolute right-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/82 text-muted-foreground backdrop-blur-md transition-all hover:border-primary/24 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-25 sm:right-5"
         >
           <MaterialSymbol icon="chevron_right" size={22} />
         </button>
@@ -143,14 +143,14 @@ export function WorksCarousel({ works }: Props) {
             onClick={() => setActive(index)}
             aria-label={`跳到 ${work.title}`}
             className={`rounded-full transition-all duration-300 ${
-              index === active ? 'h-2 w-8 bg-ember' : 'h-2 w-2 bg-white/20 hover:bg-white/32'
+              index === active ? 'h-2 w-8 bg-primary' : 'h-2 w-2 bg-white/20 hover:bg-white/32'
             }`}
           />
         ))}
       </div>
 
       <div key={activeWork.id} className="mx-auto mt-8 max-w-3xl text-center animate-fade-in">
-        <p className="text-[11px] font-mono uppercase tracking-[0.32em] text-sky-100/46">
+        <p className="text-[11px] font-mono uppercase tracking-[0.32em] text-muted-foreground">
           Project Focus
         </p>
         <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl">
@@ -167,7 +167,7 @@ export function WorksCarousel({ works }: Props) {
             {activeWork.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-sky-300/12 bg-sky-300/8 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-sky-100/78"
+                className="rounded-full border border-primary/14 bg-primary/10 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-primary/85"
               >
                 {tag}
               </span>
@@ -178,7 +178,7 @@ export function WorksCarousel({ works }: Props) {
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <Link
             href={`/works/${activeWork.slug}`}
-            className="inline-flex items-center gap-2 rounded-full bg-ember px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-ember/85"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/88"
           >
             <MaterialSymbol icon="deployed_code" size={18} />
             查看项目详情
@@ -189,7 +189,7 @@ export function WorksCarousel({ works }: Props) {
               href={activeWork.primary_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-card/60 px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-sky-300/20 hover:text-sky-100"
+              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/24 hover:text-primary"
             >
               <MaterialSymbol icon="open_in_new" size={18} />
               {activeWork.primary_label || '访问链接'}
@@ -201,7 +201,7 @@ export function WorksCarousel({ works }: Props) {
               href={activeWork.github_url || activeWork.secondary_url || '#'}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-card/60 px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-sky-300/20 hover:text-sky-100"
+              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/24 hover:text-primary"
             >
               <MaterialSymbol icon="code_blocks" size={18} />
               {activeWork.secondary_label || '查看源码 / 外链'}

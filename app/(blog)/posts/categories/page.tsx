@@ -38,10 +38,10 @@ function getCategoryIcon(name: string): RemixIcon {
 
 /** 给每个分类分配一个微妙的渐变方向，保持在 ember 色系内 */
 const GRADIENT_VARIANTS = [
-  'from-ember/18 via-ember/6 to-transparent',
-  'from-ember/12 via-transparent to-ocean/8',
-  'from-ocean/12 via-transparent to-ember/8',
-  'from-ember/10 to-transparent',
+  'from-primary/18 via-primary/6 to-transparent',
+  'from-primary/12 via-transparent to-primary/8',
+  'from-primary/14 via-transparent to-primary/6',
+  'from-primary/10 to-transparent',
 ]
 
 export default async function CategoriesPage() {
@@ -71,7 +71,7 @@ export default async function CategoriesPage() {
 
       {/* ── 页头 ── */}
       <div className="mb-10">
-        <p className="text-xs font-mono text-ember tracking-[0.25em] uppercase mb-2">CATEGORIES</p>
+        <p className="text-xs font-mono text-primary tracking-[0.25em] uppercase mb-2">CATEGORIES</p>
         <h1 className="text-3xl font-bold text-foreground mb-1">分类</h1>
         <p className="text-sm text-muted-foreground">
           {categories.length} 个分类 · 共 {total} 篇文章
@@ -83,7 +83,7 @@ export default async function CategoriesPage() {
         {categories.map(({ category, count }) => (
           <div
             key={category}
-            className="h-full bg-ember/60 first:rounded-l-full last:rounded-r-full transition-all hover:bg-ember"
+            className="h-full bg-primary/60 first:rounded-l-full last:rounded-r-full transition-all hover:bg-primary"
             style={{ width: `${(count / total) * 100}%` }}
             title={`${category} ${count} 篇`}
           />
@@ -104,7 +104,7 @@ export default async function CategoriesPage() {
               href={`/posts?category=${encodeURIComponent(category)}`}
               className={`group relative sm:col-span-2 rounded-2xl border border-border bg-card
                           overflow-hidden flex flex-col min-h-[240px] p-7
-                          hover:[border-color:rgba(255,138,107,0.45)]
+                          hover:border-primary/45
                           transition-all duration-300`}
             >
               {/* 渐变背景 */}
@@ -118,12 +118,12 @@ export default async function CategoriesPage() {
 
               {/* 顶部：图标 + 百分比徽章 */}
               <div className="relative flex items-start justify-between mb-auto">
-                <span className="w-12 h-12 rounded-xl bg-ember/12 border border-ember/20
-                                  flex items-center justify-center text-ember
-                                  group-hover:bg-ember/20 transition-colors">
+                <span className="w-12 h-12 rounded-xl bg-primary/12 border border-primary/20
+                                  flex items-center justify-center text-primary
+                                  group-hover:bg-primary/20 transition-colors">
                   <CatIcon size={22} />
                 </span>
-                <span className="text-xs font-mono text-ember bg-ember/10 border border-ember/25
+                <span className="text-xs font-mono text-primary bg-primary/10 border border-primary/25
                                   px-2.5 py-1 rounded-full">
                   {pct}%
                 </span>
@@ -132,11 +132,11 @@ export default async function CategoriesPage() {
               {/* 分类名 + 篇数 */}
               <div className="relative mt-6">
                 <h2 className="text-2xl font-bold text-foreground
-                                group-hover:text-ember transition-colors duration-200">
+                                group-hover:text-primary transition-colors duration-200">
                   {category}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  <span className="text-ember font-semibold">{count}</span> 篇文章
+                  <span className="text-primary font-semibold">{count}</span> 篇文章
                 </p>
               </div>
 
@@ -157,7 +157,7 @@ export default async function CategoriesPage() {
               <RiArrowRightUpLine
                 size={16}
                 className="absolute bottom-5 right-5 text-muted-foreground/30
-                            group-hover:text-ember transition-colors duration-200"
+                            group-hover:text-primary transition-colors duration-200"
               />
             </Link>
           )
@@ -174,7 +174,7 @@ export default async function CategoriesPage() {
               href={`/posts?category=${encodeURIComponent(category)}`}
               className={`group relative rounded-2xl border border-border bg-card
                           overflow-hidden flex flex-col min-h-[240px] p-6
-                          hover:[border-color:rgba(255,138,107,0.45)]
+                          hover:border-primary/45
                           transition-all duration-300`}
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${GRADIENT_VARIANTS[1]} pointer-events-none`} />
@@ -185,21 +185,21 @@ export default async function CategoriesPage() {
               </span>
 
               <div className="relative flex items-start justify-between mb-auto">
-                <span className="w-10 h-10 rounded-xl bg-ember/12 border border-ember/20
-                                  flex items-center justify-center text-ember
-                                  group-hover:bg-ember/20 transition-colors">
+                <span className="w-10 h-10 rounded-xl bg-primary/12 border border-primary/20
+                                  flex items-center justify-center text-primary
+                                  group-hover:bg-primary/20 transition-colors">
                   <CatIcon size={18} />
                 </span>
-                <span className="text-[11px] font-mono text-ember/70">{pct}%</span>
+                <span className="text-[11px] font-mono text-primary/70">{pct}%</span>
               </div>
 
               <div className="relative mt-4">
                 <h2 className="text-xl font-bold text-foreground
-                                group-hover:text-ember transition-colors duration-200">
+                                group-hover:text-primary transition-colors duration-200">
                   {category}
                 </h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  <span className="text-ember font-semibold">{count}</span> 篇
+                  <span className="text-primary font-semibold">{count}</span> 篇
                 </p>
               </div>
 
@@ -218,7 +218,7 @@ export default async function CategoriesPage() {
               <RiArrowRightUpLine
                 size={14}
                 className="absolute bottom-4 right-4 text-muted-foreground/30
-                            group-hover:text-ember transition-colors duration-200"
+                            group-hover:text-primary transition-colors duration-200"
               />
             </Link>
           )
@@ -238,7 +238,7 @@ export default async function CategoriesPage() {
               href={`/posts?category=${encodeURIComponent(category)}`}
               className={`group relative rounded-2xl border border-border bg-card
                           overflow-hidden flex flex-col p-5 min-h-[180px]
-                          hover:[border-color:rgba(255,138,107,0.45)]
+                          hover:border-primary/45
                           transition-all duration-300`}
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${gradient} pointer-events-none`} />
@@ -249,9 +249,9 @@ export default async function CategoriesPage() {
               </span>
 
               <div className="relative flex items-start justify-between mb-auto">
-                <span className="w-9 h-9 rounded-lg bg-ember/10 border border-ember/15
-                                  flex items-center justify-center text-ember/80
-                                  group-hover:bg-ember/20 group-hover:text-ember transition-colors">
+                <span className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/15
+                                  flex items-center justify-center text-primary/80
+                                  group-hover:bg-primary/20 group-hover:text-primary transition-colors">
                   <CatIcon size={16} />
                 </span>
                 <span className="text-[10px] font-mono text-muted-foreground/50">{pct}%</span>
@@ -259,11 +259,11 @@ export default async function CategoriesPage() {
 
               <div className="relative mt-3">
                 <h3 className="text-base font-bold text-foreground
-                                group-hover:text-ember transition-colors duration-200">
+                                group-hover:text-primary transition-colors duration-200">
                   {category}
                 </h3>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  <span className="text-ember/80">{count}</span> 篇
+                  <span className="text-primary/80">{count}</span> 篇
                 </p>
               </div>
 
@@ -277,7 +277,7 @@ export default async function CategoriesPage() {
               <RiArrowRightUpLine
                 size={13}
                 className="absolute bottom-3.5 right-3.5 text-muted-foreground/20
-                            group-hover:text-ember transition-colors duration-200"
+                            group-hover:text-primary transition-colors duration-200"
               />
             </Link>
           )

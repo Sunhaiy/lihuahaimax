@@ -19,7 +19,7 @@ export function PostCard({ post }: PostCardProps) {
       <div className={`relative rounded-xl border border-border bg-card overflow-hidden
                       flex flex-col h-full
                       transition-all duration-300
-                      hover:[border-color:rgba(255,138,107,0.35)]
+                      hover:border-primary/35 hover:shadow-[0_16px_36px_rgba(5,150,105,0.12)]
                       ${SHIMMER}`}>
 
         {/* ── 封面区 ── */}
@@ -34,11 +34,11 @@ export function PostCard({ post }: PostCardProps) {
           ) : (
             /* 默认封面：多层渐变 + 分类首字 + 网格纹理 */
             <div className="w-full h-full relative
-                            bg-gradient-to-br from-ember/12 via-card to-muted
+                            bg-gradient-to-br from-primary/12 via-card to-muted
                             flex items-center justify-center">
               <span className="text-7xl font-bold leading-none select-none
                                text-transparent bg-clip-text
-                               bg-gradient-to-br from-ember/30 to-ember/10">
+                               bg-gradient-to-br from-primary/40 to-primary/10">
                 {post.category?.charAt(0) ?? '文'}
               </span>
               <div className="absolute inset-0 opacity-[0.03]"
@@ -63,7 +63,7 @@ export function PostCard({ post }: PostCardProps) {
 
         {/* ── 内容区 ── */}
         <div className="flex flex-col flex-1 px-4 pt-3.5 pb-4">
-          <h3 className="font-semibold text-foreground group-hover:text-ember
+          <h3 className="font-semibold text-foreground group-hover:text-primary
                          transition-colors duration-200 line-clamp-2 leading-snug mb-1.5">
             {post.title}
           </h3>

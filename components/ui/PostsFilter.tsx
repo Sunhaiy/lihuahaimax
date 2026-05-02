@@ -57,7 +57,7 @@ export function PostsFilter({ categories, tags, currentCategory, currentTags, to
           className={`text-xs px-3 py-1 rounded-full border transition-colors
             ${!currentCategory && !currentTags.length
               ? 'bg-foreground text-background border-foreground'
-              : 'border-border text-muted-foreground hover:border-ember/40 hover:text-ember'}`}
+              : 'border-border text-muted-foreground hover:border-primary/40 hover:text-primary'}`}
         >
           全部 {totalPublished}
         </button>
@@ -68,7 +68,7 @@ export function PostsFilter({ categories, tags, currentCategory, currentTags, to
             className={`text-xs px-3 py-1 rounded-full border transition-colors
               ${cat === currentCategory
                 ? 'bg-foreground text-background border-foreground'
-                : 'border-border text-muted-foreground hover:border-ember/40 hover:text-ember'}`}
+                : 'border-border text-muted-foreground hover:border-primary/40 hover:text-primary'}`}
           >
             {cat} {count}
           </button>
@@ -85,8 +85,8 @@ export function PostsFilter({ categories, tags, currentCategory, currentTags, to
               onClick={() => toggleTag(t)}
               className={`text-xs px-2.5 py-0.5 rounded-full border transition-colors
                 ${currentTags.includes(t)
-                  ? 'bg-ember/15 text-ember border-ember/50'
-                  : 'border-border text-muted-foreground hover:border-ember/40 hover:text-ember'}`}
+                  ? 'bg-primary/12 text-primary border-primary/40'
+                  : 'border-border text-muted-foreground hover:border-primary/40 hover:text-primary'}`}
             >
               {t}
               {currentTags.includes(t) && <span className="ml-1 opacity-60">×</span>}
@@ -98,7 +98,7 @@ export function PostsFilter({ categories, tags, currentCategory, currentTags, to
             <button
               onClick={() => setShowAllTags(v => !v)}
               className="text-xs px-2.5 py-0.5 rounded-full border border-dashed
-                         border-border text-muted-foreground hover:text-ember hover:border-ember/40 transition-colors"
+                         border-border text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
             >
               {showAllTags ? '收起' : `+${hiddenCount} 更多`}
             </button>

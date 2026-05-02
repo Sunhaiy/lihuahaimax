@@ -38,11 +38,11 @@ export function FeaturedCarousel({ posts }: { posts: CarouselPost[] }) {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-ember/20 via-muted to-card
+              <div className="w-full h-full bg-gradient-to-br from-primary/20 via-muted to-card
                               flex items-center justify-center">
                 <span className="text-5xl font-bold select-none
                                  text-transparent bg-clip-text
-                                 bg-gradient-to-br from-ember/40 to-ember/10">
+                                 bg-gradient-to-br from-primary/45 to-primary/10">
                   {post.category?.charAt(0) ?? '文'}
                 </span>
               </div>
@@ -75,7 +75,7 @@ export function FeaturedCarousel({ posts }: { posts: CarouselPost[] }) {
                 onClick={() => setPage(i)}
                 className={`h-1.5 rounded-full transition-all duration-200
                             ${i === page
-                              ? 'w-5 bg-ember'
+                              ? 'w-5 bg-primary'
                               : 'w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50'}`}
               />
             ))}
@@ -86,7 +86,7 @@ export function FeaturedCarousel({ posts }: { posts: CarouselPost[] }) {
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
               className="w-7 h-7 rounded-lg border border-border flex items-center justify-center
-                         text-muted-foreground hover:text-ember hover:border-ember/40
+                         text-muted-foreground hover:text-primary hover:border-primary/40
                          disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <RiArrowLeftSLine size={15} />
@@ -95,7 +95,7 @@ export function FeaturedCarousel({ posts }: { posts: CarouselPost[] }) {
               onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={page === totalPages - 1}
               className="w-7 h-7 rounded-lg border border-border flex items-center justify-center
-                         text-muted-foreground hover:text-ember hover:border-ember/40
+                         text-muted-foreground hover:text-primary hover:border-primary/40
                          disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <RiArrowRightSLine size={15} />

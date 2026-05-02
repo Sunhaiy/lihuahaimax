@@ -1,51 +1,44 @@
-// ============================================================
-// 极客瞬间 (Moment) 类型定义
-// ============================================================
-
-/** 瞬间类型 —— 便于前端差异化渲染 */
 export type MomentType =
-  | 'text'       // 纯文字随想
-  | 'image'      // 图片配文
-  | 'sleep'      // 小米手环睡眠数据
-  | 'steps'      // 小米手环步数数据
-  | 'heartrate'  // 小米手环心率数据
-  | 'mood'       // 心情打卡
-  | 'link'       // 分享链接
+  | 'text'
+  | 'image'
+  | 'sleep'
+  | 'steps'
+  | 'heartrate'
+  | 'mood'
+  | 'link'
 
-/** 小米手环睡眠数据结构（预留） */
 export interface MiBandSleepData {
-  sleepStart: string  // ISO8601
-  sleepEnd: string    // ISO8601
+  sleepStart: string
+  sleepEnd: string
   deepSleepMinutes: number
   lightSleepMinutes: number
   remMinutes: number
   score: number | null
 }
 
-/** 小米手环步数数据结构（预留） */
 export interface MiBandStepsData {
   steps: number
-  distance: number   // 米
-  calories: number   // 千卡
+  distance: number
+  calories: number
   activeMinutes: number
 }
 
-/** 数据库原始行 */
 export interface MomentRow {
   id: number
   type: MomentType
   content: string | null
   images: string[]
-  /** 扩展数据，如手环数据，存为 JSONB */
   meta: Record<string, unknown> | null
   mood: string | null
   weather: string | null
   location: string | null
   is_public: boolean
+  share_count: number
+  like_count: number
+  comment_count: number
   created_at: Date
 }
 
-/** 前端使用的驼峰形态 */
 export interface Moment {
   id: number
   type: MomentType
@@ -56,10 +49,12 @@ export interface Moment {
   weather: string | null
   location: string | null
   isPublic: boolean
+  shareCount: number
+  likeCount: number
+  commentCount: number
   createdAt: string
 }
 
-/** 创建瞬间的输入 */
 export interface CreateMomentInput {
   type: MomentType
   content?: string
@@ -72,3 +67,32 @@ export interface CreateMomentInput {
 }
 
 export type UpdateMomentInput = Partial<CreateMomentInput>
+
+export interface MomentCommentRow {
+  id: number
+  moment_id: number
+  author_name: string
+  content: string
+  created_at: Date
+}
+
+export interface MomentComment {
+  id: number
+  momentId: number
+  authorName: string
+  content: string
+  createdAt: string
+}
+
+export interface CreateMomentCommentInput {
+  authorName: string
+  content: string
+}
+
+export interface MomentEngagementSummary {
+  momentId: number
+  likeCount: number
+  commentCount: number
+  shareCount: number
+  liked: boolean
+}

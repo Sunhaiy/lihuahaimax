@@ -5,10 +5,10 @@ import type { ActivityDay } from '@/lib/db/dao/activityDao'
 
 const LEVEL_CLS = [
   'bg-border/50',
-  'bg-ember/20',
-  'bg-ember/45',
-  'bg-ember/70',
-  'bg-ember',
+  'bg-primary/18',
+  'bg-primary/36',
+  'bg-primary/58',
+  'bg-primary',
 ] as const
 
 function level(count: number) {

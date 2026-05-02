@@ -1,77 +1,76 @@
-/**
- * app/(blog)/about/page.tsx
- *
- * 关于我 — 个人介绍页面。
- */
-
 import type { Metadata } from 'next'
+import { getSiteProfile } from '@/lib/site'
 
-export const metadata: Metadata = { title: '关于 · 梨花海' }
+export const metadata: Metadata = { title: '关于' }
 
 const SKILLS = [
   { cat: '嵌入式 & 硬件', items: ['ESP32', 'STM32', 'MQTT', 'FreeRTOS', 'KiCad'] },
-  { cat: '后端 & 基建',   items: ['Node.js', 'Next.js', 'PostgreSQL', 'Docker', 'Linux'] },
-  { cat: '前端',          items: ['React', 'TypeScript', 'Tailwind CSS', 'Tiptap'] },
-  { cat: '工具链',        items: ['Git', 'Neovim', 'Arch Linux', 'GitHub Actions'] },
+  { cat: '后端 & 基建', items: ['Node.js', 'Next.js', 'PostgreSQL', 'Docker', 'Linux'] },
+  { cat: '前端', items: ['React', 'TypeScript', 'Tailwind CSS', 'Tiptap'] },
+  { cat: '工具链', items: ['Git', 'Neovim', 'Arch Linux', 'GitHub Actions'] },
 ]
 
 const TIMELINE = [
-  { year: '2025', event: '开始写作梨花海博客，记录代码与生活' },
-  { year: '2023', event: '深入物联网方向，玩转 ESP32 & MQTT' },
-  { year: '2021', event: '接触嵌入式开发，从 Arduino 一路踩坑' },
-  { year: '2019', event: '写下第一行 Python，正式入坑编程' },
+  { year: '2025', event: '开始持续写博客，把代码、项目和生活并排记录下来。' },
+  { year: '2023', event: '深入物联网方向，围着 ESP32、MQTT 和自动化折腾。' },
+  { year: '2021', event: '从 Arduino 起步，正式扎进嵌入式和软硬件协作。' },
+  { year: '2019', event: '写下第一行 Python，慢慢把兴趣变成长期能力。' },
 ]
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const siteProfile = await getSiteProfile()
+
   return (
-    <div className="max-w-5xl mx-auto px-6 py-12">
-      {/* ── 头部 ── */}
-      <div className="mb-16 flex flex-col sm:flex-row items-start sm:items-center gap-8">
-        <div className="w-24 h-24 rounded-full flex-shrink-0
-                        bg-gradient-to-br from-ember/40 to-ember/10
-                        border-2 border-ember/25 flex items-center justify-center">
-          <span className="text-4xl font-bold text-ember select-none">梨</span>
+    <div className="mx-auto max-w-5xl px-6 py-12">
+      <div className="mb-16 flex flex-col items-start gap-8 sm:flex-row sm:items-center">
+        <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-ember/25 bg-gradient-to-br from-ember/40 to-ember/10">
+          {siteProfile.avatarUrl ? (
+            <img
+              src={siteProfile.avatarUrl}
+              alt={siteProfile.ownerName}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span className="select-none text-4xl font-bold text-ember">
+              {siteProfile.ownerInitial}
+            </span>
+          )}
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-1">梨花海</h1>
+          <h1 className="mb-1 text-3xl font-bold text-foreground">{siteProfile.ownerName}</h1>
           <p className="mb-3 text-sm font-medium tracking-[0.08em] text-ember">
-            极客 · 二次元 · 代码诗人
+            {siteProfile.roleLine}
           </p>
-          <p className="text-muted-foreground text-sm leading-relaxed max-w-lg">
-            热爱 coding，追番打游戏，记录凌晨 3 点的一切。
-            这里是我的数字中枢——代码笔记、生活随想、ACG 收藏和光影相册。
+          <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
+            {siteProfile.bio} 这里也是我整理文章、项目、收藏与生活轨迹的地方。
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-12">
-        {/* ── 左栏：介绍 + 技能 ── */}
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_280px]">
         <div className="space-y-12">
-          {/* 关于我 */}
           <section>
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <span className="text-ember">✦</span> 关于我
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+              <span className="text-ember">+</span> 关于我
             </h2>
-            <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+            <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
               <p>
-                一个在嵌入式和 Web 全栈之间横跳的程序员。
-                白天写固件，晚上写博客，周末追番，深夜打游戏。
+                我习惯在嵌入式、Web 全栈和内容系统之间来回切换，喜欢把一个想法从硬件、接口、
+                后台到前台一步一步做完整。
               </p>
               <p>
-                相信工具驱动思维，喜欢用代码解决生活中遇到的问题，
-                哪怕有时候这个"解决方案"比问题本身还复杂。
+                这个站点不只是博客，也是一套长期使用的个人系统。文章、瞬间、动漫、游戏、项目、
+                友链和图像内容会慢慢汇到同一个中枢里。
               </p>
               <p>
-                这个博客是我的数字笔记本，记录我在技术、生活、二次元路上的所有探索。
-                欢迎一起交流，也欢迎来友链区互换链接。
+                如果你也喜欢把作品做成自己真正会用的系统，而不是只停留在演示稿上，那我们大概率聊得来。
               </p>
             </div>
           </section>
 
-          {/* 技能栈 */}
           <section>
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <span className="text-ember">✦</span> 技能栈
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+              <span className="text-ember">+</span> 技能栈
             </h2>
             <div className="space-y-4">
               {SKILLS.map(({ cat, items }) => (
@@ -81,8 +80,7 @@ export default function AboutPage() {
                     {items.map((item) => (
                       <span
                         key={item}
-                        className="text-xs px-2.5 py-1 rounded-full border border-border
-                                   bg-card text-muted-foreground"
+                        className="rounded-full border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground"
                       >
                         {item}
                       </span>
@@ -94,47 +92,55 @@ export default function AboutPage() {
           </section>
         </div>
 
-        {/* ── 右栏：时间线 + 联系 ── */}
         <div className="space-y-10">
-          {/* 时间线 */}
           <section>
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <span className="text-ember">✦</span> 时间线
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+              <span className="text-ember">+</span> 时间线
             </h2>
             <div className="space-y-4">
               {TIMELINE.map(({ year, event }) => (
                 <div key={year} className="flex gap-4">
-                  <span className="text-xs font-mono text-ember pt-0.5 w-10 flex-shrink-0">
+                  <span className="w-10 flex-shrink-0 pt-0.5 text-xs font-mono text-ember">
                     {year}
                   </span>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{event}</p>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{event}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          {/* 联系我 */}
           <section>
-            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <span className="text-ember">✦</span> 联系我
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+              <span className="text-ember">+</span> 联系方式
             </h2>
             <div className="space-y-2">
-              {[
-                { label: 'GitHub', href: 'https://github.com', icon: '⌥' },
-                { label: '友情链接', href: '/links', icon: '🤝' },
-              ].map(({ label, href, icon }) => (
+              {siteProfile.githubUrl ? (
                 <a
-                  key={label}
-                  href={href}
-                  target={href.startsWith('http') ? '_blank' : undefined}
-                  rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  className="flex items-center gap-3 text-sm text-muted-foreground
-                             hover:text-ember transition-colors"
+                  href={siteProfile.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-sm text-muted-foreground transition-colors hover:text-ember"
                 >
-                  <span className="w-5 text-center">{icon}</span>
-                  {label}
+                  <span className="w-5 text-center">GitHub</span>
+                  {siteProfile.githubUrl}
                 </a>
-              ))}
+              ) : null}
+              {siteProfile.email ? (
+                <a
+                  href={`mailto:${siteProfile.email}`}
+                  className="flex items-center gap-3 text-sm text-muted-foreground transition-colors hover:text-ember"
+                >
+                  <span className="w-5 text-center">邮箱</span>
+                  {siteProfile.email}
+                </a>
+              ) : null}
+              <a
+                href="/links"
+                className="flex items-center gap-3 text-sm text-muted-foreground transition-colors hover:text-ember"
+              >
+                <span className="w-5 text-center">友链</span>
+                访问友情链接页
+              </a>
             </div>
           </section>
         </div>

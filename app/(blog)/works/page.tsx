@@ -11,7 +11,7 @@ export default async function WorksPage() {
   return (
     <div className="min-h-[calc(100vh-64px)] px-4 pb-20 sm:px-6">
       <div className="mx-auto w-full max-w-6xl pt-16 text-center">
-        <p className="text-[11px] font-mono uppercase tracking-[0.35em] text-sky-100/52">
+        <p className="text-[11px] font-mono uppercase tracking-[0.35em] text-primary/72">
           Works Archive
         </p>
         <h1 className="mt-4 text-4xl font-semibold tracking-[-0.06em] text-foreground sm:text-5xl">

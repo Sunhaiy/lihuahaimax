@@ -39,7 +39,7 @@ export default async function GalleryPage({
             href={cat === 'all' ? '/gallery' : `/gallery?category=${cat}`}
             className={`px-3 py-1 text-sm rounded-base transition-colors border
               ${(category ?? 'all') === cat
-                ? 'bg-ocean text-white border-ocean'
+                ? 'bg-primary text-primary-foreground border-primary'
                 : 'border-border text-muted-foreground hover:border-foreground/30 dark:hover:border-white/20 hover:text-foreground'
               }`}
           >
@@ -72,7 +72,7 @@ export default async function GalleryPage({
                     )}
                     <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] font-mono text-gray-300">
                       {item.exif.make && item.exif.model && (
-                        <span className="col-span-2 text-ocean">
+                        <span className="col-span-2 text-primary">
                           {item.exif.make} {item.exif.model}
                         </span>
                       )}

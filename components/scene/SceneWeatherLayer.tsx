@@ -32,7 +32,7 @@ export function SceneWeatherLayer({
   intensity,
   enabled,
 }: SceneWeatherLayerProps) {
-  const [drops, setDrops] = useState<RainDrop[]>(() => createDrops(120))
+  const [drops, setDrops] = useState<RainDrop[]>([])
   const [isFlashing, setIsFlashing] = useState(false)
   const [boltPos, setBoltPos] = useState(50)
 
@@ -82,15 +82,15 @@ export function SceneWeatherLayer({
           <span
             key={`${drop.left}-${index}`}
             className="absolute -top-[140px] w-[1.5px]"
-              style={{
-                left: drop.left,
-                height: drop.height,
-                opacity: drop.opacity,
-                background: 'linear-gradient(to bottom, transparent, hsl(var(--weather-rain) / 0.86))',
-                mixBlendMode: 'screen',
-                animation: `scene-rain-fall ${drop.duration} linear infinite`,
-                animationDelay: drop.delay,
-              }}
+            style={{
+              left: drop.left,
+              height: drop.height,
+              opacity: drop.opacity,
+              background: 'linear-gradient(to bottom, transparent, hsl(var(--weather-rain) / 0.86))',
+              mixBlendMode: 'screen',
+              animation: `scene-rain-fall ${drop.duration} linear infinite`,
+              animationDelay: drop.delay,
+            }}
           />
         ))}
       </div>

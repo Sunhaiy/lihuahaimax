@@ -98,7 +98,7 @@ export default async function PostsPage({
             <Link key={post.id} href={`/posts/${post.slug}`} className="group block h-full">
               <div className={`relative rounded-xl overflow-hidden border border-border
                                flex flex-col h-full
-                               hover:[border-color:rgba(255,138,107,0.35)]
+                               hover:border-primary/35 hover:shadow-[0_16px_36px_rgba(5,150,105,0.12)]
                                transition-all duration-300 ${SHIMMER}`}>
                 {/* 封面 */}
                 <div className="aspect-[16/10] overflow-hidden bg-muted flex-shrink-0">

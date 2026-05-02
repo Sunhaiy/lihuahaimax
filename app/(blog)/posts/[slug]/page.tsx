@@ -1,31 +1,31 @@
-/**
- * app/(blog)/posts/[slug]/page.tsx
- *
- * 文章详情页 — SSG + ISR。
- * 头部：圆角封面图 + 居中标题/标签 + 毛玻璃元数据横条。
- * 主体：左侧正文 + 右侧粘性目录侧边栏。
- */
-
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { findPostBySlug, findPosts, incrementViewCount, findAdjacentPosts } from '@/lib/db/dao/postDao'
-import { PostContent } from './PostContent'
-import { TOC } from '@/components/ui/TOC'
-import { CommentSection } from './CommentSection'
+import {
+  findAdjacentPosts,
+  findPostBySlug,
+  findPosts,
+  incrementViewCount,
+} from '@/lib/db/dao/postDao'
+import { getSiteProfile } from '@/lib/site'
 import { extractHeadings, estimateReadTime } from '@/lib/utils/extractHeadings'
-import { RiTimeLine, RiEyeLine, RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react'
+import { TOC } from '@/components/ui/TOC'
+import { RiArrowLeftSLine, RiArrowRightSLine, RiEyeLine, RiTimeLine } from '@remixicon/react'
+import { CommentSection } from './CommentSection'
+import { PostContent } from './PostContent'
 
 export const revalidate = 3600
 
 export async function generateStaticParams() {
   const result = await findPosts({ status: 'published', pageSize: 100 })
-  return result.data.map((p) => ({ slug: p.slug }))
+  return result.data.map((post) => ({ slug: post.slug }))
 }
 
-export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string }> }
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
   const { slug } = await params
   const post = await findPostBySlug(slug)
   if (!post) return { title: '文章不存在' }
@@ -51,9 +51,12 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   incrementViewCount(post.id).catch(() => {})
 
-  const adjacent = post.published_at
-    ? await findAdjacentPosts(post.published_at, post.id)
-    : { prev: null, next: null }
+  const [adjacent, siteProfile] = await Promise.all([
+    post.published_at
+      ? findAdjacentPosts(post.published_at, post.id)
+      : Promise.resolve({ prev: null, next: null }),
+    getSiteProfile(),
+  ])
 
   const headings = extractHeadings(post.content as object)
   const readTime = estimateReadTime(post.content as object)
@@ -61,192 +64,176 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   return (
     <>
-      {/* ══════════════════════════════════════════════════
-          头部 Hero — 全宽封面图 + 居中标题 + 毛玻璃元数据条
-          ══════════════════════════════════════════════════ */}
-      <section
-        className="relative overflow-hidden"
-        style={{ minHeight: '420px' }}
-      >
-          {/* 背景图 / 无封面渐变 */}
-          {hasCover ? (
-            <img
-              src={post.cover_url!}
-              alt=""
-              aria-hidden
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ) : (
-            <>
-              <div aria-hidden className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black" />
-              <div aria-hidden className="absolute -top-32 -left-16 w-[480px] h-[480px] rounded-full bg-ember/10 blur-[120px] pointer-events-none" />
-              <div aria-hidden className="absolute bottom-0 right-0 w-64 h-64 rounded-full bg-ember/5 blur-[80px] pointer-events-none" />
-            </>
-          )}
-
-          {/* 渐变叠层：顶部浅 → 底部深，确保文字可读 */}
-          <div
+      <section className="relative overflow-hidden" style={{ minHeight: '420px' }}>
+        {hasCover ? (
+          <img
+            src={post.cover_url!}
+            alt=""
             aria-hidden
-            className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/80 via-black/30 to-black/10"
+            className="absolute inset-0 h-full w-full object-cover"
           />
+        ) : (
+          <>
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -left-16 -top-32 h-[480px] w-[480px] rounded-full bg-ember/10 blur-[120px]"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute bottom-0 right-0 h-64 w-64 rounded-full bg-ember/5 blur-[80px]"
+            />
+          </>
+        )}
 
-          {/* 居中内容区：标签 + 标题 + 摘要 */}
-          <div className="relative flex flex-col items-center justify-center text-center px-6 sm:px-20 pt-16 pb-28 min-h-[420px]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10"
+        />
 
-            {/* 分类标签 */}
-            {post.tags.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-2 mb-5">
-                {post.tags.map((tag) => (
-                  <Link
-                    key={tag}
-                    href={`/posts?tag=${encodeURIComponent(tag)}`}
-                    className="rounded-full px-3 py-1 text-xs font-medium
-                               bg-white/10 border border-white/20 text-white/80
-                               hover:bg-white/20 transition-colors backdrop-blur-sm"
-                  >
-                    {tag}
-                  </Link>
-                ))}
-              </div>
-            )}
-
-            {/* 标题 */}
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-snug text-white max-w-3xl">
-              {post.title}
-            </h1>
-
-            {/* 摘要 */}
-            {post.excerpt && (
-              <p className="mt-4 text-sm sm:text-base text-white/55 max-w-xl leading-relaxed">
-                {post.excerpt}
-              </p>
-            )}
-          </div>
-
-          {/* 毛玻璃元数据横条 — 绝对定位在图片底部 */}
-          <div className="absolute bottom-0 inset-x-0 flex justify-center px-6 pb-6">
-            <div className="flex items-center gap-0 rounded-xl overflow-hidden
-                            backdrop-blur-md bg-black/35 border border-white/10
-                            text-white/70 text-xs font-mono divide-x divide-white/10">
-
-              {/* 作者 */}
-              <div className="px-4 py-2.5 text-white/90 font-semibold">
-                梨花海
-              </div>
-
-              {/* 发布日期 */}
-              {post.published_at && (
-                <div className="flex items-center gap-1.5 px-4 py-2.5">
-                  <RiTimeLine size={12} className="shrink-0" />
-                  <time dateTime={post.published_at.toISOString()}>
-                    {new Date(post.published_at).toLocaleDateString('zh-CN', {
-                      year: 'numeric', month: '2-digit', day: '2-digit',
-                    })}
-                  </time>
-                </div>
-              )}
-
-              {/* 阅读次数 */}
-              <div className="flex items-center gap-1.5 px-4 py-2.5">
-                <RiEyeLine size={12} className="shrink-0" />
-                <span>{post.view_count}</span>
-              </div>
-
-              {/* 预计阅读时长 */}
-              <div className="px-4 py-2.5">
-                约 {readTime} 分钟
-              </div>
+        <div className="relative flex min-h-[420px] flex-col items-center justify-center px-6 pb-28 pt-16 text-center sm:px-20">
+          {post.tags.length > 0 ? (
+            <div className="mb-5 flex flex-wrap justify-center gap-2">
+              {post.tags.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/posts?tag=${encodeURIComponent(tag)}`}
+                  className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur-sm transition-colors hover:bg-white/20"
+                >
+                  {tag}
+                </Link>
+              ))}
             </div>
+          ) : null}
+
+          <h1 className="max-w-3xl text-3xl font-bold leading-snug tracking-tight text-white sm:text-4xl lg:text-5xl">
+            {post.title}
+          </h1>
+
+          {post.excerpt ? (
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/55 sm:text-base">
+              {post.excerpt}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0 flex justify-center px-6 pb-6">
+          <div className="flex items-center gap-0 overflow-hidden rounded-xl border border-white/10 bg-black/35 text-xs font-mono text-white/70 backdrop-blur-md divide-x divide-white/10">
+            <div className="px-4 py-2.5 font-semibold text-white/90">{siteProfile.ownerName}</div>
+
+            {post.published_at ? (
+              <div className="flex items-center gap-1.5 px-4 py-2.5">
+                <RiTimeLine size={12} className="shrink-0" />
+                <time dateTime={post.published_at.toISOString()}>
+                  {new Date(post.published_at).toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                  })}
+                </time>
+              </div>
+            ) : null}
+
+            <div className="flex items-center gap-1.5 px-4 py-2.5">
+              <RiEyeLine size={12} className="shrink-0" />
+              <span>{post.view_count}</span>
+            </div>
+
+            <div className="px-4 py-2.5">约 {readTime} 分钟</div>
           </div>
+        </div>
+      </section>
 
-        </section>
-
-      {/* ══════════════════════════════════════════════════
-          主体：两栏布局（正文 + TOC 侧边栏）
-          ══════════════════════════════════════════════════ */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-5 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-10 items-start">
-
-          {/* ── 左栏：正文 ── */}
+      <div className="mx-auto max-w-7xl px-3 py-10 sm:px-5">
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1fr_220px]">
           <article className="min-w-0">
-
             <PostContent content={post.content as object} />
 
-            <div className="border-t border-border mt-12 mb-8" />
+            <div className="mb-8 mt-12 border-t border-border" />
 
-            {/* 作者卡片 */}
-            <div className="rounded-2xl border border-border bg-card p-6 flex items-center gap-5">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-ember/40 to-ember/10
-                              border border-ember/25 flex items-center justify-center shrink-0">
-                <span className="text-xl font-bold text-ember select-none">梨</span>
+            <div className="flex items-center gap-5 rounded-2xl border border-border bg-card p-6">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-ember/25 bg-gradient-to-br from-ember/40 to-ember/10">
+                {siteProfile.avatarUrl ? (
+                  <img
+                    src={siteProfile.avatarUrl}
+                    alt={siteProfile.ownerName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="select-none text-xl font-bold text-ember">
+                    {siteProfile.ownerInitial}
+                  </span>
+                )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm text-foreground mb-0.5">梨花海</p>
-                <p className="mb-2 text-[11px] font-medium tracking-[0.08em] text-ember">极客 · 二次元 · 代码诗人</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  热爱 coding，追番打游戏，记录凌晨 3 点的一切。
+              <div className="min-w-0 flex-1">
+                <p className="mb-0.5 text-sm font-semibold text-foreground">
+                  {siteProfile.ownerName}
                 </p>
+                <p className="mb-2 text-[11px] font-medium tracking-[0.08em] text-ember">
+                  {siteProfile.roleLine}
+                </p>
+                <p className="text-xs leading-relaxed text-muted-foreground">{siteProfile.bio}</p>
               </div>
             </div>
 
-            {/* 上一篇 / 下一篇 */}
-            {(adjacent.prev || adjacent.next) && (
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {adjacent.prev || adjacent.next ? (
+              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {adjacent.prev ? (
                   <Link
                     href={`/posts/${adjacent.prev.slug}`}
-                    className="group flex items-start gap-3 rounded-xl border border-border bg-card
-                               p-4 hover:border-ember/40 transition-colors"
+                    className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-ember/40"
                   >
-                    <RiArrowLeftSLine size={18} className="shrink-0 mt-0.5 text-muted-foreground
-                                                            group-hover:text-ember transition-colors" />
+                    <RiArrowLeftSLine
+                      size={18}
+                      className="mt-0.5 shrink-0 text-muted-foreground transition-colors group-hover:text-ember"
+                    />
                     <div className="min-w-0">
                       <p className="mb-1 text-[10px] font-medium text-muted-foreground">上一篇</p>
-                      <p className="text-sm font-medium text-foreground group-hover:text-ember
-                                    transition-colors line-clamp-2">
+                      <p className="line-clamp-2 text-sm font-medium text-foreground transition-colors group-hover:text-ember">
                         {adjacent.prev.title}
                       </p>
                     </div>
                   </Link>
-                ) : <div />}
+                ) : (
+                  <div />
+                )}
 
                 {adjacent.next ? (
                   <Link
                     href={`/posts/${adjacent.next.slug}`}
-                    className="group flex items-start gap-3 rounded-xl border border-border bg-card
-                               p-4 hover:border-ember/40 transition-colors sm:flex-row-reverse text-right"
+                    className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-right transition-colors hover:border-ember/40 sm:flex-row-reverse"
                   >
-                    <RiArrowRightSLine size={18} className="shrink-0 mt-0.5 text-muted-foreground
-                                                             group-hover:text-ember transition-colors" />
+                    <RiArrowRightSLine
+                      size={18}
+                      className="mt-0.5 shrink-0 text-muted-foreground transition-colors group-hover:text-ember"
+                    />
                     <div className="min-w-0">
                       <p className="mb-1 text-[10px] font-medium text-muted-foreground">下一篇</p>
-                      <p className="text-sm font-medium text-foreground group-hover:text-ember
-                                    transition-colors line-clamp-2">
+                      <p className="line-clamp-2 text-sm font-medium text-foreground transition-colors group-hover:text-ember">
                         {adjacent.next.title}
                       </p>
                     </div>
                   </Link>
-                ) : <div />}
+                ) : (
+                  <div />
+                )}
               </div>
-            )}
+            ) : null}
 
-            {/* 评论区 */}
             <CommentSection postId={post.id} />
-
           </article>
 
-          {/* ── 右栏：目录 ── */}
           <aside className="hidden lg:block">
-            <div className="sticky top-24 rounded-xl border border-border bg-card p-4
-                            max-h-[calc(100vh-7rem)] overflow-y-auto
-                            [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-xl border border-border bg-card p-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <TOC headings={headings} />
-              {headings.length === 0 && (
+              {headings.length === 0 ? (
                 <p className="text-xs text-muted-foreground">本文暂无目录</p>
-              )}
+              ) : null}
             </div>
           </aside>
-
         </div>
       </div>
     </>

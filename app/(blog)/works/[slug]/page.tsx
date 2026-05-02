@@ -54,7 +54,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
 
           <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
             <div className="max-w-3xl">
-              <p className="text-[11px] font-mono uppercase tracking-[0.35em] text-sky-100/56">
+              <p className="text-[11px] font-mono uppercase tracking-[0.35em] text-primary/70">
                 Classified Archive
               </p>
               <h1 className="mt-4 text-4xl font-semibold tracking-[-0.06em] text-white sm:text-5xl">
@@ -74,7 +74,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
               {work.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full border border-sky-300/12 bg-sky-300/10 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-sky-100/82"
+                  className="rounded-full border border-primary/16 bg-primary/12 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-white/82"
                 >
                   {tag}
                 </span>
@@ -106,7 +106,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
                   {work.year ?? 'Archive'}
                 </div>
                 {work.seal ? (
-                  <div className="absolute bottom-6 right-6 rounded-full bg-ember px-4 py-2 text-sm font-semibold text-white shadow-[0_14px_36px_rgba(255,138,107,0.35)]">
+                  <div className="absolute bottom-6 right-6 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[0_14px_36px_rgba(5,150,105,0.24)]">
                     {work.seal}
                   </div>
                 ) : null}
@@ -126,7 +126,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
             {work.milestones.length > 0 ? (
               <section className="rounded-[28px] border border-white/8 bg-black/24 p-6 backdrop-blur-xl">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-400/10 text-sky-100">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/12 text-primary">
                     <MaterialSymbol icon="timeline" size={20} />
                   </span>
                   <div>
@@ -159,7 +159,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
                             href={item.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-4 inline-flex items-center gap-2 text-sm text-sky-100/82 hover:text-white"
+                            className="mt-4 inline-flex items-center gap-2 text-sm text-primary/82 hover:text-primary"
                           >
                             <MaterialSymbol icon="open_in_new" size={16} />
                             查看关联节点
@@ -251,7 +251,7 @@ export default async function WorkDetailPage({ params }: PageProps) {
             {work.contributors.length > 0 ? (
               <section className="rounded-[28px] border border-white/8 bg-black/24 p-5 backdrop-blur-xl">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-400/10 text-sky-100">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/12 text-primary">
                     <MaterialSymbol icon="group" size={20} />
                   </span>
                   <div>

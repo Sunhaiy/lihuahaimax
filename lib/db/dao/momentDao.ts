@@ -5,7 +5,14 @@
  */
 
 import { query } from '@/lib/db'
-import type { MomentRow, CreateMomentInput, UpdateMomentInput } from '@/types/moment'
+import type {
+  CreateMomentCommentInput,
+  CreateMomentInput,
+  MomentCommentRow,
+  MomentEngagementSummary,
+  MomentRow,
+  UpdateMomentInput,
+} from '@/types/moment'
 
 // ============================================================
 // 查询
@@ -23,11 +30,11 @@ export async function findMoments(params: {
   let idx = 1
 
   if (publicOnly) {
-    conditions.push(`is_public = $${idx++}`)
+    conditions.push(`m.is_public = $${idx++}`)
     values.push(true)
   }
   if (type) {
-    conditions.push(`type = $${idx++}`)
+    conditions.push(`m.type = $${idx++}`)
     values.push(type)
   }
 
@@ -36,12 +43,27 @@ export async function findMoments(params: {
 
   const [dataResult, countResult] = await Promise.all([
     query<MomentRow>(
-      `SELECT * FROM moments ${where}
-       ORDER BY created_at DESC
+      `SELECT
+         m.*,
+         COALESCE(l.like_count, 0)::int AS like_count,
+         COALESCE(c.comment_count, 0)::int AS comment_count
+       FROM moments m
+       LEFT JOIN (
+         SELECT moment_id, COUNT(*) AS like_count
+         FROM moment_likes
+         GROUP BY moment_id
+       ) l ON l.moment_id = m.id
+       LEFT JOIN (
+         SELECT moment_id, COUNT(*) AS comment_count
+         FROM moment_comments
+         GROUP BY moment_id
+       ) c ON c.moment_id = m.id
+       ${where}
+       ORDER BY m.created_at DESC
        LIMIT $${idx++} OFFSET $${idx++}`,
       [...values, pageSize, offset]
     ),
-    query<{ count: string }>(`SELECT COUNT(*) as count FROM moments ${where}`, values),
+    query<{ count: string }>(`SELECT COUNT(*) as count FROM moments m ${where}`, values),
   ])
 
   return {
@@ -51,7 +73,25 @@ export async function findMoments(params: {
 }
 
 export async function findMomentById(id: number): Promise<MomentRow | null> {
-  const result = await query<MomentRow>(`SELECT * FROM moments WHERE id = $1`, [id])
+  const result = await query<MomentRow>(
+    `SELECT
+       m.*,
+       COALESCE(l.like_count, 0)::int AS like_count,
+       COALESCE(c.comment_count, 0)::int AS comment_count
+     FROM moments m
+     LEFT JOIN (
+       SELECT moment_id, COUNT(*) AS like_count
+       FROM moment_likes
+       GROUP BY moment_id
+     ) l ON l.moment_id = m.id
+     LEFT JOIN (
+       SELECT moment_id, COUNT(*) AS comment_count
+       FROM moment_comments
+       GROUP BY moment_id
+     ) c ON c.moment_id = m.id
+     WHERE m.id = $1`,
+    [id]
+  )
   return result.rows[0] ?? null
 }
 
@@ -113,6 +153,125 @@ export async function updateMoment(id: number, input: UpdateMomentInput): Promis
 export async function deleteMoment(id: number): Promise<boolean> {
   const result = await query(`DELETE FROM moments WHERE id = $1`, [id])
   return (result.rowCount ?? 0) > 0
+}
+
+// ============================================================
+// 互动
+// ============================================================
+
+export async function toggleMomentLike(
+  momentId: number,
+  visitorKey: string
+): Promise<MomentEngagementSummary | null> {
+  return withMomentVisibility(momentId, async () => {
+    const existing = await query<{ id: number }>(
+      `SELECT id FROM moment_likes WHERE moment_id = $1 AND visitor_key = $2`,
+      [momentId, visitorKey]
+    )
+
+    const liked = !existing.rows[0]
+    if (liked) {
+      await query(
+        `INSERT INTO moment_likes (moment_id, visitor_key)
+         VALUES ($1, $2)
+         ON CONFLICT (moment_id, visitor_key) DO NOTHING`,
+        [momentId, visitorKey]
+      )
+    } else {
+      await query(
+        `DELETE FROM moment_likes WHERE moment_id = $1 AND visitor_key = $2`,
+        [momentId, visitorKey]
+      )
+    }
+
+    return getMomentEngagementSummary(momentId, visitorKey, liked)
+  })
+}
+
+export async function getMomentComments(momentId: number): Promise<MomentCommentRow[] | null> {
+  return withMomentVisibility(momentId, async () => {
+    const result = await query<MomentCommentRow>(
+      `SELECT *
+       FROM moment_comments
+       WHERE moment_id = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [momentId]
+    )
+
+    return result.rows
+  })
+}
+
+export async function insertMomentComment(
+  momentId: number,
+  input: CreateMomentCommentInput
+): Promise<MomentCommentRow | null> {
+  return withMomentVisibility(momentId, async () => {
+    const result = await query<MomentCommentRow>(
+      `INSERT INTO moment_comments (moment_id, author_name, content)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [momentId, input.authorName, input.content]
+    )
+
+    return result.rows[0]
+  })
+}
+
+export async function incrementMomentShare(momentId: number): Promise<MomentEngagementSummary | null> {
+  return withMomentVisibility(momentId, async () => {
+    await query(
+      `UPDATE moments
+       SET share_count = share_count + 1
+       WHERE id = $1`,
+      [momentId]
+    )
+
+    return getMomentEngagementSummary(momentId)
+  })
+}
+
+async function getMomentEngagementSummary(
+  momentId: number,
+  visitorKey?: string,
+  likedOverride?: boolean
+): Promise<MomentEngagementSummary> {
+  const [counts, liked] = await Promise.all([
+    query<{ like_count: number; comment_count: number; share_count: number }>(
+      `SELECT
+         (SELECT COUNT(*)::int FROM moment_likes WHERE moment_id = $1) AS like_count,
+         (SELECT COUNT(*)::int FROM moment_comments WHERE moment_id = $1) AS comment_count,
+         COALESCE((SELECT share_count FROM moments WHERE id = $1), 0)::int AS share_count`,
+      [momentId]
+    ),
+    visitorKey && likedOverride === undefined
+      ? query<{ liked: boolean }>(
+          `SELECT EXISTS (
+             SELECT 1 FROM moment_likes WHERE moment_id = $1 AND visitor_key = $2
+           ) AS liked`,
+          [momentId, visitorKey]
+        )
+      : null,
+  ])
+
+  const row = counts.rows[0]
+  return {
+    momentId,
+    likeCount: Number(row?.like_count ?? 0),
+    commentCount: Number(row?.comment_count ?? 0),
+    shareCount: Number(row?.share_count ?? 0),
+    liked: likedOverride ?? Boolean(liked?.rows[0]?.liked),
+  }
+}
+
+async function withMomentVisibility<T>(
+  momentId: number,
+  fn: () => Promise<T>
+): Promise<T | null> {
+  const moment = await findMomentById(momentId)
+  if (!moment || !moment.is_public) return null
+  return fn()
 }
 
 // ============================================================

@@ -32,7 +32,7 @@ export default async function AnimePage() {
           <div className="absolute inset-0 bg-gradient-to-br from-purple-950/35 via-background/20 to-background pointer-events-none" />
         )}
 
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,138,107,0.12),transparent_32%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.12),transparent_32%)] pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-t from-background/88 via-background/40 to-black/12 pointer-events-none" />
 
         <div className="relative mx-auto w-full max-w-6xl px-6 pb-8">

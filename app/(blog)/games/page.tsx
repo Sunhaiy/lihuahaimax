@@ -16,7 +16,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_COLOR: Record<string, string> = {
   playing: 'text-emerald-400', completed: 'text-muted-foreground',
-  platinum: 'text-ember', abandoned: 'text-red-400', plan_to_play: 'text-ocean',
+  platinum: 'text-ember', abandoned: 'text-red-400', plan_to_play: 'text-primary',
 }
 
 const PLATFORM_ICON: Record<string, string> = {

@@ -18,6 +18,22 @@ export async function getSetting<T = Record<string, unknown>>(key: string): Prom
   return result.rows[0]?.value ?? null
 }
 
+export async function getSettings<T = unknown>(keys: string[]): Promise<Record<string, T | null>> {
+  if (keys.length === 0) return {}
+
+  const result = await query<{ key: string; value: T }>(
+    'SELECT key, value FROM settings WHERE key = ANY($1::text[])',
+    [keys]
+  )
+
+  const settings = Object.fromEntries(keys.map((key) => [key, null])) as Record<string, T | null>
+  for (const row of result.rows) {
+    settings[row.key] = row.value
+  }
+
+  return settings
+}
+
 export async function setSetting<T>(
   key: string,
   value: T,

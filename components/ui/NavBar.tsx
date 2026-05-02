@@ -11,8 +11,14 @@ interface Category {
   count: number
 }
 
+interface SiteBrand {
+  siteName: string
+  siteNameEn: string
+}
+
 interface NavBarProps {
   categories: Category[]
+  siteProfile: SiteBrand
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -42,7 +48,8 @@ const POST_SUB_PAGES = [
   { href: '/posts/tags', label: '标签', icon: 'sell' },
 ]
 
-const PANEL_CLS = 'rounded-xl border border-border bg-background/80 backdrop-blur-xl backdrop-saturate-150'
+const PANEL_CLS =
+  'rounded-2xl border border-border/80 bg-card/95 shadow-[0_18px_48px_rgba(2,6,23,0.18)] backdrop-blur-xl backdrop-saturate-150'
 
 interface MenuPos {
   centerX: number
@@ -53,7 +60,7 @@ function getCategoryIcon(name: string) {
   return CATEGORY_ICONS[name] ?? 'folder'
 }
 
-export function NavBar({ categories }: NavBarProps) {
+export function NavBar({ categories, siteProfile }: NavBarProps) {
   const [mounted, setMounted] = useState(false)
   const [postMenuOpen, setPostMenuOpen] = useState(false)
   const [collectionMenuOpen, setCollectionMenuOpen] = useState(false)
@@ -96,24 +103,37 @@ export function NavBar({ categories }: NavBarProps) {
     <>
       <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl backdrop-saturate-150">
         <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-foreground transition-colors hover:text-ember">
-            梨花海
-            <span className="ml-2 text-xs font-normal tracking-[0.22em] text-muted-foreground">LIHUA HAI</span>
+          <Link
+            href="/"
+            className="text-lg font-semibold tracking-tight text-foreground transition-colors hover:text-primary"
+          >
+            {siteProfile.siteName}
+            <span className="ml-2 text-xs font-normal tracking-[0.22em] text-muted-foreground">
+              {siteProfile.siteNameEn}
+            </span>
           </Link>
 
           <div className="hidden items-center gap-1 sm:flex">
-            <Link href="/" className="flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5">
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
+            >
               <MaterialSymbol icon="home" size={16} />
               首页
             </Link>
 
-            <div ref={postTriggerRef} className="relative" onMouseEnter={openPostMenu} onMouseLeave={closePostMenuLater}>
+            <div
+              ref={postTriggerRef}
+              className="relative"
+              onMouseEnter={openPostMenu}
+              onMouseLeave={closePostMenuLater}
+            >
               <Link
                 href="/posts"
-                className={`flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm transition-all duration-200 ${
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all duration-200 ${
                   postMenuOpen
-                    ? 'bg-black/5 text-foreground dark:bg-white/5'
-                    : 'text-muted-foreground hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5'
+                    ? 'bg-muted text-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
               >
                 <MaterialSymbol icon="article" size={16} />
@@ -121,23 +141,34 @@ export function NavBar({ categories }: NavBarProps) {
               </Link>
             </div>
 
-            <Link href="/moments" className="flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5">
+            <Link
+              href="/moments"
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
+            >
               <MaterialSymbol icon="bolt" size={16} fill />
               瞬间
             </Link>
 
-            <Link href="/works" className="flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5">
+            <Link
+              href="/works"
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
+            >
               <MaterialSymbol icon="deployed_code" size={16} />
               作品
             </Link>
 
-            <div ref={collectionTriggerRef} className="relative" onMouseEnter={openCollectionMenu} onMouseLeave={closeCollectionMenuLater}>
+            <div
+              ref={collectionTriggerRef}
+              className="relative"
+              onMouseEnter={openCollectionMenu}
+              onMouseLeave={closeCollectionMenuLater}
+            >
               <button
                 type="button"
-                className={`flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm transition-all duration-200 ${
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all duration-200 ${
                   collectionMenuOpen
-                    ? 'bg-black/5 text-foreground dark:bg-white/5'
-                    : 'text-muted-foreground hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5'
+                    ? 'bg-muted text-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
               >
                 <MaterialSymbol icon="star" size={16} />
@@ -145,12 +176,18 @@ export function NavBar({ categories }: NavBarProps) {
               </button>
             </div>
 
-            <Link href="/links" className="flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5">
+            <Link
+              href="/links"
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
+            >
               <MaterialSymbol icon="link" size={16} />
               友情链接
             </Link>
 
-            <Link href="/about" className="flex items-center gap-1.5 rounded-base px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5">
+            <Link
+              href="/about"
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
+            >
               <MaterialSymbol icon="person" size={16} />
               关于
             </Link>
@@ -161,7 +198,7 @@ export function NavBar({ categories }: NavBarProps) {
             <button
               type="button"
               aria-label="打开菜单"
-              className="flex h-9 w-9 items-center justify-center rounded-base text-muted-foreground transition-colors hover:bg-black/5 hover:text-foreground dark:hover:bg-white/5 sm:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:hidden"
             >
               <MaterialSymbol icon="menu" size={18} />
             </button>
@@ -169,110 +206,114 @@ export function NavBar({ categories }: NavBarProps) {
         </nav>
       </header>
 
-      {mounted && postMenuOpen && createPortal(
-        <div
-          style={{
-            position: 'fixed',
-            top: postPos.bottom + 8,
-            left: postPos.centerX,
-            transform: 'translateX(-50%)',
-            zIndex: 9999,
-          }}
-          onMouseEnter={openPostMenu}
-          onMouseLeave={closePostMenuLater}
-        >
-          <div className={`${PANEL_CLS} min-w-[280px] p-3`}>
-            <div className="mb-1 grid grid-cols-4 gap-0.5">
-              {POST_SUB_PAGES.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setPostMenuOpen(false)}
-                  className="group flex flex-col items-center gap-1 rounded-lg px-2 py-2.5 transition-colors hover:bg-ember/10"
-                >
-                  <span className="text-muted-foreground transition-colors group-hover:text-ember">
-                    <MaterialSymbol icon={item.icon} size={15} />
-                  </span>
-                  <span className="whitespace-nowrap text-[11px] font-medium text-muted-foreground transition-colors group-hover:text-ember">
-                    {item.label}
-                  </span>
-                </Link>
-              ))}
-            </div>
-
-            {categories.length > 0 ? (
-              <>
-                <div className="my-2 border-t border-border" />
-                <p className="mb-2 px-1 text-[10px] font-medium tracking-[0.16em] text-muted-foreground select-none">
-                  文章分类
-                </p>
-                <div className="grid grid-cols-2 gap-0.5">
-                  {categories.map(({ category, count }) => (
-                    <Link
-                      key={category}
-                      href={`/posts?category=${encodeURIComponent(category)}`}
-                      onClick={() => setPostMenuOpen(false)}
-                      className="group flex items-center gap-2.5 rounded-lg px-3 py-2 transition-colors hover:bg-ember/10"
-                    >
-                      <span className="flex-shrink-0 text-muted-foreground transition-colors group-hover:text-ember">
-                        <MaterialSymbol icon={getCategoryIcon(category)} size={15} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-xs font-medium text-foreground transition-colors group-hover:text-ember">
-                          {category}
-                        </span>
-                        <span className="block text-[10px] text-muted-foreground">{count} 篇</span>
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </>
-            ) : null}
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {mounted && collectionMenuOpen && createPortal(
-        <div
-          style={{
-            position: 'fixed',
-            top: collectionPos.bottom + 8,
-            left: collectionPos.centerX,
-            transform: 'translateX(-50%)',
-            zIndex: 9999,
-          }}
-          onMouseEnter={openCollectionMenu}
-          onMouseLeave={closeCollectionMenuLater}
-        >
-          <div className={`${PANEL_CLS} min-w-[196px] p-3`}>
-            <p className="mb-2 px-1 text-[10px] font-medium tracking-[0.16em] text-muted-foreground select-none">
-              收藏夹
-            </p>
-            <div className="flex flex-col gap-0.5">
-              {COLLECTION_ITEMS.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setCollectionMenuOpen(false)}
-                  className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-ember/10"
-                >
-                  <span className="flex-shrink-0 text-muted-foreground transition-colors group-hover:text-ember">
-                    <MaterialSymbol icon={item.icon} size={16} />
-                  </span>
-                  <span>
-                    <span className="block text-xs font-medium text-foreground transition-colors group-hover:text-ember">
+      {mounted &&
+        postMenuOpen &&
+        createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              top: postPos.bottom + 8,
+              left: postPos.centerX,
+              transform: 'translateX(-50%)',
+              zIndex: 9999,
+            }}
+            onMouseEnter={openPostMenu}
+            onMouseLeave={closePostMenuLater}
+          >
+            <div className={`${PANEL_CLS} min-w-[280px] p-3`}>
+              <div className="mb-1 grid grid-cols-4 gap-0.5">
+                {POST_SUB_PAGES.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setPostMenuOpen(false)}
+                    className="group flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 transition-colors hover:bg-primary/10"
+                  >
+                    <span className="text-muted-foreground transition-colors group-hover:text-primary">
+                      <MaterialSymbol icon={item.icon} size={15} />
+                    </span>
+                    <span className="whitespace-nowrap text-[11px] font-medium text-muted-foreground transition-colors group-hover:text-primary">
                       {item.label}
                     </span>
-                    <span className="block text-[10px] text-muted-foreground">{item.desc}</span>
-                  </span>
-                </Link>
-              ))}
+                  </Link>
+                ))}
+              </div>
+
+              {categories.length > 0 ? (
+                <>
+                  <div className="my-2 border-t border-border" />
+                  <p className="mb-2 px-1 text-[10px] font-medium tracking-[0.16em] text-muted-foreground select-none">
+                    文章分类
+                  </p>
+                  <div className="grid grid-cols-2 gap-0.5">
+                    {categories.map(({ category, count }) => (
+                      <Link
+                        key={category}
+                        href={`/posts?category=${encodeURIComponent(category)}`}
+                        onClick={() => setPostMenuOpen(false)}
+                        className="group flex items-center gap-2.5 rounded-xl px-3 py-2 transition-colors hover:bg-primary/10"
+                      >
+                        <span className="flex-shrink-0 text-muted-foreground transition-colors group-hover:text-primary">
+                          <MaterialSymbol icon={getCategoryIcon(category)} size={15} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-xs font-medium text-foreground transition-colors group-hover:text-primary">
+                            {category}
+                          </span>
+                          <span className="block text-[10px] text-muted-foreground">{count} 篇</span>
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              ) : null}
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body
+        )}
+
+      {mounted &&
+        collectionMenuOpen &&
+        createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              top: collectionPos.bottom + 8,
+              left: collectionPos.centerX,
+              transform: 'translateX(-50%)',
+              zIndex: 9999,
+            }}
+            onMouseEnter={openCollectionMenu}
+            onMouseLeave={closeCollectionMenuLater}
+          >
+            <div className={`${PANEL_CLS} min-w-[196px] p-3`}>
+              <p className="mb-2 px-1 text-[10px] font-medium tracking-[0.16em] text-muted-foreground select-none">
+                收藏夹
+              </p>
+              <div className="flex flex-col gap-0.5">
+                {COLLECTION_ITEMS.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setCollectionMenuOpen(false)}
+                    className="group flex items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-primary/10"
+                  >
+                    <span className="flex-shrink-0 text-muted-foreground transition-colors group-hover:text-primary">
+                      <MaterialSymbol icon={item.icon} size={16} />
+                    </span>
+                    <span>
+                      <span className="block text-xs font-medium text-foreground transition-colors group-hover:text-primary">
+                        {item.label}
+                      </span>
+                      <span className="block text-[10px] text-muted-foreground">{item.desc}</span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   )
 }
