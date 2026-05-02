@@ -137,7 +137,7 @@ export default async function HomePage({
 
           {momentsResult.data.length > 0 ? (
             <div className="mt-auto pt-16">
-              <div className="scene-panel mx-auto max-w-5xl rounded-[32px] p-5 sm:p-6">
+              <div className="mx-auto max-w-5xl rounded-[32px] border border-white/8 bg-[rgba(24,24,26,0.72)] p-5 backdrop-blur-2xl sm:p-6">
                 <div className="mb-5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2.5">
                     <span className="scene-icon-badge h-8 w-8 rounded-2xl">
@@ -147,7 +147,7 @@ export default async function HomePage({
                   </div>
                   <Link
                     href="/moments"
-                    className="scene-action h-8 w-8 justify-center"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-white/48 transition-colors hover:bg-white/[0.05] hover:text-white/82"
                     aria-label="查看全部瞬间"
                   >
                     <MaterialSymbol icon="arrow_forward" size={16} />
@@ -162,13 +162,13 @@ export default async function HomePage({
                       <Link
                         key={moment.id}
                         href="/moments"
-                        className="scene-panel-soft group relative flex min-h-[172px] w-[18rem] flex-shrink-0 flex-col justify-between overflow-hidden rounded-[24px] p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/24 hover:bg-hero-panel/72 sm:w-[19rem]"
+                        className="group relative flex min-h-[172px] w-[18rem] flex-shrink-0 flex-col justify-between overflow-hidden rounded-[24px] border border-white/[0.07] bg-[rgba(20,20,22,0.56)] p-4 backdrop-blur-xl transition-all duration-300 hover:border-white/[0.1] hover:bg-[rgba(24,24,26,0.62)] sm:w-[19rem]"
                       >
                         <div className="scene-terminal-grid absolute inset-0 opacity-[0.03]" />
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.035] via-transparent to-primary/5 opacity-80" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-white/[0.01] opacity-70" />
                         <div className="relative z-10">
                           {moment.images.length > 0 ? (
-                            <div className="mb-3 aspect-[16/9] overflow-hidden rounded-[18px] border border-hero-border/18 bg-background/24">
+                            <div className="mb-3 aspect-[16/9] overflow-hidden rounded-[18px] border border-white/8 bg-black/10">
                               <img
                                 src={moment.images[0]}
                                 alt=""
@@ -200,7 +200,7 @@ export default async function HomePage({
                               minute: '2-digit',
                             })}
                           </span>
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-hero-border/16 bg-hero-panel/56 text-hero-subtle transition-colors group-hover:bg-primary/14 group-hover:text-hero">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-white/34 transition-colors group-hover:bg-white/[0.06] group-hover:text-white/72">
                             <MaterialSymbol icon="arrow_outward" size={13} />
                           </span>
                         </div>

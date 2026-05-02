@@ -1,22 +1,28 @@
 'use client'
 
-import { useMemo, useRef, useState, type MouseEvent } from 'react'
+import { useMemo, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import type { ActivityDay } from '@/lib/db/dao/activityDao'
 
-const LEVEL_CLS = [
-  'bg-border/50',
-  'bg-primary/18',
-  'bg-primary/36',
-  'bg-primary/58',
-  'bg-primary',
-] as const
-
 const COLUMN_WIDTH = 14
+
+const LEVEL_STYLES: CSSProperties[] = [
+  { backgroundColor: 'hsl(var(--border) / 0.5)' },
+  { backgroundColor: 'hsl(var(--primary) / 0.28)' },
+  { backgroundColor: 'hsl(var(--primary) / 0.46)' },
+  { backgroundColor: 'hsl(var(--primary) / 0.68)' },
+  { backgroundColor: 'hsl(var(--primary))' },
+]
 
 type TooltipState = {
   left: number
   top: number
   text: string
+}
+
+type Cell = {
+  date: string
+  count: number
+  future: boolean
 }
 
 function getLevel(count: number) {
@@ -52,8 +58,6 @@ export function ActivityHeatmap({ data }: Props) {
     start.setDate(start.getDate() - 51 * 7)
 
     const countMap = new Map(data.map((item) => [item.date, item.count]))
-
-    type Cell = { date: string; count: number; future: boolean }
     const nextWeeks: Cell[][] = []
     const nextMonthLabels: { label: string; col: number }[] = []
     let lastMonth = -1
@@ -100,10 +104,7 @@ export function ActivityHeatmap({ data }: Props) {
     }
   }, [data])
 
-  function showTooltip(
-    event: MouseEvent<HTMLDivElement>,
-    cell: { date: string; count: number; future: boolean }
-  ) {
+  function showTooltip(event: MouseEvent<HTMLDivElement>, cell: Cell) {
     if (cell.future || !containerRef.current) return
 
     const containerRect = containerRef.current.getBoundingClientRect()
@@ -154,11 +155,8 @@ export function ActivityHeatmap({ data }: Props) {
               {week.map((cell, dayIndex) => (
                 <div
                   key={dayIndex}
-                  className={[
-                    'h-[11px] w-[11px] rounded-[2px]',
-                    'cursor-default transition-transform duration-150 hover:scale-[1.18]',
-                    cell.future ? 'bg-border/20' : LEVEL_CLS[getLevel(cell.count)],
-                  ].join(' ')}
+                  className="h-[11px] w-[11px] cursor-default rounded-[2px] transition-transform duration-150 hover:scale-[1.18]"
+                  style={cell.future ? { backgroundColor: 'hsl(var(--border) / 0.2)' } : LEVEL_STYLES[getLevel(cell.count)]}
                   onMouseEnter={(event) => showTooltip(event, cell)}
                   onMouseLeave={() => setTooltip(null)}
                 />
@@ -169,8 +167,8 @@ export function ActivityHeatmap({ data }: Props) {
 
         <div className="mt-2 flex items-center justify-end gap-1.5">
           <span className="text-[10px] text-muted-foreground">少</span>
-          {LEVEL_CLS.map((className, index) => (
-            <div key={index} className={`h-[10px] w-[10px] rounded-[2px] ${className}`} />
+          {LEVEL_STYLES.map((style, index) => (
+            <div key={index} className="h-[10px] w-[10px] rounded-[2px]" style={style} />
           ))}
           <span className="text-[10px] text-muted-foreground">多</span>
         </div>
