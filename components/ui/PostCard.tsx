@@ -16,14 +16,14 @@ interface PostCardProps {
 export function PostCard({ post }: PostCardProps) {
   return (
     <Link href={`/posts/${post.slug}`} className="block group h-full">
-      <div className={`relative rounded-xl border border-border bg-card overflow-hidden
+      <div className={`relative h-full overflow-hidden rounded-[22px] border border-border/80 bg-card/92 backdrop-blur-sm
                       flex flex-col h-full
                       transition-all duration-300
-                      hover:border-primary/35 hover:shadow-[0_16px_36px_rgba(5,150,105,0.12)]
+                      hover:-translate-y-0.5 hover:border-primary/35
                       ${SHIMMER}`}>
 
         {/* ── 封面区 ── */}
-        <div className="aspect-[16/9] relative overflow-hidden flex-shrink-0">
+        <div className="relative aspect-[16/9] flex-shrink-0 overflow-hidden">
           {post.cover_url ? (
             <img
               src={post.cover_url}
@@ -47,7 +47,7 @@ export function PostCard({ post }: PostCardProps) {
           )}
 
           {/* 底部渐变遮罩 */}
-          <div className="absolute inset-x-0 bottom-0 h-10
+          <div className="absolute inset-x-0 bottom-0 h-12
                           bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
 
           {/* 分类 badge */}
@@ -62,7 +62,7 @@ export function PostCard({ post }: PostCardProps) {
         </div>
 
         {/* ── 内容区 ── */}
-        <div className="flex flex-col flex-1 px-4 pt-3.5 pb-4">
+        <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5">
           <h3 className="font-semibold text-foreground group-hover:text-primary
                          transition-colors duration-200 line-clamp-2 leading-snug mb-1.5">
             {post.title}

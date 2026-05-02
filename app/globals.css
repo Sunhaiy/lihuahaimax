@@ -293,23 +293,21 @@
   }
 
   .scene-panel {
-    border: 1px solid hsl(var(--hero-panel-border) / 0.28);
-    background: hsl(var(--hero-panel) / 0.78);
+    border: 1px solid hsl(var(--hero-panel-border) / 0.26);
+    background:
+      linear-gradient(180deg, hsl(var(--hero-panel) / 0.8) 0%, hsl(var(--hero-panel) / 0.72) 100%);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    box-shadow:
-      0 24px 90px rgba(2, 6, 23, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
   }
 
   .scene-panel-soft {
-    border: 1px solid hsl(var(--hero-panel-border) / 0.22);
-    background: hsl(var(--hero-panel) / 0.62);
+    border: 1px solid hsl(var(--hero-panel-border) / 0.2);
+    background:
+      linear-gradient(180deg, hsl(var(--hero-panel) / 0.68) 0%, hsl(var(--hero-panel) / 0.58) 100%);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
-    box-shadow:
-      0 16px 48px rgba(2, 6, 23, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   .scene-chip {
@@ -328,7 +326,6 @@
     border: 1px solid hsl(var(--primary) / 0.2);
     background: hsl(var(--primary) / 0.12);
     color: hsl(var(--hero-foreground));
-    box-shadow: 0 0 24px hsl(var(--primary) / 0.14);
   }
 
   .scene-icon-badge {
@@ -338,7 +335,6 @@
     border: 1px solid hsl(var(--primary) / 0.2);
     background: hsl(var(--primary) / 0.12);
     color: hsl(var(--hero-foreground));
-    box-shadow: 0 0 24px hsl(var(--primary) / 0.16);
   }
 
   .scene-action {
@@ -356,6 +352,11 @@
     border-color: hsl(var(--primary) / 0.28);
     color: hsl(var(--hero-foreground));
     background: hsl(var(--hero-panel) / 0.74);
+  }
+
+  .menu-popover {
+    transform-origin: top center;
+    animation: menu-popover-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .masonry-2 {
@@ -645,5 +646,17 @@
 
   50% {
     box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.32), 0 0 48px rgba(56, 189, 248, 0.18);
+  }
+}
+
+@keyframes menu-popover-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }

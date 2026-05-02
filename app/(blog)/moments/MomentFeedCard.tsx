@@ -237,11 +237,26 @@ function mergeEngagement(
   return { ...previous, ...next }
 }
 
+function getMomentContentClass(content: string) {
+  const length = content.trim().length
+
+  if (length <= 22) {
+    return 'text-[1.2rem] font-semibold leading-[1.55] tracking-[-0.028em] sm:text-[1.36rem]'
+  }
+
+  if (length <= 54) {
+    return 'text-[1.08rem] font-semibold leading-[1.62] tracking-[-0.024em] sm:text-[1.2rem]'
+  }
+
+  return 'text-[1rem] font-medium leading-[1.74] tracking-[-0.016em] sm:text-[1.08rem]'
+}
+
 export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
   const createdAt = new Date(moment.created_at)
   const summary = getMomentSummary(moment)
   const metrics = getMomentMetrics(moment)
   const linkMeta = getMomentLinkMeta(moment)
+  const contentClass = moment.content ? getMomentContentClass(moment.content) : ''
   const [visitorKey, setVisitorKey] = useState('')
   const [engagement, setEngagement] = useState<EngagementState>({
     likeCount: moment.like_count,
@@ -377,12 +392,12 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
   return (
     <article
       id={`moment-${moment.id}`}
-      className="group relative scroll-mt-24 overflow-hidden rounded-[26px] border border-hero-border/16 bg-zinc-950/58 px-4 py-4 shadow-[0_22px_70px_rgba(2,6,23,0.28)] backdrop-blur-2xl transition-all duration-300 hover:border-primary/24 hover:bg-zinc-950/64 sm:px-5 sm:py-5"
+      className="group relative scroll-mt-24 overflow-hidden rounded-[24px] border border-hero-border/16 bg-zinc-950/58 px-4 py-4 backdrop-blur-2xl transition-all duration-300 hover:border-primary/24 hover:bg-zinc-950/64 sm:px-5 sm:py-5"
     >
       <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-white/18 to-transparent" />
 
       <header className="flex items-start gap-3">
-        <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-full border border-white/12 bg-hero-panel/60 shadow-[0_0_0_4px_rgba(255,255,255,0.03)]">
+        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white/12 bg-hero-panel/60">
           {siteProfile.avatarUrl ? (
             <img
               src={siteProfile.avatarUrl}
@@ -397,27 +412,27 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
         </div>
 
         <div className="min-w-0 flex-1 pt-0.5">
-          <p className="truncate text-[1.32rem] font-extrabold leading-none tracking-[-0.035em] text-white/90">
+          <p className="truncate text-[1.05rem] font-bold leading-none tracking-[-0.03em] text-white/90">
             {siteProfile.ownerName}.
           </p>
 
           {moment.content ? (
-            <p className="mt-4 whitespace-pre-line text-[1.55rem] font-extrabold leading-[1.25] tracking-[-0.055em] text-white/88 sm:text-[1.9rem]">
-              {moment.content}
-            </p>
+            <div className="mt-3 max-w-[40rem]">
+              <p className={`whitespace-pre-line text-white/88 ${contentClass}`}>{moment.content}</p>
+            </div>
           ) : null}
 
           {metrics.length > 0 ? (
-            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-4 grid max-w-[40rem] gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {metrics.map((metric) => (
                 <div
                   key={metric.label}
-                  className="rounded-[18px] border border-white/8 bg-white/[0.055] px-4 py-3"
+                  className="rounded-[16px] border border-white/8 bg-white/[0.055] px-3.5 py-2.5"
                 >
                   <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-white/42">
                     {metric.label}
                   </p>
-                  <p className="mt-1 text-sm font-bold text-white/82">{metric.value}</p>
+                  <p className="mt-1 text-[13px] font-bold text-white/82">{metric.value}</p>
                 </div>
               ))}
             </div>
@@ -428,13 +443,13 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
               href={linkMeta.url}
               target="_blank"
               rel="noreferrer"
-              className="mt-4 block rounded-[18px] border border-white/10 bg-white/[0.055] px-4 py-3 transition-colors hover:border-primary/28 hover:bg-white/[0.075]"
+              className="mt-4 block max-w-[40rem] rounded-[16px] border border-white/10 bg-white/[0.055] px-3.5 py-3 transition-colors hover:border-primary/28 hover:bg-white/[0.075]"
             >
-              <p className="line-clamp-2 text-sm font-bold text-white/88">
+              <p className="line-clamp-2 text-[13px] font-bold text-white/88">
                 {linkMeta.title ?? linkMeta.url}
               </p>
               {linkMeta.description ? (
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/50">
+                <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-white/50">
                   {linkMeta.description}
                 </p>
               ) : null}
@@ -447,7 +462,7 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
           <MomentImages images={moment.images} />
 
           <div className="mt-4 flex items-center justify-between gap-3 text-white/46">
-            <div className="flex min-w-0 items-center gap-2 text-[0.95rem] font-semibold">
+            <div className="flex min-w-0 items-center gap-2 text-[0.9rem] font-semibold">
               <time className="flex-shrink-0">
                 {createdAt.toLocaleTimeString('zh-CN', {
                   hour: '2-digit',
@@ -456,12 +471,12 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
               </time>
               <span className="text-white/28">·</span>
               <span className="inline-flex min-w-0 items-center gap-1.5 truncate">
-                <MaterialSymbol icon={getSourceIcon(moment)} size={17} />
+                <MaterialSymbol icon={getSourceIcon(moment)} size={15} />
                 <span className="truncate">{formatMomentSource(moment)}</span>
               </span>
             </div>
 
-            <div className="flex shrink-0 items-center gap-4 sm:gap-6">
+            <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
               <ActionButton
                 active={engagement.liked}
                 count={engagement.likeCount}
@@ -486,12 +501,12 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
           </div>
 
           {shareStatus ? (
-            <p className="mt-2 text-right text-xs font-medium text-white/42">{shareStatus}</p>
+            <p className="mt-2 text-right text-[11px] font-medium text-white/42">{shareStatus}</p>
           ) : null}
 
-          <div className="mt-4 rounded-[14px] bg-white/[0.065] px-4 py-3">
-            <div className="flex items-center gap-2 text-[0.98rem] font-extrabold leading-6 text-white/86">
-              <MaterialSymbol icon="favorite" size={22} className="flex-shrink-0 text-white/86" />
+          <div className="mt-4 rounded-[14px] bg-white/[0.065] px-4 py-2.5">
+            <div className="flex items-center gap-2 text-[0.95rem] font-bold leading-6 text-white/86">
+              <MaterialSymbol icon="favorite" size={20} className="flex-shrink-0 text-white/86" />
               <span>{getLikeStripText(siteProfile, engagement, summary)}</span>
             </div>
           </div>
@@ -509,7 +524,7 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
             />
           ) : null}
 
-          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.2em] text-white/24">
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-white/24">
             {timeAgo(createdAt)} · {formatMomentType(moment.type)}
           </p>
         </div>
@@ -575,15 +590,15 @@ function ActionButton({
     <button
       type="button"
       aria-label={label}
-      className={`inline-flex items-center gap-2 text-white/82 transition hover:text-white disabled:cursor-wait disabled:opacity-60 ${
+      className={`inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded-full border border-transparent px-1.5 text-white/78 transition hover:border-white/10 hover:bg-white/[0.03] hover:text-white disabled:cursor-wait disabled:opacity-60 ${
         active ? 'text-ember' : ''
       }`}
       disabled={disabled}
       onClick={onClick}
     >
-      <MaterialSymbol icon={icon} size={30} fill={active} weight={430} />
+      <MaterialSymbol icon={icon} size={19} fill={active} weight={430} />
       {typeof count === 'number' && count > 0 ? (
-        <span className="text-[1.05rem] font-extrabold leading-none">{count}</span>
+        <span className="text-[0.82rem] font-semibold leading-none">{count}</span>
       ) : null}
     </button>
   )

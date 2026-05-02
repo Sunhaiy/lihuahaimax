@@ -137,8 +137,8 @@ export default async function HomePage({
 
           {momentsResult.data.length > 0 ? (
             <div className="mt-auto pt-16">
-              <div className="scene-panel mx-auto max-w-5xl rounded-[30px] p-4">
-                <div className="mb-4 flex items-center justify-between gap-4">
+              <div className="scene-panel mx-auto max-w-5xl rounded-[32px] p-5 sm:p-6">
+                <div className="mb-5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2.5">
                     <span className="scene-icon-badge h-8 w-8 rounded-2xl">
                       <MaterialSymbol icon="chat_bubble" size={16} />
@@ -162,12 +162,13 @@ export default async function HomePage({
                       <Link
                         key={moment.id}
                         href="/moments"
-                        className="scene-panel-soft group relative flex min-h-[148px] w-60 flex-shrink-0 flex-col justify-between overflow-hidden rounded-[22px] p-4 transition-colors hover:border-primary/24 hover:bg-hero-panel/70"
+                        className="scene-panel-soft group relative flex min-h-[172px] w-[18rem] flex-shrink-0 flex-col justify-between overflow-hidden rounded-[24px] p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/24 hover:bg-hero-panel/72 sm:w-[19rem]"
                       >
                         <div className="scene-terminal-grid absolute inset-0 opacity-[0.03]" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.035] via-transparent to-primary/5 opacity-80" />
                         <div className="relative z-10">
                           {moment.images.length > 0 ? (
-                            <div className="mb-3 aspect-[16/9] overflow-hidden rounded-[16px] border border-hero-border/16 bg-background/30">
+                            <div className="mb-3 aspect-[16/9] overflow-hidden rounded-[18px] border border-hero-border/18 bg-background/24">
                               <img
                                 src={moment.images[0]}
                                 alt=""
@@ -178,7 +179,7 @@ export default async function HomePage({
 
                           {preview ? (
                             <p
-                              className={`scene-copy-muted line-clamp-4 whitespace-pre-line text-xs leading-6 ${
+                              className={`scene-copy-muted line-clamp-4 whitespace-pre-line text-[13px] leading-6 ${
                                 preview.mono ? 'font-mono' : ''
                               }`}
                             >
@@ -189,7 +190,7 @@ export default async function HomePage({
                           )}
                         </div>
 
-                        <div className="scene-copy-subtle relative z-10 mt-4 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.18em]">
+                        <div className="scene-copy-subtle relative z-10 mt-5 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.16em]">
                           <span className="inline-flex items-center gap-1.5">
                             <MaterialSymbol icon="schedule" size={13} />
                             {new Date(moment.created_at).toLocaleString('zh-CN', {
@@ -199,7 +200,7 @@ export default async function HomePage({
                               minute: '2-digit',
                             })}
                           </span>
-                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-hero-panel/70 text-hero-subtle transition-colors group-hover:bg-primary/16 group-hover:text-hero">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-hero-border/16 bg-hero-panel/56 text-hero-subtle transition-colors group-hover:bg-primary/14 group-hover:text-hero">
                             <MaterialSymbol icon="arrow_outward" size={13} />
                           </span>
                         </div>

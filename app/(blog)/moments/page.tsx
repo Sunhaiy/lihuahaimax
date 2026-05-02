@@ -28,21 +28,21 @@ export default async function MomentsPage() {
   ])
 
   return (
-    <div className="mx-auto max-w-[880px] px-3 pb-16 pt-8 sm:px-6 sm:pt-10">
-      <section className="mb-7 px-1 sm:px-2">
+    <div className="mx-auto max-w-[760px] px-4 pb-16 pt-9 sm:px-5 sm:pt-12">
+      <section className="mb-8 px-1">
         <p className="scene-copy-subtle text-[11px] font-mono uppercase tracking-[0.28em]">
           Moments Archive
         </p>
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="scene-copy text-3xl font-black tracking-[-0.07em] sm:text-5xl">
+            <h1 className="scene-copy text-[2.5rem] font-black tracking-[-0.075em] sm:text-[4rem]">
               瞬间
             </h1>
-            <p className="scene-copy-muted mt-3 max-w-2xl text-sm leading-7">
+            <p className="scene-copy-muted mt-3 max-w-xl text-[14px] leading-7">
               {siteProfile.ownerName} 的照片、碎碎念、天气和路过的小事，都按社交动态的节奏收在这里。
             </p>
           </div>
-          <p className="scene-chip w-fit px-3 py-1 text-xs font-bold">
+          <p className="scene-chip w-fit px-3 py-1 text-[11px] font-semibold">
             {moments.length} 条记录
           </p>
         </div>
@@ -56,7 +56,7 @@ export default async function MomentsPage() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4">
           {moments.map((moment) => (
             <MomentFeedCard
               key={moment.id}

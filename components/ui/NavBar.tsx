@@ -49,7 +49,7 @@ const POST_SUB_PAGES = [
 ]
 
 const PANEL_CLS =
-  'rounded-2xl border border-border/80 bg-card/95 shadow-[0_18px_48px_rgba(2,6,23,0.18)] backdrop-blur-xl backdrop-saturate-150'
+  'rounded-[24px] border border-white/10 bg-[rgba(38,34,36,0.62)] backdrop-blur-xl backdrop-brightness-75 backdrop-saturate-150'
 
 interface MenuPos {
   centerX: number
@@ -220,19 +220,19 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
             onMouseEnter={openPostMenu}
             onMouseLeave={closePostMenuLater}
           >
-            <div className={`${PANEL_CLS} min-w-[280px] p-3`}>
+            <div className={`menu-popover ${PANEL_CLS} min-w-[300px] p-3.5`}>
               <div className="mb-1 grid grid-cols-4 gap-0.5">
                 {POST_SUB_PAGES.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setPostMenuOpen(false)}
-                    className="group flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 transition-colors hover:bg-primary/10"
+                    className="group flex flex-col items-center gap-1 rounded-2xl px-2 py-2.5 transition-all duration-200 hover:bg-muted/80"
                   >
-                    <span className="text-muted-foreground transition-colors group-hover:text-primary">
+                    <span className="text-muted-foreground transition-colors group-hover:text-foreground">
                       <MaterialSymbol icon={item.icon} size={15} />
                     </span>
-                    <span className="whitespace-nowrap text-[11px] font-medium text-muted-foreground transition-colors group-hover:text-primary">
+                    <span className="whitespace-nowrap text-[11px] font-medium text-muted-foreground transition-colors group-hover:text-foreground">
                       {item.label}
                     </span>
                   </Link>
@@ -251,13 +251,13 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
                         key={category}
                         href={`/posts?category=${encodeURIComponent(category)}`}
                         onClick={() => setPostMenuOpen(false)}
-                        className="group flex items-center gap-2.5 rounded-xl px-3 py-2 transition-colors hover:bg-primary/10"
+                        className="group flex items-center gap-2.5 rounded-2xl px-3 py-2.5 transition-all duration-200 hover:bg-muted/80"
                       >
-                        <span className="flex-shrink-0 text-muted-foreground transition-colors group-hover:text-primary">
+                        <span className="flex-shrink-0 text-muted-foreground transition-colors group-hover:text-foreground">
                           <MaterialSymbol icon={getCategoryIcon(category)} size={15} />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-xs font-medium text-foreground transition-colors group-hover:text-primary">
+                          <span className="block truncate text-xs font-medium text-foreground">
                             {category}
                           </span>
                           <span className="block text-[10px] text-muted-foreground">{count} 篇</span>
@@ -286,7 +286,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
             onMouseEnter={openCollectionMenu}
             onMouseLeave={closeCollectionMenuLater}
           >
-            <div className={`${PANEL_CLS} min-w-[196px] p-3`}>
+            <div className={`menu-popover ${PANEL_CLS} min-w-[220px] p-3.5`}>
               <p className="mb-2 px-1 text-[10px] font-medium tracking-[0.16em] text-muted-foreground select-none">
                 收藏夹
               </p>
@@ -296,13 +296,13 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setCollectionMenuOpen(false)}
-                    className="group flex items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-primary/10"
+                    className="group flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-200 hover:bg-muted/80"
                   >
-                    <span className="flex-shrink-0 text-muted-foreground transition-colors group-hover:text-primary">
+                    <span className="flex-shrink-0 text-muted-foreground transition-colors group-hover:text-foreground">
                       <MaterialSymbol icon={item.icon} size={16} />
                     </span>
                     <span>
-                      <span className="block text-xs font-medium text-foreground transition-colors group-hover:text-primary">
+                      <span className="block text-xs font-medium text-foreground">
                         {item.label}
                       </span>
                       <span className="block text-[10px] text-muted-foreground">{item.desc}</span>

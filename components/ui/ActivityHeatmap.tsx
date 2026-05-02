@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, type MouseEvent } from 'react'
 import type { ActivityDay } from '@/lib/db/dao/activityDao'
 
 const LEVEL_CLS = [
@@ -11,7 +11,15 @@ const LEVEL_CLS = [
   'bg-primary',
 ] as const
 
-function level(count: number) {
+const COLUMN_WIDTH = 14
+
+type TooltipState = {
+  left: number
+  top: number
+  text: string
+}
+
+function getLevel(count: number) {
   if (count === 0) return 0
   if (count === 1) return 1
   if (count <= 3) return 2
@@ -19,9 +27,9 @@ function level(count: number) {
   return 4
 }
 
-function fmtDate(s: string) {
-  const [y, m, d] = s.split('-')
-  return `${y}年${parseInt(m)}月${parseInt(d)}日`
+function formatDate(value: string) {
+  const [year, month, day] = value.split('-').map(Number)
+  return `${year}年${month}月${day}日`
 }
 
 interface Props {
@@ -29,108 +37,129 @@ interface Props {
 }
 
 export function ActivityHeatmap({ data }: Props) {
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null)
 
   const { weeks, monthLabels, activeDays, total } = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    const dow = today.getDay()
+    const dayOfWeek = today.getDay()
     const thisMonday = new Date(today)
-    thisMonday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1))
+    thisMonday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
 
     const start = new Date(thisMonday)
     start.setDate(start.getDate() - 51 * 7)
 
-    const map = new Map(data.map((d) => [d.date, d.count]))
+    const countMap = new Map(data.map((item) => [item.date, item.count]))
 
     type Cell = { date: string; count: number; future: boolean }
-    const weeks: Cell[][] = []
-    const monthLabels: { label: string; col: number }[] = []
+    const nextWeeks: Cell[][] = []
+    const nextMonthLabels: { label: string; col: number }[] = []
     let lastMonth = -1
-    let activeDays = 0
-    let total = 0
+    let nextActiveDays = 0
+    let nextTotal = 0
 
     for (let col = 0; col < 52; col++) {
       const week: Cell[] = []
-      for (let row = 0; row < 7; row++) {
-        const d = new Date(start)
-        d.setDate(d.getDate() + col * 7 + row)
-        const dateStr =
-          d.getFullYear() + '-' +
-          String(d.getMonth() + 1).padStart(2, '0') + '-' +
-          String(d.getDate()).padStart(2, '0')
-        const future = d > today
-        const count = future ? 0 : (map.get(dateStr) ?? 0)
 
-        if (row === 0 && d.getMonth() !== lastMonth) {
-          monthLabels.push({ label: `${d.getMonth() + 1}月`, col })
-          lastMonth = d.getMonth()
+      for (let row = 0; row < 7; row++) {
+        const date = new Date(start)
+        date.setDate(date.getDate() + col * 7 + row)
+
+        const dateKey = [
+          date.getFullYear(),
+          String(date.getMonth() + 1).padStart(2, '0'),
+          String(date.getDate()).padStart(2, '0'),
+        ].join('-')
+
+        const future = date > today
+        const count = future ? 0 : (countMap.get(dateKey) ?? 0)
+
+        if (row === 0 && date.getMonth() !== lastMonth) {
+          nextMonthLabels.push({ label: `${date.getMonth() + 1}月`, col })
+          lastMonth = date.getMonth()
         }
+
         if (!future && count > 0) {
-          activeDays++
-          total += count
+          nextActiveDays += 1
+          nextTotal += count
         }
-        week.push({ date: dateStr, count, future })
+
+        week.push({ date: dateKey, count, future })
       }
-      weeks.push(week)
+
+      nextWeeks.push(week)
     }
-    return { weeks, monthLabels, activeDays, total }
+
+    return {
+      weeks: nextWeeks,
+      monthLabels: nextMonthLabels,
+      activeDays: nextActiveDays,
+      total: nextTotal,
+    }
   }, [data])
 
-  const COL_W = 14
+  function showTooltip(
+    event: MouseEvent<HTMLDivElement>,
+    cell: { date: string; count: number; future: boolean }
+  ) {
+    if (cell.future || !containerRef.current) return
+
+    const containerRect = containerRef.current.getBoundingClientRect()
+    const cellRect = event.currentTarget.getBoundingClientRect()
+    const rawLeft = cellRect.left - containerRect.left + cellRect.width / 2
+    const safePadding = 68
+    const clampedLeft = Math.max(
+      safePadding,
+      Math.min(containerRect.width - safePadding, rawLeft)
+    )
+
+    setTooltip({
+      left: clampedLeft,
+      top: cellRect.top - containerRect.top - 10,
+      text: cell.count > 0 ? `${formatDate(cell.date)} · ${cell.count} 条` : formatDate(cell.date),
+    })
+  }
 
   return (
-    <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      {/* w-max：容器宽度精确等于格子内容宽度，标题行两端对齐到格子左右端 */}
-      <div className="flex flex-col w-max">
-
-        {/* 标题行：与格子等宽，两端对齐 */}
-        <div className="flex items-center justify-between mb-3">
+    <div
+      ref={containerRef}
+      className="relative overflow-x-auto overflow-y-visible pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+    >
+      <div className="flex w-max flex-col">
+        <div className="mb-3 flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">创作活跃度</h2>
           <p className="text-sm text-muted-foreground">
-            过去一年 ·{' '}
-            <span className="text-foreground font-medium">{total}</span> 条 ·{' '}
-            <span className="text-foreground font-medium">{activeDays}</span> 天活跃
+            过去一年 · <span className="font-medium text-foreground">{total}</span> 条 ·{' '}
+            <span className="font-medium text-foreground">{activeDays}</span> 天活跃
           </p>
         </div>
 
-        {/* 月份标签行 */}
         <div className="relative h-[14px]">
           {monthLabels.map(({ label, col }) => (
             <span
               key={col}
-              className="absolute text-[9px] text-muted-foreground whitespace-nowrap"
-              style={{ left: col * COL_W }}
+              className="absolute whitespace-nowrap text-[9px] text-muted-foreground"
+              style={{ left: col * COLUMN_WIDTH }}
             >
               {label}
             </span>
           ))}
         </div>
 
-        {/* 格子行 */}
-        <div className="flex gap-[3px] mt-[3px]">
-          {weeks.map((week, wi) => (
-            <div key={wi} className="flex flex-col gap-[3px]">
-              {week.map((cell, di) => (
+        <div className="mt-[3px] flex gap-[3px]">
+          {weeks.map((week, weekIndex) => (
+            <div key={weekIndex} className="flex flex-col gap-[3px]">
+              {week.map((cell, dayIndex) => (
                 <div
-                  key={di}
+                  key={dayIndex}
                   className={[
-                    'w-[11px] h-[11px] rounded-[2px]',
-                    'cursor-default transition-transform hover:scale-125',
-                    cell.future ? 'bg-border/20' : LEVEL_CLS[level(cell.count)],
+                    'h-[11px] w-[11px] rounded-[2px]',
+                    'cursor-default transition-transform duration-150 hover:scale-[1.18]',
+                    cell.future ? 'bg-border/20' : LEVEL_CLS[getLevel(cell.count)],
                   ].join(' ')}
-                  onMouseEnter={(e) => {
-                    if (cell.future) return
-                    const rect = e.currentTarget.getBoundingClientRect()
-                    setTooltip({
-                      x: rect.left + rect.width / 2,
-                      y: rect.top,
-                      text: cell.count > 0
-                        ? `${fmtDate(cell.date)} · ${cell.count} 条`
-                        : fmtDate(cell.date),
-                    })
-                  }}
+                  onMouseEnter={(event) => showTooltip(event, cell)}
                   onMouseLeave={() => setTooltip(null)}
                 />
               ))}
@@ -138,30 +167,23 @@ export function ActivityHeatmap({ data }: Props) {
           ))}
         </div>
 
-        {/* 图例 */}
-        <div className="flex items-center gap-1.5 mt-2 justify-end">
+        <div className="mt-2 flex items-center justify-end gap-1.5">
           <span className="text-[10px] text-muted-foreground">少</span>
-          {LEVEL_CLS.map((cls, i) => (
-            <div key={i} className={`w-[10px] h-[10px] rounded-[2px] ${cls}`} />
+          {LEVEL_CLS.map((className, index) => (
+            <div key={index} className={`h-[10px] w-[10px] rounded-[2px] ${className}`} />
           ))}
           <span className="text-[10px] text-muted-foreground">多</span>
         </div>
-
       </div>
 
-      {/* 浮动 Tooltip */}
-      {tooltip && (
+      {tooltip ? (
         <div
-          className="fixed z-50 pointer-events-none
-                     px-2.5 py-1.5 rounded-lg text-xs font-mono
-                     bg-background/95 backdrop-blur-md border border-border
-                     text-foreground whitespace-nowrap shadow-md
-                     -translate-x-1/2 -translate-y-full"
-          style={{ left: tooltip.x, top: tooltip.y - 6 }}
+          className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-xl border border-border/80 bg-background/88 px-3 py-1.5 text-xs font-medium text-foreground backdrop-blur-xl"
+          style={{ left: tooltip.left, top: tooltip.top }}
         >
           {tooltip.text}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
