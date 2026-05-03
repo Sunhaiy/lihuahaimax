@@ -9,16 +9,28 @@ interface Props {
   works: WorkListItem[]
 }
 
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+})
+
+const timeFormatter = new Intl.DateTimeFormat('en-US', {
+  hour: 'numeric',
+  minute: '2-digit',
+  hour12: true,
+})
+
 export function WorksCarousel({ works }: Props) {
   const [active, setActive] = useState(0)
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'ArrowLeft') {
-        setActive((current) => Math.max(0, current - 1))
+        setActive((current) => (current - 1 + works.length) % works.length)
       }
       if (event.key === 'ArrowRight') {
-        setActive((current) => Math.min(works.length - 1, current + 1))
+        setActive((current) => (current + 1) % works.length)
       }
     }
 
@@ -29,190 +41,154 @@ export function WorksCarousel({ works }: Props) {
   if (works.length === 0) return null
 
   const activeWork = works[active]
+  const ticketDate = formatTicketDate(activeWork)
+  const ticketTime = formatTicketTime(activeWork)
 
   return (
-    <div className="w-full select-none">
-      <div className="relative h-[420px] overflow-hidden sm:h-[480px]">
-        {works.map((work, index) => {
-          const pos = index - active
-          const abs = Math.abs(pos)
-          if (abs > 2) return null
+    <section className="relative isolate flex min-h-[calc(100vh-5rem)] w-full items-center justify-center overflow-hidden bg-[#f4efe8] px-4 py-12 sm:px-6 lg:px-10">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(255,255,255,0.95)_0%,rgba(248,245,239,0.98)_24%,rgba(244,239,232,1)_58%,rgba(239,232,224,1)_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(214,203,191,0.12),transparent_14%,transparent_86%,rgba(214,203,191,0.12))]" />
+      <div className="pointer-events-none absolute left-1/2 top-16 h-72 w-72 -translate-x-1/2 rounded-full bg-white/60 blur-[110px]" />
+      <div className="pointer-events-none absolute left-1/2 top-[28%] h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-[#d8ccbf]/18 blur-[130px]" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-[linear-gradient(180deg,transparent,rgba(205,194,182,0.26))]" />
 
-          let scale = 1
-          let offset = '0%'
-          let opacity = 1
-          let zIndex = 12
-          let clickable = false
+      <div className="relative mx-auto flex w-full flex-col items-center">
+        <div className="relative w-full max-w-[19.6rem] sm:max-w-[20.2rem]">
+          <div className="pointer-events-none absolute inset-x-7 top-4 h-full rounded-[2rem] bg-black/12 blur-[20px]" />
+          <div className="pointer-events-none absolute inset-x-5 top-[0.85rem] h-full rounded-[1.95rem] bg-black/16 opacity-70" />
+          <div className="pointer-events-none absolute inset-x-3 top-2 h-full rounded-[1.9rem] bg-[#1b1b1b] opacity-78" />
 
-          if (abs === 1) {
-            scale = 0.8
-            offset = pos > 0 ? '64%' : '-64%'
-            opacity = 0.62
-            zIndex = 6
-            clickable = true
-          }
-
-          if (abs === 2) {
-            scale = 0.6
-            offset = pos > 0 ? '112%' : '-112%'
-            opacity = 0.24
-            zIndex = 2
-            clickable = true
-          }
-
-          return (
-            <div
-              key={work.id}
-              onClick={clickable ? () => setActive(index) : undefined}
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: 'min(68%, 820px)',
-                minWidth: 280,
-                transform: `translateX(calc(-50% + ${offset})) translateY(-50%) scale(${scale})`,
-                opacity,
-                zIndex,
-                transition: 'all 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
-                cursor: clickable ? 'pointer' : 'default',
-              }}
+          <article className="relative overflow-hidden rounded-[1.85rem] border border-black/12 bg-[#171717] p-[0.92rem] text-white shadow-[0_28px_90px_rgba(0,0,0,0.22),0_6px_22px_rgba(0,0,0,0.14)] transition-transform duration-300 hover:-translate-y-0.5">
+            <Link
+              href={`/works/${activeWork.slug}`}
+              className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              aria-label={`Open ${activeWork.title}`}
             >
-              <div className="overflow-hidden rounded-[28px] border border-border/70 bg-card/90 shadow-[0_18px_80px_rgba(2,6,23,0.22)] backdrop-blur-xl">
-                <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-                  {work.cover_url ? (
+              <div className="relative overflow-hidden rounded-[1.08rem] border border-white/7 bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
+                <div className="aspect-[1.43/1]">
+                  {activeWork.cover_url ? (
                     <img
-                      src={work.cover_url}
-                      alt={work.title}
-                      className="h-full w-full object-cover"
+                      src={activeWork.cover_url}
+                      alt={activeWork.title}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.025]"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/18 via-card to-muted">
-                      <span className="text-[88px] font-black tracking-[-0.08em] text-primary/25">
-                        {work.title.charAt(0)}
+                    <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_30%_20%,rgba(146,122,255,0.7),transparent_32%),radial-gradient(circle_at_70%_30%,rgba(35,215,255,0.65),transparent_34%),radial-gradient(circle_at_50%_75%,rgba(255,92,163,0.55),transparent_30%),linear-gradient(135deg,#050505,#2e2e2e)]">
+                      <span className="text-7xl font-black tracking-[-0.08em] text-white/16">
+                        {activeWork.title.charAt(0)}
                       </span>
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-                  <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5">
-                    <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.22em] text-slate-100/78">
-                      {work.year ?? 'Archive'}
-                    </span>
-                    <span className="rounded-full border border-primary/16 bg-primary/12 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-white/78">
-                      /works/{work.slug}
-                    </span>
-                  </div>
-                  <div className="absolute inset-x-0 bottom-0 p-6">
-                    <p className="text-[11px] font-mono uppercase tracking-[0.32em] text-white/46">
-                      Project Archive
+                </div>
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04),rgba(0,0,0,0.22))]" />
+              </div>
+
+              <div className="px-[0.35rem] pb-1 pt-[1.15rem]">
+                <p className="text-[0.78rem] font-medium tracking-[-0.01em] text-white/34">Name</p>
+                <h2 className="mt-1.5 text-[1.12rem] font-semibold leading-[1.12] tracking-[-0.055em] text-white sm:text-[1.22rem]">
+                  {activeWork.title}
+                </h2>
+
+                <div className="mt-[1.35rem] grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[0.78rem] font-medium tracking-[-0.01em] text-white/24">Date</p>
+                    <p className="mt-[0.32rem] text-[0.9rem] font-medium tracking-[-0.025em] text-white/90">
+                      {ticketDate}
                     </p>
-                    <h3 className="mt-3 text-3xl font-semibold tracking-[-0.05em] text-white sm:text-4xl">
-                      {work.title}
-                    </h3>
-                    {work.subtitle ? (
-                      <p className="mt-2 text-sm text-slate-200/78">{work.subtitle}</p>
-                    ) : null}
+                  </div>
+                  <div>
+                    <p className="text-[0.78rem] font-medium tracking-[-0.01em] text-white/24">Time</p>
+                    <p className="mt-[0.32rem] text-[0.9rem] font-medium tracking-[-0.025em] text-white/90">
+                      {ticketTime}
+                    </p>
                   </div>
                 </div>
               </div>
-            </div>
-          )
-        })}
 
-        <button
-          onClick={() => setActive((current) => Math.max(0, current - 1))}
-          disabled={active === 0}
-          aria-label="上一项"
-          className="absolute left-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/82 text-muted-foreground backdrop-blur-md transition-all hover:border-primary/24 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-25 sm:left-5"
-        >
-          <MaterialSymbol icon="chevron_left" size={22} />
-        </button>
-        <button
-          onClick={() => setActive((current) => Math.min(works.length - 1, current + 1))}
-          disabled={active === works.length - 1}
-          aria-label="下一项"
-          className="absolute right-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/82 text-muted-foreground backdrop-blur-md transition-all hover:border-primary/24 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-25 sm:right-5"
-        >
-          <MaterialSymbol icon="chevron_right" size={22} />
-        </button>
-      </div>
+              <div className="relative mt-[1.35rem]">
+                <span className="absolute -left-[1.55rem] top-1/2 h-[1.1rem] w-[1.1rem] -translate-y-1/2 rounded-full bg-[#f4efe8] shadow-[inset_-1px_0_0_rgba(0,0,0,0.08)]" />
+                <span className="absolute -right-[1.55rem] top-1/2 h-[1.1rem] w-[1.1rem] -translate-y-1/2 rounded-full bg-[#f4efe8] shadow-[inset_1px_0_0_rgba(0,0,0,0.08)]" />
+                <div className="h-px w-full bg-[radial-gradient(circle,rgba(255,255,255,0.45)_1px,transparent_1.2px)] bg-[length:10px_1px] bg-repeat-x bg-center opacity-90" />
+              </div>
 
-      <div className="mt-6 flex justify-center gap-2">
-        {works.map((work, index) => (
+              <div className="px-[1rem] pb-[1rem] pt-[1.55rem]">
+                <div className="relative h-[2.55rem] overflow-hidden rounded-[2px] border border-black/22 bg-[linear-gradient(90deg,#5d5d5d_0%,#ececec_14%,#fcfcfc_30%,#c8c8c8_49%,#efefef_69%,#fafafa_84%,#5c5c5c_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.46),inset_0_-1px_0_rgba(0,0,0,0.18),0_9px_18px_rgba(0,0,0,0.2)]">
+                  <div className="absolute inset-y-0 left-[14%] w-[18%] bg-white/28 blur-[10px]" />
+                  <div className="absolute inset-y-0 right-[11%] w-[14%] bg-white/26 blur-[8px]" />
+                </div>
+              </div>
+            </Link>
+          </article>
+        </div>
+
+        <div className="mt-9 flex items-center gap-3">
           <button
-            key={work.id}
-            onClick={() => setActive(index)}
-            aria-label={`跳到 ${work.title}`}
-            className={`rounded-full transition-all duration-300 ${
-              index === active ? 'h-2 w-8 bg-primary' : 'h-2 w-2 bg-white/20 hover:bg-white/32'
-            }`}
-          />
-        ))}
-      </div>
+            type="button"
+            onClick={() => setActive((current) => (current - 1 + works.length) % works.length)}
+            aria-label="Previous project"
+            className="flex h-[3.1rem] w-[3.1rem] items-center justify-center rounded-full border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(236,230,222,0.9))] text-[#1d1d1d] shadow-[0_10px_24px_rgba(0,0,0,0.08)] transition-colors hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(241,234,226,0.96))]"
+          >
+            <MaterialSymbol icon="chevron_left" size={19} />
+          </button>
 
-      <div key={activeWork.id} className="mx-auto mt-8 max-w-3xl text-center animate-fade-in">
-        <p className="text-[11px] font-mono uppercase tracking-[0.32em] text-muted-foreground">
-          Project Focus
-        </p>
-        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground sm:text-4xl">
-          {activeWork.title}
-        </h2>
-        {activeWork.summary || activeWork.description ? (
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-8 text-muted-foreground">
-            {activeWork.summary || activeWork.description}
-          </p>
-        ) : null}
-
-        {activeWork.tags.length > 0 ? (
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
-            {activeWork.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-primary/14 bg-primary/10 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.18em] text-primary/85"
-              >
-                {tag}
-              </span>
+          <div className="flex items-center gap-2">
+            {works.map((work, index) => (
+              <button
+                key={work.id}
+                type="button"
+                onClick={() => setActive(index)}
+                aria-label={`Go to ${work.title}`}
+                className={`rounded-full transition-all duration-300 ${
+                  index === active
+                    ? 'h-2.5 w-7 bg-[#161616]'
+                    : 'h-2.5 w-2.5 bg-black/18 hover:bg-black/28'
+                }`}
+              />
             ))}
           </div>
-        ) : null}
 
-        <div className="mt-7 flex flex-wrap justify-center gap-3">
-          <Link
-            href={`/works/${activeWork.slug}`}
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/88"
+          <button
+            type="button"
+            onClick={() => setActive((current) => (current + 1) % works.length)}
+            aria-label="Next project"
+            className="flex h-[3.1rem] w-[3.1rem] items-center justify-center rounded-full border border-black/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(236,230,222,0.9))] text-[#1d1d1d] shadow-[0_10px_24px_rgba(0,0,0,0.08)] transition-colors hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(241,234,226,0.96))]"
           >
-            <MaterialSymbol icon="deployed_code" size={18} />
-            查看项目详情
-          </Link>
+            <MaterialSymbol icon="chevron_right" size={19} />
+          </button>
+        </div>
 
-          {activeWork.primary_url ? (
-            <a
-              href={activeWork.primary_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/24 hover:text-primary"
-            >
-              <MaterialSymbol icon="open_in_new" size={18} />
-              {activeWork.primary_label || '访问链接'}
-            </a>
-          ) : null}
-
-          {activeWork.github_url || activeWork.secondary_url ? (
-            <a
-              href={activeWork.github_url || activeWork.secondary_url || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/24 hover:text-primary"
-            >
-              <MaterialSymbol icon="code_blocks" size={18} />
-              {activeWork.secondary_label || '查看源码 / 外链'}
-            </a>
+        <div className="mt-5 text-center">
+          <p className="text-[0.72rem] font-mono uppercase tracking-[0.32em] text-black/34">
+            {String(active + 1).padStart(2, '0')} / {String(works.length).padStart(2, '0')}
+          </p>
+          {activeWork.subtitle || activeWork.summary || activeWork.description ? (
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-black/48">
+              {activeWork.subtitle || activeWork.summary || activeWork.description}
+            </p>
           ) : null}
         </div>
       </div>
-
-      <p className="mt-8 text-center text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground/50">
-        {String(active + 1).padStart(2, '0')} / {String(works.length).padStart(2, '0')}
-      </p>
-    </div>
+    </section>
   )
+}
+
+function formatTicketDate(work: WorkListItem) {
+  const timestamp = resolveTicketTimestamp(work)
+  return dateFormatter.format(timestamp)
+}
+
+function formatTicketTime(work: WorkListItem) {
+  const timestamp = resolveTicketTimestamp(work)
+  return timeFormatter.format(timestamp).toLowerCase()
+}
+
+function resolveTicketTimestamp(work: WorkListItem) {
+  const candidates = [work.updated_at, work.created_at]
+
+  for (const value of candidates) {
+    const timestamp = new Date(value)
+    if (!Number.isNaN(timestamp.getTime())) return timestamp
+  }
+
+  return new Date()
 }
