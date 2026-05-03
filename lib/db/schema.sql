@@ -203,6 +203,25 @@ CREATE TABLE IF NOT EXISTS links (
 CREATE INDEX IF NOT EXISTS idx_links_category ON links (category);
 CREATE INDEX IF NOT EXISTS idx_links_active   ON links (is_active) WHERE is_active = TRUE;
 
+CREATE TABLE IF NOT EXISTS link_submissions (
+  id                SERIAL PRIMARY KEY,
+  site_name         TEXT        NOT NULL,
+  site_url          TEXT        NOT NULL,
+  site_description  TEXT,
+  site_avatar_url   TEXT,
+  site_rss_url      TEXT,
+  contact_email     TEXT        NOT NULL,
+  contact_note      TEXT,
+  status            TEXT        NOT NULL DEFAULT 'pending'
+                      CHECK (status IN ('pending', 'approved', 'rejected')),
+  admin_note        TEXT,
+  reviewed_at       TIMESTAMPTZ,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_link_submissions_status_created
+  ON link_submissions (status, created_at DESC);
+
 -- ============================================================
 -- 设置表 — 站点配置（Hero 背景图等）
 -- ============================================================

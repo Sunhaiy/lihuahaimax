@@ -4,15 +4,18 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import useSWR from 'swr'
 import {
+  AdminEmptyState,
   AdminField,
+  AdminNotice,
   AdminPageHeader,
+  AdminPanel,
+  AdminSection,
   AdminStatusBadge,
   ADMIN_INPUT_CLASS,
   ADMIN_MUTED_PANEL_CLASS,
   ADMIN_TEXTAREA_CLASS,
 } from '@/components/admin/AdminPrimitives'
 import { Button } from '@/components/ui/Button'
-import { Card, CardBody } from '@/components/ui/Card'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import type { AnimeStatus, AnimeType, GamePlatform, GameStatus } from '@/types/acg'
 
@@ -104,17 +107,17 @@ const EMPTY_GAME: GameFormState = {
 
 const ANIME_STATUS_LABELS: Record<AnimeStatus, string> = {
   watching: '在看',
-  completed: '已看完',
-  on_hold: '搁置中',
+  completed: '看完',
+  on_hold: '搁置',
   dropped: '弃坑',
-  plan_to_watch: '计划看',
+  plan_to_watch: '想看',
 }
 
 const GAME_STATUS_LABELS: Record<GameStatus, string> = {
   playing: '游玩中',
   completed: '已通关',
   abandoned: '弃坑',
-  plan_to_play: '计划玩',
+  plan_to_play: '计划',
   platinum: '白金',
 }
 
@@ -135,9 +138,7 @@ function readApiError(payload: unknown, fallback: string) {
     error?: string | { fieldErrors?: Record<string, string[]>; formErrors?: string[] }
   }
 
-  if (typeof source.error === 'string' && source.error.trim()) {
-    return source.error
-  }
+  if (typeof source.error === 'string' && source.error.trim()) return source.error
 
   if (source.error && typeof source.error === 'object') {
     const formError = source.error.formErrors?.find(Boolean)
@@ -192,17 +193,17 @@ async function uploadImage(file: File) {
   const formData = new FormData()
   formData.append('file', file)
 
-  const res = await fetch('/api/upload/image', {
+  const response = await fetch('/api/upload/image', {
     method: 'POST',
     body: formData,
   })
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => null)
+  if (!response.ok) {
+    const error = await response.json().catch(() => null)
     throw new Error(readApiError(error, '图片上传失败'))
   }
 
-  return res.json() as Promise<{ url: string }>
+  return response.json() as Promise<{ url: string }>
 }
 
 function parseOptionalInt(value: string) {
@@ -226,8 +227,8 @@ export default function DashboardAcgPage() {
     <div className="space-y-6">
       <AdminPageHeader
         eyebrow="ACG Library"
-        title="动漫 / 游戏管理"
-        description="把追番、游玩和评分记录放到同一套后台语言里，编辑、筛选和上传都保持工具化节奏。"
+        title="ACG 管理"
+        description="把动漫和游戏收进同一套后台节奏里：更安静的列表、更稳定的图像入口、更轻的表单负担。"
         actions={
           <Button variant="secondary" asChild>
             <Link href="/dashboard/works">
@@ -243,20 +244,14 @@ export default function DashboardAcgPage() {
           </>
         }
       />
-      <div className="rounded-[28px] border border-border/75 bg-card/76 p-6 backdrop-blur-xl">
-        <div className="hidden">
-        <p className="hidden text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
-          ACG Library
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">动漫 / 游戏管理</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-          这一页负责把追番和游戏收藏真正管理起来，不再只是“输个标题就结束”的演示表单。
-          项目字段已经由独立的 <code>/dashboard/works</code> 完整管理，这里聚焦把 ACG 链路补全。
-        </p>
 
-        </div>
-
-        <div className="mt-5 flex flex-wrap items-center gap-3">
+      <AdminPanel
+        title="内容类型"
+        description="两个内容域共用同一套壳层，切换时不用重新适应操作方式。"
+        icon="inventory_2"
+        bodyClassName="pt-5"
+      >
+        <div className="flex flex-wrap items-center gap-3">
           {(['anime', 'game'] as const).map((item) => (
             <button
               key={item}
@@ -264,22 +259,15 @@ export default function DashboardAcgPage() {
               onClick={() => setTab(item)}
               className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
                 tab === item
-                  ? 'border-primary/20 bg-primary/10 text-foreground'
+                  ? 'border-primary/18 bg-primary/10 text-foreground'
                   : 'border-border/70 bg-background/45 text-muted-foreground hover:border-border hover:text-foreground'
               }`}
             >
               {item === 'anime' ? '动漫' : '游戏'}
             </button>
           ))}
-
-          <Button variant="secondary" className="ml-auto hidden" asChild>
-            <Link href="/dashboard/works">
-              <MaterialSymbol icon="deployed_code" size={18} />
-              打开项目管理
-            </Link>
-          </Button>
         </div>
-      </div>
+      </AdminPanel>
 
       {tab === 'anime' ? <AnimeManager /> : <GameManager />}
     </div>
@@ -306,7 +294,7 @@ function AnimeManager() {
     if (current) setForm(toAnimeForm(current))
   }, [data, selectedId])
 
-  function resetNotice() {
+  function clearNotice() {
     setError('')
     setSuccess('')
   }
@@ -314,7 +302,7 @@ function AnimeManager() {
   function startNew() {
     setSelectedId(null)
     setForm(EMPTY_ANIME)
-    resetNotice()
+    clearNotice()
   }
 
   async function handleSave() {
@@ -324,7 +312,7 @@ function AnimeManager() {
     }
 
     setSaving(true)
-    resetNotice()
+    clearNotice()
 
     try {
       const response = await fetch(form.id ? `/api/acg/anime/${form.id}` : '/api/acg/anime', {
@@ -355,7 +343,7 @@ function AnimeManager() {
         setSelectedId(payload.id)
         setForm(toAnimeForm(payload))
       }
-      setSuccess(form.id ? '动漫已更新。' : '动漫已创建。')
+      setSuccess(form.id ? '动漫记录已更新。' : '动漫记录已创建。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '保存失败')
     } finally {
@@ -368,7 +356,7 @@ function AnimeManager() {
     if (!confirm('确定删除这条动漫记录吗？')) return
 
     setDeleting(true)
-    resetNotice()
+    clearNotice()
 
     try {
       const response = await fetch(`/api/acg/anime/${form.id}`, { method: 'DELETE' })
@@ -392,12 +380,12 @@ function AnimeManager() {
     if (!file) return
 
     setUploading(true)
-    resetNotice()
+    clearNotice()
 
     try {
       const result = await uploadImage(file)
       setForm((current) => ({ ...current, coverUrl: result.url }))
-      setSuccess('封面已上传，记得保存动漫记录。')
+      setSuccess('封面已上传，记得保存这条动漫记录。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '图片上传失败')
     } finally {
@@ -407,184 +395,187 @@ function AnimeManager() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
-      <LibraryListCard
+    <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+      <LibraryPanel
         title="动漫列表"
+        description="保持轻量检视，选中后在右侧集中编辑。"
+        icon="tv"
         count={data?.total ?? 0}
         isLoading={isLoading}
-        emptyText="还没有动漫记录，先新建一条吧。"
+        emptyTitle="还没有动漫记录"
+        emptyDescription="先录入一条作品，后面就能持续维护进度和评分。"
+        emptyAction={
+          <Button size="sm" onClick={startNew}>
+            新建第一条
+          </Button>
+        }
       >
         {data?.data.map((anime) => (
-          <SelectableListItem
+          <SelectableMediaItem
             key={anime.id}
             active={selectedId === anime.id}
             imageUrl={anime.cover_url}
             title={anime.title_cn ?? anime.title}
             subtitle={`${ANIME_STATUS_LABELS[anime.status]} · ${anime.type.toUpperCase()}`}
             meta={
-              anime.episodes_total
+              anime.episodes_total != null
                 ? `${anime.episodes_watched} / ${anime.episodes_total} 话`
                 : `${anime.episodes_watched} 话已记录`
             }
             onClick={() => {
               setSelectedId(anime.id)
               setForm(toAnimeForm(anime))
+              clearNotice()
             }}
           />
         ))}
-      </LibraryListCard>
+      </LibraryPanel>
 
-      <EditorCard
+      <EditorPanel
         title={form.id ? '编辑动漫' : '新建动漫'}
-        description="把追番状态、集数、评分、简评和封面都补齐，前台列表就能直接用。"
-        onReset={form.id ? startNew : undefined}
-        onSave={handleSave}
+        description="把进度、评分、简评和封面控制在一张干净的工作表里。"
         saveLabel={form.id ? '保存修改' : '创建动漫'}
         saving={saving}
+        onSave={handleSave}
+        onReset={form.id ? startNew : undefined}
         onDelete={form.id ? handleDelete : undefined}
         deleting={deleting}
         error={error}
         success={success}
       >
-        <div className="grid gap-6 xl:grid-cols-[220px_1fr]">
-          <ImageUploadPanel
-            label="封面"
-            imageUrl={form.coverUrl}
-            fallback={form.titleCn || form.title || '番'}
-            uploading={uploading}
-            onUpload={() => coverInputRef.current?.click()}
-            onClear={() => setForm((current) => ({ ...current, coverUrl: '' }))}
-            note="点击封面上传，支持直接保存本地上传后的图片地址。"
-          />
+        <AdminSection title="封面与基础资料" description="图像在左，核心字段在右，编辑时更容易聚焦。">
+          <div className="grid gap-6 xl:grid-cols-[220px_minmax(0,1fr)]">
+            <ImageUploadPanel
+              label="Cover"
+              imageUrl={form.coverUrl}
+              fallback={form.titleCn || form.title || '动漫封面'}
+              uploading={uploading}
+              onUpload={() => coverInputRef.current?.click()}
+              onClear={() => setForm((current) => ({ ...current, coverUrl: '' }))}
+              note="前台卡片会直接使用这张图。"
+            />
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="原始标题">
-              <input
-                value={form.title}
-                onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-                className={INPUT_CLASS}
-              />
-            </Field>
-            <Field label="中文标题">
-              <input
-                value={form.titleCn}
-                onChange={(event) => setForm((current) => ({ ...current, titleCn: event.target.value }))}
-                className={INPUT_CLASS}
-              />
-            </Field>
-            <Field label="番剧类型">
-              <select
-                value={form.type}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, type: event.target.value as AnimeType }))
-                }
-                className={INPUT_CLASS}
-              >
-                {['tv', 'movie', 'ova', 'special'].map((item) => (
-                  <option key={item} value={item}>
-                    {item.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="追番状态">
-              <select
-                value={form.status}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    status: event.target.value as AnimeStatus,
-                  }))
-                }
-                className={INPUT_CLASS}
-              >
-                {Object.entries(ANIME_STATUS_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="总集数">
-              <input
-                type="number"
-                value={form.episodesTotal}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, episodesTotal: event.target.value }))
-                }
-                className={INPUT_CLASS}
-              />
-            </Field>
-            <Field label="已看集数">
-              <input
-                type="number"
-                value={form.episodesWatched}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, episodesWatched: event.target.value }))
-                }
-                className={INPUT_CLASS}
-              />
-            </Field>
-            <Field label="评分">
-              <input
-                type="number"
-                min="1"
-                max="10"
-                step="0.1"
-                value={form.rating}
-                onChange={(event) => setForm((current) => ({ ...current, rating: event.target.value }))}
-                className={INPUT_CLASS}
-              />
-            </Field>
-            <Field label="季度 / 开始时间">
-              <input
-                value={form.startSeason}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, startSeason: event.target.value }))
-                }
-                className={INPUT_CLASS}
-                placeholder="2025 春 / 2025-04"
-              />
-            </Field>
-            <Field label="MyAnimeList ID">
-              <input
-                type="number"
-                value={form.malId}
-                onChange={(event) => setForm((current) => ({ ...current, malId: event.target.value }))}
-                className={INPUT_CLASS}
-              />
-            </Field>
-            <Field label="封面链接" fullWidth>
-              <input
-                value={form.coverUrl}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, coverUrl: event.target.value }))
-                }
-                className={INPUT_CLASS}
-                placeholder="https://example.com/cover.jpg 或 /uploads/images/..."
-              />
-            </Field>
-            <Field label="简评" fullWidth>
-              <textarea
-                value={form.shortReview}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, shortReview: event.target.value }))
-                }
-                className={TEXTAREA_CLASS}
-                rows={5}
-              />
-            </Field>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="原始标题">
+                <input
+                  value={form.title}
+                  onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                  className={INPUT_CLASS}
+                  placeholder="作品原名"
+                />
+              </Field>
+              <Field label="中文标题">
+                <input
+                  value={form.titleCn}
+                  onChange={(event) => setForm((current) => ({ ...current, titleCn: event.target.value }))}
+                  className={INPUT_CLASS}
+                  placeholder="前台优先显示的标题"
+                />
+              </Field>
+              <Field label="类型">
+                <select
+                  value={form.type}
+                  onChange={(event) => setForm((current) => ({ ...current, type: event.target.value as AnimeType }))}
+                  className={INPUT_CLASS}
+                >
+                  {['tv', 'movie', 'ova', 'special'].map((item) => (
+                    <option key={item} value={item}>
+                      {item.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="状态">
+                <select
+                  value={form.status}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, status: event.target.value as AnimeStatus }))
+                  }
+                  className={INPUT_CLASS}
+                >
+                  {Object.entries(ANIME_STATUS_LABELS).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="总集数">
+                <input
+                  type="number"
+                  value={form.episodesTotal}
+                  onChange={(event) => setForm((current) => ({ ...current, episodesTotal: event.target.value }))}
+                  className={INPUT_CLASS}
+                  placeholder="12"
+                />
+              </Field>
+              <Field label="已看集数">
+                <input
+                  type="number"
+                  value={form.episodesWatched}
+                  onChange={(event) => setForm((current) => ({ ...current, episodesWatched: event.target.value }))}
+                  className={INPUT_CLASS}
+                  placeholder="7"
+                />
+              </Field>
+              <Field label="评分">
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  step="0.1"
+                  value={form.rating}
+                  onChange={(event) => setForm((current) => ({ ...current, rating: event.target.value }))}
+                  className={INPUT_CLASS}
+                  placeholder="8.6"
+                />
+              </Field>
+              <Field label="季度 / 开始时间">
+                <input
+                  value={form.startSeason}
+                  onChange={(event) => setForm((current) => ({ ...current, startSeason: event.target.value }))}
+                  className={INPUT_CLASS}
+                  placeholder="2025 春 / 2025-04"
+                />
+              </Field>
+              <Field label="MyAnimeList ID">
+                <input
+                  type="number"
+                  value={form.malId}
+                  onChange={(event) => setForm((current) => ({ ...current, malId: event.target.value }))}
+                  className={INPUT_CLASS}
+                  placeholder="12345"
+                />
+              </Field>
+              <Field label="封面链接" fullWidth>
+                <input
+                  value={form.coverUrl}
+                  onChange={(event) => setForm((current) => ({ ...current, coverUrl: event.target.value }))}
+                  className={INPUT_CLASS}
+                  placeholder="https://example.com/cover.jpg 或 /uploads/images/..."
+                />
+              </Field>
+              <Field label="简评" fullWidth>
+                <textarea
+                  value={form.shortReview}
+                  onChange={(event) => setForm((current) => ({ ...current, shortReview: event.target.value }))}
+                  className={TEXTAREA_CLASS}
+                  rows={5}
+                  placeholder="写给自己看的短评，前台卡片也会复用。"
+                />
+              </Field>
+            </div>
           </div>
-        </div>
 
-        <input
-          ref={coverInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleCoverUpload}
-        />
-      </EditorCard>
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleCoverUpload}
+          />
+        </AdminSection>
+      </EditorPanel>
     </div>
   )
 }
@@ -610,7 +601,7 @@ function GameManager() {
     if (current) setForm(toGameForm(current))
   }, [data, selectedId])
 
-  function resetNotice() {
+  function clearNotice() {
     setError('')
     setSuccess('')
   }
@@ -618,7 +609,7 @@ function GameManager() {
   function startNew() {
     setSelectedId(null)
     setForm(EMPTY_GAME)
-    resetNotice()
+    clearNotice()
   }
 
   async function handleSave() {
@@ -628,7 +619,7 @@ function GameManager() {
     }
 
     setSaving(true)
-    resetNotice()
+    clearNotice()
 
     try {
       const response = await fetch(form.id ? `/api/acg/game/${form.id}` : '/api/acg/game', {
@@ -657,7 +648,7 @@ function GameManager() {
         setSelectedId(payload.id)
         setForm(toGameForm(payload))
       }
-      setSuccess(form.id ? '游戏已更新。' : '游戏已创建。')
+      setSuccess(form.id ? '游戏记录已更新。' : '游戏记录已创建。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '保存失败')
     } finally {
@@ -670,7 +661,7 @@ function GameManager() {
     if (!confirm('确定删除这条游戏记录吗？')) return
 
     setDeleting(true)
-    resetNotice()
+    clearNotice()
 
     try {
       const response = await fetch(`/api/acg/game/${form.id}`, { method: 'DELETE' })
@@ -697,7 +688,7 @@ function GameManager() {
     if (!file) return
 
     setUploadingField(field)
-    resetNotice()
+    clearNotice()
 
     try {
       const result = await uploadImage(file)
@@ -706,7 +697,7 @@ function GameManager() {
         coverUrl: field === 'cover' ? result.url : current.coverUrl,
         cartridgeImageUrl: field === 'cartridge' ? result.url : current.cartridgeImageUrl,
       }))
-      setSuccess('图片已上传，记得保存游戏记录。')
+      setSuccess('图片已上传，记得保存这条游戏记录。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '图片上传失败')
     } finally {
@@ -717,15 +708,23 @@ function GameManager() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
-      <LibraryListCard
+    <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+      <LibraryPanel
         title="游戏列表"
+        description="同一套密度处理主机、PC 和移动游戏。"
+        icon="stadia_controller"
         count={data?.total ?? 0}
         isLoading={isLoading}
-        emptyText="还没有游戏记录，先新建一条吧。"
+        emptyTitle="还没有游戏记录"
+        emptyDescription="先录入一条游戏，后面就能继续维护时长、评分和状态。"
+        emptyAction={
+          <Button size="sm" onClick={startNew}>
+            新建第一条
+          </Button>
+        }
       >
         {data?.data.map((game) => (
-          <SelectableListItem
+          <SelectableMediaItem
             key={game.id}
             active={selectedId === game.id}
             imageUrl={game.cover_url}
@@ -739,222 +738,214 @@ function GameManager() {
             onClick={() => {
               setSelectedId(game.id)
               setForm(toGameForm(game))
+              clearNotice()
             }}
           />
         ))}
-      </LibraryListCard>
+      </LibraryPanel>
 
-      <EditorCard
+      <EditorPanel
         title={form.id ? '编辑游戏' : '新建游戏'}
-        description="把平台、时长、白金/通关状态、卡带图和简评一起管理起来。"
-        onReset={form.id ? startNew : undefined}
-        onSave={handleSave}
+        description="把平台、进度、评分、封面和卡带图一起整理好，前台展示会顺很多。"
         saveLabel={form.id ? '保存修改' : '创建游戏'}
         saving={saving}
+        onSave={handleSave}
+        onReset={form.id ? startNew : undefined}
         onDelete={form.id ? handleDelete : undefined}
         deleting={deleting}
         error={error}
         success={success}
       >
-        <div className="grid gap-6 xl:grid-cols-[240px_1fr]">
-          <div className="space-y-4">
-            <ImageUploadPanel
-              label="封面"
-              imageUrl={form.coverUrl}
-              fallback={form.title || '游'}
-              uploading={uploadingField === 'cover'}
-              onUpload={() => coverInputRef.current?.click()}
-              onClear={() => setForm((current) => ({ ...current, coverUrl: '' }))}
-              note="游戏列表和前台翻转卡片会直接使用这张封面。"
-            />
-            <ImageUploadPanel
-              label="卡带 / 副图"
-              imageUrl={form.cartridgeImageUrl}
-              fallback="副图"
-              uploading={uploadingField === 'cartridge'}
-              onUpload={() => cartridgeInputRef.current?.click()}
-              onClear={() => setForm((current) => ({ ...current, cartridgeImageUrl: '' }))}
-              note="用于更丰富的项目展示，比如卡带图、包装图或另一张宣传图。"
-            />
+        <AdminSection title="封面与基础资料" description="封面和副图拆开管理，阅读路径更清楚。">
+          <div className="grid gap-6 xl:grid-cols-[240px_minmax(0,1fr)]">
+            <div className="space-y-4">
+              <ImageUploadPanel
+                label="Cover"
+                imageUrl={form.coverUrl}
+                fallback={form.title || '游戏封面'}
+                uploading={uploadingField === 'cover'}
+                onUpload={() => coverInputRef.current?.click()}
+                onClear={() => setForm((current) => ({ ...current, coverUrl: '' }))}
+                note="前台游戏卡片会直接使用这张图。"
+              />
+              <ImageUploadPanel
+                label="Alt Image"
+                imageUrl={form.cartridgeImageUrl}
+                fallback="副图 / 卡带图"
+                uploading={uploadingField === 'cartridge'}
+                onUpload={() => cartridgeInputRef.current?.click()}
+                onClear={() => setForm((current) => ({ ...current, cartridgeImageUrl: '' }))}
+                note="用于更完整的游戏展示，例如卡带图或包装图。"
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="游戏名称">
+                <input
+                  value={form.title}
+                  onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                  className={INPUT_CLASS}
+                  placeholder="例如：Hollow Knight"
+                />
+              </Field>
+              <Field label="平台">
+                <select
+                  value={form.platform}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, platform: event.target.value as GamePlatform }))
+                  }
+                  className={INPUT_CLASS}
+                >
+                  {Object.entries(PLATFORM_LABELS).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="状态">
+                <select
+                  value={form.status}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, status: event.target.value as GameStatus }))
+                  }
+                  className={INPUT_CLASS}
+                >
+                  {Object.entries(GAME_STATUS_LABELS).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="游玩时长">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={form.playHours}
+                  onChange={(event) => setForm((current) => ({ ...current, playHours: event.target.value }))}
+                  className={INPUT_CLASS}
+                  placeholder="42.5"
+                />
+              </Field>
+              <Field label="评分">
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  step="0.1"
+                  value={form.rating}
+                  onChange={(event) => setForm((current) => ({ ...current, rating: event.target.value }))}
+                  className={INPUT_CLASS}
+                  placeholder="9.2"
+                />
+              </Field>
+              <Field label="完成日期">
+                <input
+                  type="date"
+                  value={form.completedAt}
+                  onChange={(event) => setForm((current) => ({ ...current, completedAt: event.target.value }))}
+                  className={INPUT_CLASS}
+                />
+              </Field>
+              <Field label="封面链接" fullWidth>
+                <input
+                  value={form.coverUrl}
+                  onChange={(event) => setForm((current) => ({ ...current, coverUrl: event.target.value }))}
+                  className={INPUT_CLASS}
+                  placeholder="https://example.com/cover.jpg 或 /uploads/images/..."
+                />
+              </Field>
+              <Field label="副图链接" fullWidth>
+                <input
+                  value={form.cartridgeImageUrl}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, cartridgeImageUrl: event.target.value }))
+                  }
+                  className={INPUT_CLASS}
+                  placeholder="https://example.com/alt.jpg 或 /uploads/images/..."
+                />
+              </Field>
+              <Field label="简评" fullWidth>
+                <textarea
+                  value={form.shortReview}
+                  onChange={(event) => setForm((current) => ({ ...current, shortReview: event.target.value }))}
+                  className={TEXTAREA_CLASS}
+                  rows={5}
+                  placeholder="写给自己看的短评，前台列表会复用。"
+                />
+              </Field>
+            </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="游戏名称">
-              <input
-                value={form.title}
-                onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-                className={INPUT_CLASS}
-              />
-            </Field>
-            <Field label="平台">
-              <select
-                value={form.platform}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    platform: event.target.value as GamePlatform,
-                  }))
-                }
-                className={INPUT_CLASS}
-              >
-                {Object.entries(PLATFORM_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="状态">
-              <select
-                value={form.status}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    status: event.target.value as GameStatus,
-                  }))
-                }
-                className={INPUT_CLASS}
-              >
-                {Object.entries(GAME_STATUS_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="游玩时长">
-              <input
-                type="number"
-                min="0"
-                step="0.5"
-                value={form.playHours}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, playHours: event.target.value }))
-                }
-                className={INPUT_CLASS}
-                placeholder="例如 42.5"
-              />
-            </Field>
-            <Field label="评分">
-              <input
-                type="number"
-                min="1"
-                max="10"
-                step="0.1"
-                value={form.rating}
-                onChange={(event) => setForm((current) => ({ ...current, rating: event.target.value }))}
-                className={INPUT_CLASS}
-              />
-            </Field>
-            <Field label="完成日期">
-              <input
-                type="date"
-                value={form.completedAt}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, completedAt: event.target.value }))
-                }
-                className={INPUT_CLASS}
-              />
-            </Field>
-            <Field label="封面链接" fullWidth>
-              <input
-                value={form.coverUrl}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, coverUrl: event.target.value }))
-                }
-                className={INPUT_CLASS}
-                placeholder="https://example.com/cover.jpg 或 /uploads/images/..."
-              />
-            </Field>
-            <Field label="卡带 / 副图链接" fullWidth>
-              <input
-                value={form.cartridgeImageUrl}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, cartridgeImageUrl: event.target.value }))
-                }
-                className={INPUT_CLASS}
-                placeholder="https://example.com/alt.jpg 或 /uploads/images/..."
-              />
-            </Field>
-            <Field label="简评" fullWidth>
-              <textarea
-                value={form.shortReview}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, shortReview: event.target.value }))
-                }
-                className={TEXTAREA_CLASS}
-                rows={5}
-              />
-            </Field>
-          </div>
-        </div>
-
-        <input
-          ref={coverInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(event) => handleImageUpload(event, 'cover')}
-        />
-        <input
-          ref={cartridgeInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(event) => handleImageUpload(event, 'cartridge')}
-        />
-      </EditorCard>
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) => handleImageUpload(event, 'cover')}
+          />
+          <input
+            ref={cartridgeInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) => handleImageUpload(event, 'cartridge')}
+          />
+        </AdminSection>
+      </EditorPanel>
     </div>
   )
 }
 
-function LibraryListCard({
+function LibraryPanel({
   title,
+  description,
+  icon,
   count,
   isLoading,
-  emptyText,
+  emptyTitle,
+  emptyDescription,
+  emptyAction,
   children,
 }: {
   title: string
+  description: string
+  icon: string
   count: number
   isLoading: boolean
-  emptyText: string
+  emptyTitle: string
+  emptyDescription: string
+  emptyAction: React.ReactNode
   children: React.ReactNode
 }) {
   return (
-    <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
-      <CardBody className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
-            {count} items
-          </span>
-        </div>
+    <AdminPanel title={title} description={description} icon={icon} bodyClassName="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-mono uppercase tracking-[0.22em] text-muted-foreground">Library</p>
+        <AdminStatusBadge tone="neutral">{count} 条</AdminStatusBadge>
+      </div>
 
+      {isLoading ? (
         <div className="space-y-3">
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="h-24 animate-pulse rounded-[22px] border border-border bg-background/60"
-                />
-              ))}
-            </div>
-          ) : count === 0 ? (
-            <div className="rounded-[22px] border border-border/70 bg-background/36 px-5 py-12 text-center text-sm text-muted-foreground">
-              {emptyText}
-            </div>
-          ) : (
-            children
-          )}
+          {Array.from({ length: 5 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-24 animate-pulse rounded-[22px] border border-border/70 bg-background/38"
+            />
+          ))}
         </div>
-      </CardBody>
-    </Card>
+      ) : count === 0 ? (
+        <AdminEmptyState title={emptyTitle} description={emptyDescription} action={emptyAction} />
+      ) : (
+        <div className="space-y-3">{children}</div>
+      )}
+    </AdminPanel>
   )
 }
 
-function SelectableListItem({
+function SelectableMediaItem({
   active,
   imageUrl,
   title,
@@ -973,23 +964,23 @@ function SelectableListItem({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-[22px] border px-4 py-4 text-left transition-all duration-200 ${
+      className={`w-full rounded-[22px] border px-4 py-3 text-left transition-colors ${
         active
-          ? 'border-primary/20 bg-primary/10'
-          : 'border-border/70 bg-background/42 hover:border-border hover:bg-background/55'
+          ? 'border-primary/18 bg-primary/10'
+          : 'border-border/70 bg-background/38 hover:border-border hover:bg-background/46'
       }`}
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-16 w-12 items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-background/42">
+        <div className="flex h-16 w-12 items-center justify-center overflow-hidden rounded-[18px] border border-border/70 bg-background/42">
           {imageUrl ? (
             <img src={imageUrl} alt={title} className="h-full w-full object-cover" />
           ) : (
-            <span className="p-2 text-center text-xs text-muted-foreground">{title}</span>
+            <span className="px-2 text-center text-xs leading-5 text-muted-foreground">{title}</span>
           )}
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground">{title}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">{subtitle}</p>
           <p className="mt-2 text-[11px] font-mono text-muted-foreground/75">{meta}</p>
         </div>
       </div>
@@ -997,13 +988,13 @@ function SelectableListItem({
   )
 }
 
-function EditorCard({
+function EditorPanel({
   title,
   description,
-  onReset,
-  onSave,
   saveLabel,
   saving,
+  onSave,
+  onReset,
   onDelete,
   deleting,
   error,
@@ -1012,10 +1003,10 @@ function EditorCard({
 }: {
   title: string
   description: string
-  onReset?: () => void
-  onSave: () => void
   saveLabel: string
   saving: boolean
+  onSave: () => void
+  onReset?: () => void
   onDelete?: () => void
   deleting: boolean
   error: string
@@ -1023,51 +1014,38 @@ function EditorCard({
   children: React.ReactNode
 }) {
   return (
-    <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
-      <CardBody className="space-y-7">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-lg font-semibold text-foreground">{title}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            {onReset ? (
-              <Button variant="ghost" onClick={onReset}>
-                <MaterialSymbol icon="refresh" size={18} />
-                切换到新建
-              </Button>
-            ) : null}
-            <Button onClick={onSave} loading={saving}>
-              <MaterialSymbol icon="save" size={18} />
-              {saveLabel}
+    <AdminPanel
+      title={title}
+      description={description}
+      icon="edit_square"
+      actions={
+        <div className="flex flex-wrap items-center gap-3">
+          {onReset ? (
+            <Button variant="ghost" onClick={onReset}>
+              <MaterialSymbol icon="add" size={18} />
+              切到新建
             </Button>
-          </div>
+          ) : null}
+          <Button onClick={onSave} loading={saving}>
+            <MaterialSymbol icon="save" size={18} />
+            {saveLabel}
+          </Button>
         </div>
-
-        {error ? (
-          <div className="rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-            {error}
-          </div>
-        ) : null}
-
-        {success ? (
-          <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-            {success}
-          </div>
-        ) : null}
-
-        {children}
-
-        {onDelete ? (
-          <div className="flex justify-end">
-            <Button variant="ghost" onClick={onDelete} disabled={deleting}>
-              <MaterialSymbol icon="delete" size={18} />
-              {deleting ? '删除中' : '删除记录'}
-            </Button>
-          </div>
-        ) : null}
-      </CardBody>
-    </Card>
+      }
+      bodyClassName="space-y-6"
+    >
+      {error ? <AdminNotice tone="danger">{error}</AdminNotice> : null}
+      {success ? <AdminNotice tone="success">{success}</AdminNotice> : null}
+      {children}
+      {onDelete ? (
+        <div className="flex justify-end">
+          <Button variant="ghost" onClick={onDelete} disabled={deleting}>
+            <MaterialSymbol icon="delete" size={18} />
+            {deleting ? '删除中' : '删除记录'}
+          </Button>
+        </div>
+      ) : null}
+    </AdminPanel>
   )
 }
 
@@ -1099,7 +1077,7 @@ function ImageUploadPanel({
         className="group mt-4 block w-full rounded-[24px] border border-dashed border-border/70 bg-background/34 p-4 text-left transition-colors hover:border-primary/24 hover:bg-background/48"
       >
         <div className="flex justify-center">
-          <div className="flex h-32 w-full items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-background/45">
+          <div className="flex h-32 w-full items-center justify-center overflow-hidden rounded-[22px] border border-border/70 bg-background/45">
             {imageUrl ? (
               <img src={imageUrl} alt={label} className="h-full w-full object-cover" />
             ) : (
@@ -1129,20 +1107,21 @@ function ImageUploadPanel({
 
 function Field({
   label,
+  hint,
   children,
   fullWidth = false,
 }: {
   label: string
+  hint?: string
   children: React.ReactNode
   fullWidth?: boolean
 }) {
   return (
-    <AdminField label={label} fullWidth={fullWidth}>
+    <AdminField label={label} hint={hint} fullWidth={fullWidth}>
       {children}
     </AdminField>
   )
 }
 
 const INPUT_CLASS = ADMIN_INPUT_CLASS
-
 const TEXTAREA_CLASS = ADMIN_TEXTAREA_CLASS

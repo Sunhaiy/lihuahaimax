@@ -34,16 +34,16 @@ export function DashboardFrame({
     DASHBOARD_NAV_GROUPS[0]
 
   return (
-    <div className="h-screen overflow-hidden bg-background text-foreground">
+    <div className="admin-theme h-screen overflow-hidden bg-background text-foreground">
       <div className="mx-auto flex h-full max-w-[1720px]">
-        <aside className="hidden h-full w-[312px] shrink-0 border-r border-border/70 bg-card/74 backdrop-blur-2xl lg:flex lg:flex-col">
-          <div className="border-b border-border/70 px-6 py-6">
+        <aside className="hidden h-full w-[296px] shrink-0 border-r border-border/70 bg-card/76 backdrop-blur-2xl lg:flex lg:flex-col">
+          <div className="border-b border-border/70 px-6 py-5">
             <Link href="/dashboard" className="flex items-start gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/70 bg-background/60 text-primary">
-                <MaterialSymbol icon="dashboard_customize" size={22} fill />
+              <span className="flex h-11 w-11 items-center justify-center rounded-[20px] border border-border/70 bg-background/60 text-primary">
+                <MaterialSymbol icon="dashboard_customize" size={20} fill />
               </span>
-              <div>
-                <span className="block text-lg font-semibold text-foreground">Lihua Console</span>
+              <div className="min-w-0">
+                <span className="block truncate text-lg font-semibold text-foreground">Lihua Console</span>
                 <span className="mt-1 block text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
                   Unified Admin System
                 </span>
@@ -52,7 +52,7 @@ export function DashboardFrame({
 
             <Link
               href={DASHBOARD_EDITOR_ITEM.href}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/18 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/26 hover:bg-primary/14"
+              className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[20px] border border-primary/18 bg-primary/10 px-4 text-sm font-medium text-foreground transition-colors hover:border-primary/28 hover:bg-primary/14"
             >
               <MaterialSymbol icon={DASHBOARD_EDITOR_ITEM.icon} size={18} />
               {DASHBOARD_EDITOR_ITEM.label}
@@ -63,18 +63,19 @@ export function DashboardFrame({
             <nav className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-5">
               {DASHBOARD_NAV_GROUPS.map((group) => (
                 <section key={group.label}>
-                  <p className="px-3 text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+                  <p className="px-2 text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
                     {group.label}
                   </p>
-                  <div className="mt-2 space-y-1.5">
+                  <div className="mt-2 space-y-1">
                     {group.items.map((item) => {
                       const active = isActivePath(pathname, item.href)
+
                       return (
                         <Link
                           key={item.href}
                           href={item.href}
                           className={cn(
-                            'group flex items-start gap-3 rounded-2xl border px-3 py-3 transition-colors',
+                            'group flex items-start gap-3 rounded-[20px] border px-3 py-2.5 transition-colors',
                             active
                               ? 'border-primary/18 bg-primary/10 text-foreground'
                               : 'border-transparent text-muted-foreground hover:border-border/70 hover:bg-background/45 hover:text-foreground'
@@ -82,17 +83,17 @@ export function DashboardFrame({
                         >
                           <span
                             className={cn(
-                              'mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition-colors',
+                              'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[18px] border transition-colors',
                               active
-                                ? 'border-primary/18 bg-background/55 text-primary'
+                                ? 'border-primary/18 bg-background/58 text-primary'
                                 : 'border-border/70 bg-background/48 text-muted-foreground group-hover:text-foreground'
                             )}
                           >
-                            <MaterialSymbol icon={item.icon} size={18} />
+                            <MaterialSymbol icon={item.icon} size={17} />
                           </span>
-                          <span className="min-w-0">
-                            <span className="block text-sm font-medium">{item.label}</span>
-                            <span className="mt-1 block text-xs leading-5 text-muted-foreground">
+                          <span className="min-w-0 pt-0.5">
+                            <span className="block text-sm font-medium leading-5">{item.label}</span>
+                            <span className="mt-0.5 block text-[11px] leading-5 text-muted-foreground">
                               {item.description}
                             </span>
                           </span>
@@ -105,7 +106,7 @@ export function DashboardFrame({
             </nav>
 
             <div className="border-t border-border/70 px-5 py-4">
-              <div className="rounded-[22px] border border-border/70 bg-background/45 p-4">
+              <div className="rounded-[22px] border border-border/70 bg-background/42 p-4">
                 <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">账号</p>
                 <p className="mt-3 truncate text-sm text-foreground">{email ?? '未登录'}</p>
                 <div className="mt-4 flex items-center gap-2">
@@ -132,7 +133,7 @@ export function DashboardFrame({
         </aside>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <header className="shrink-0 border-b border-border/70 bg-background/82 px-4 backdrop-blur-2xl sm:px-6 lg:px-8">
+          <header className="shrink-0 border-b border-border/70 bg-background/84 px-4 backdrop-blur-2xl sm:px-6 lg:px-8">
             <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 py-3">
               <div className="min-w-0">
                 <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">

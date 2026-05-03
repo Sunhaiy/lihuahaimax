@@ -39,3 +39,35 @@ export interface CreateLinkInput {
 }
 
 export type UpdateLinkInput = Partial<CreateLinkInput>
+
+export type LinkSubmissionStatus = 'pending' | 'approved' | 'rejected'
+
+export interface LinkSubmissionRow {
+  id: number
+  site_name: string
+  site_url: string
+  site_description: string | null
+  site_avatar_url: string | null
+  site_rss_url: string | null
+  contact_email: string
+  contact_note: string | null
+  status: LinkSubmissionStatus
+  admin_note: string | null
+  reviewed_at: Date | null
+  created_at: Date
+}
+
+export interface CreateLinkSubmissionInput {
+  siteName: string
+  siteUrl: string
+  siteDescription?: string
+  siteAvatarUrl?: string
+  siteRssUrl?: string
+  contactEmail: string
+  contactNote?: string
+}
+
+export interface UpdateLinkSubmissionInput {
+  status?: LinkSubmissionStatus
+  adminNote?: string | null
+}

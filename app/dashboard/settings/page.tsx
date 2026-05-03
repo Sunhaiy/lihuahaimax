@@ -1,17 +1,20 @@
 'use client'
 
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
 import useSWR from 'swr'
 import {
   AdminField,
+  AdminNotice,
   AdminPageHeader,
+  AdminPanel,
+  AdminSection,
   AdminStatusBadge,
   ADMIN_INPUT_CLASS,
   ADMIN_MUTED_PANEL_CLASS,
   ADMIN_TEXTAREA_CLASS,
 } from '@/components/admin/AdminPrimitives'
+import { MediaLibraryPicker } from '@/components/admin/MediaLibraryPicker'
 import { Button } from '@/components/ui/Button'
-import { Card, CardBody } from '@/components/ui/Card'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { toRgba } from '@/lib/scene-color'
 import type { SiteProfile } from '@/types/site'
@@ -22,23 +25,23 @@ const fetcher = (url: string) => fetch(url).then((response) => response.json())
 const ENABLED_PAGES: Array<{ key: SceneEnabledPage; label: string; description: string }> = [
   {
     key: 'all',
-    label: '全部公开页',
-    description: '用于记录全站统一背景策略，当前前台不会实际渲染固定 scene 背景。',
+    label: '全站预留',
+    description: '保留未来扩展位，方便之后统一切回全站场景层。',
   },
   {
     key: 'home',
     label: '首页 Hero',
-    description: '当前前台只会在首页 Hero 使用背景图，这个开关最接近真实生效范围。',
+    description: '当前前台真正生效的范围，首页大图会直接读取这里的配置。',
   },
   {
     key: 'moments',
-    label: 'Moments',
-    description: '先保留配置能力，等下一轮再决定 moments 是否重新接入气氛层。',
+    label: '瞬间',
+    description: '为 moments 保留独立场景数据，后续可以继续单独强化气氛。',
   },
   {
     key: 'works-detail',
-    label: '项目详情',
-    description: '项目详情页的 scene 范围先保留数据，不在这轮前台渲染。',
+    label: '作品详情',
+    description: '先存住详细页的预设，等下一轮再决定是否真正接到前台。',
   },
 ]
 
@@ -149,12 +152,14 @@ export default function SettingsPage() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [uploadingScene, setUploadingScene] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [uploadingDefaultCover, setUploadingDefaultCover] = useState(false)
   const [clearingScene, setClearingScene] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
   const sceneFileRef = useRef<HTMLInputElement>(null)
   const avatarFileRef = useRef<HTMLInputElement>(null)
+  const defaultCoverFileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (sceneRequest.data) setSceneForm(sceneRequest.data)
@@ -185,7 +190,8 @@ export default function SettingsPage() {
     try {
       const next = await saveScene(sceneForm)
       sceneRequest.mutate(next, false)
-      setSuccess('场景设置已保存')
+      setSceneForm(next)
+      setSuccess('前台场景设置已保存。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '保存场景设置失败')
     } finally {
@@ -201,7 +207,8 @@ export default function SettingsPage() {
     try {
       const next = await saveSiteProfile(profileForm)
       profileRequest.mutate(next, false)
-      setSuccess('站点资料已保存')
+      setProfileForm(next)
+      setSuccess('站点资料已保存。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '保存站点资料失败')
     } finally {
@@ -220,7 +227,7 @@ export default function SettingsPage() {
       const next = await uploadSceneImage(file)
       sceneRequest.mutate(next, false)
       setSceneForm(next)
-      setSuccess('背景图已更新')
+      setSuccess('首页背景图已更新。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '上传背景图失败')
     } finally {
@@ -238,13 +245,32 @@ export default function SettingsPage() {
 
     try {
       const result = await uploadImage(file)
-      setProfileForm((current) => (current ? { ...current, avatarUrl: result.url } : current))
-      setSuccess('头像已上传，记得保存站点资料')
+      updateProfile('avatarUrl', result.url)
+      setSuccess('头像已上传，记得保存站点资料。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '上传头像失败')
     } finally {
       setUploadingAvatar(false)
       if (avatarFileRef.current) avatarFileRef.current.value = ''
+    }
+  }
+
+  async function handleDefaultCoverUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingDefaultCover(true)
+    resetNotice()
+
+    try {
+      const result = await uploadImage(file)
+      updateProfile('defaultPostCoverUrl', result.url)
+      setSuccess('默认文章封面已上传，记得保存站点资料。')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '上传默认封面失败')
+    } finally {
+      setUploadingDefaultCover(false)
+      if (defaultCoverFileRef.current) defaultCoverFileRef.current.value = ''
     }
   }
 
@@ -256,7 +282,7 @@ export default function SettingsPage() {
       const next = await clearSceneImage()
       sceneRequest.mutate(next, false)
       setSceneForm(next)
-      setSuccess('背景图已清除')
+      setSuccess('首页背景图已清除。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '清除背景图失败')
     } finally {
@@ -271,414 +297,383 @@ export default function SettingsPage() {
           <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-muted-foreground">
             Site Console
           </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">站点设置中心</h1>
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-foreground">
+            全局设置
+          </h1>
         </div>
-        <div className="h-[220px] animate-pulse rounded-[28px] border border-border bg-card/70" />
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="h-[680px] animate-pulse rounded-[28px] border border-border bg-card/70" />
-          <div className="h-[680px] animate-pulse rounded-[28px] border border-border bg-card/70" />
-        </div>
+        <div className="h-[260px] animate-pulse rounded-[28px] border border-border bg-card/70" />
+        <div className="h-[620px] animate-pulse rounded-[28px] border border-border bg-card/70" />
       </div>
     )
   }
 
   const previewBackground = sceneForm.image.url
-    ? `linear-gradient(180deg, rgba(0,0,0,${sceneForm.filter.overlay}) 0%, rgba(0,0,0,${Math.min(0.92, sceneForm.filter.overlay + sceneForm.filter.gradient * 0.22)}) 100%), url(${sceneForm.image.url})`
+    ? `linear-gradient(180deg, rgba(0,0,0,${sceneForm.filter.overlay}) 0%, rgba(0,0,0,${Math.min(
+        0.92,
+        sceneForm.filter.overlay + sceneForm.filter.gradient * 0.22
+      )}) 100%), url(${sceneForm.image.url})`
     : `radial-gradient(circle at top, ${toRgba(sceneForm.filter.tintColor, 0.18)}, transparent 38%)`
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
         eyebrow="Site Console"
-        title="站点设置中心"
-        description="统一维护前台资料、首页背景与预览参数，让高频编辑和低频配置都落在同一套后台语义里。"
+        title="全局设置"
+        description="维护站点资料、媒体资产和首页场景。文章默认封面也统一放在这里，编辑器留空时会自动回退。"
         meta={
           <>
-            <AdminStatusBadge tone="accent">前台资料</AdminStatusBadge>
-            <AdminStatusBadge tone="neutral">背景场景</AdminStatusBadge>
-            <AdminStatusBadge tone="neutral">实时预览</AdminStatusBadge>
+            <AdminStatusBadge tone="accent">媒体资产</AdminStatusBadge>
+            <AdminStatusBadge tone="neutral">默认封面</AdminStatusBadge>
+            <AdminStatusBadge tone="neutral">首页场景</AdminStatusBadge>
           </>
         }
-      />
-      <div className="hidden flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-muted-foreground">
-            Site Console
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">站点设置中心</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-            统一管理站点资料与前台背景资源。当前公开前台已经切成“只有首页 Hero 使用背景图”的策略，天气层与固定 scene 背景先保留配置，不在这一轮前台生效。
-          </p>
-        </div>
-      </div>
-
-      {error ? (
-        <div className="rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          {error}
-        </div>
-      ) : null}
-
-      {success ? (
-        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-          {success}
-        </div>
-      ) : null}
-
-      <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
-        <CardBody className="space-y-7">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <SectionHeader
-              icon="badge"
-              title="站点基础资料"
-              description="设置导航品牌、头像、简介、角色说明和页脚文案。"
-            />
+        actions={
+          <>
+            <Button variant="secondary" onClick={handleSaveScene} loading={savingScene}>
+              <MaterialSymbol icon="wallpaper" size={18} />
+              保存场景
+            </Button>
             <Button onClick={handleSaveProfile} loading={savingProfile}>
               <MaterialSymbol icon="save" size={18} />
               保存站点资料
             </Button>
-          </div>
+          </>
+        }
+      />
 
-          <div className="grid gap-6 xl:grid-cols-[260px_1fr]">
-            <div className={`${ADMIN_MUTED_PANEL_CLASS} p-5`}>
-              <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
-                Avatar
-              </p>
-              <button
-                type="button"
-                onClick={() => avatarFileRef.current?.click()}
-                className="group mt-4 block w-full rounded-[24px] border border-dashed border-border/70 bg-background/34 p-4 text-left transition-colors hover:border-primary/24 hover:bg-background/48"
-              >
-                <div className="flex justify-center">
-                    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-background/55">
-                    {profileForm.avatarUrl ? (
-                      <img
-                        src={profileForm.avatarUrl}
-                        alt={profileForm.ownerName}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-4xl font-bold text-primary">
-                        {profileForm.ownerInitial || '站'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <p className="mt-4 text-center text-sm font-medium text-foreground">
-                  {uploadingAvatar ? '上传中…' : '点击上传头像'}
-                </p>
-                <p className="mt-2 text-center text-xs leading-6 text-muted-foreground">
-                  导航、首页资料卡、关于页和 moments 作者信息会复用这张头像。
-                </p>
-              </button>
+      {error ? <AdminNotice tone="danger">{error}</AdminNotice> : null}
+      {success ? <AdminNotice tone="success">{success}</AdminNotice> : null}
 
-              <div className="mt-4 space-y-2">
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  onClick={() => avatarFileRef.current?.click()}
-                  disabled={uploadingAvatar}
-                >
-                  <MaterialSymbol icon="image_arrow_up" size={18} />
-                  {uploadingAvatar ? '上传中…' : '更换头像'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  fullWidth
-                  onClick={() => updateProfile('avatarUrl', null)}
-                  disabled={!profileForm.avatarUrl}
-                >
-                  <MaterialSymbol icon="delete" size={18} />
-                  清空头像
-                </Button>
-              </div>
-            </div>
-
+      <AdminPanel
+        title="品牌与媒体资产"
+        description="把站点身份、头像和文章默认封面放在同一套媒体工作流里，后面维护会轻松很多。"
+        icon="imagesmode"
+      >
+        <div className="space-y-6">
+          <AdminSection
+            title="站点基础资料"
+            description="这些内容会同时影响导航、资料卡、关于页和 Moments 的作者信息。"
+          >
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="站点名称">
+              <AdminField label="站点名称">
                 <input
                   value={profileForm.siteName}
                   onChange={(event) => updateProfile('siteName', event.target.value)}
-                  className={INPUT_CLASS}
+                  className={ADMIN_INPUT_CLASS}
                 />
-              </Field>
-              <Field label="英文副标">
+              </AdminField>
+              <AdminField label="英文副标">
                 <input
                   value={profileForm.siteNameEn}
                   onChange={(event) => updateProfile('siteNameEn', event.target.value)}
-                  className={INPUT_CLASS}
+                  className={ADMIN_INPUT_CLASS}
                 />
-              </Field>
-              <Field label="博主名称">
+              </AdminField>
+              <AdminField label="博主名称">
                 <input
                   value={profileForm.ownerName}
                   onChange={(event) => updateProfile('ownerName', event.target.value)}
-                  className={INPUT_CLASS}
+                  className={ADMIN_INPUT_CLASS}
                 />
-              </Field>
-              <Field label="头像缩写">
+              </AdminField>
+              <AdminField label="头像缩写">
                 <input
                   value={profileForm.ownerInitial}
                   onChange={(event) => updateProfile('ownerInitial', event.target.value)}
-                  className={INPUT_CLASS}
+                  className={ADMIN_INPUT_CLASS}
                 />
-              </Field>
-              <Field label="站点标语" fullWidth>
+              </AdminField>
+              <AdminField label="站点标语" fullWidth>
                 <input
                   value={profileForm.slogan}
                   onChange={(event) => updateProfile('slogan', event.target.value)}
-                  className={INPUT_CLASS}
+                  className={ADMIN_INPUT_CLASS}
                 />
-              </Field>
-              <Field label="角色说明" fullWidth>
+              </AdminField>
+              <AdminField label="角色说明" fullWidth>
                 <input
                   value={profileForm.roleLine}
                   onChange={(event) => updateProfile('roleLine', event.target.value)}
-                  className={INPUT_CLASS}
+                  className={ADMIN_INPUT_CLASS}
                 />
-              </Field>
-              <Field label="GitHub 链接">
+              </AdminField>
+              <AdminField label="GitHub 链接">
                 <input
                   value={profileForm.githubUrl}
                   onChange={(event) => updateProfile('githubUrl', event.target.value)}
-                  className={INPUT_CLASS}
+                  className={ADMIN_INPUT_CLASS}
                   placeholder="https://github.com/your-name"
                 />
-              </Field>
-              <Field label="联系邮箱">
+              </AdminField>
+              <AdminField label="联系邮箱">
                 <input
                   value={profileForm.email}
                   onChange={(event) => updateProfile('email', event.target.value)}
-                  className={INPUT_CLASS}
+                  className={ADMIN_INPUT_CLASS}
                   placeholder="hello@example.com"
                 />
-              </Field>
-              <Field label="页脚文案" fullWidth>
+              </AdminField>
+              <AdminField label="页脚文案" fullWidth>
                 <input
                   value={profileForm.footerText}
                   onChange={(event) => updateProfile('footerText', event.target.value)}
-                  className={INPUT_CLASS}
+                  className={ADMIN_INPUT_CLASS}
                 />
-              </Field>
-              <Field label="个人简介" fullWidth>
+              </AdminField>
+              <AdminField label="个人简介" fullWidth>
                 <textarea
                   value={profileForm.bio}
                   onChange={(event) => updateProfile('bio', event.target.value)}
-                  className={TEXTAREA_CLASS}
+                  className={ADMIN_TEXTAREA_CLASS}
                   rows={5}
                 />
-              </Field>
+              </AdminField>
             </div>
-          </div>
+          </AdminSection>
 
-          <input
-            ref={avatarFileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleAvatarUpload}
-          />
-        </CardBody>
-      </Card>
-
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-      <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
-          <CardBody className="space-y-7">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <SectionHeader
-                icon="image"
-                title="前台背景与 Hero"
-                description="保留 scene 数据结构，但当前前台只消费首页 Hero 背景图。"
-              />
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="secondary"
-                  onClick={() => sceneFileRef.current?.click()}
-                  disabled={uploadingScene}
-                >
-                  <MaterialSymbol icon="upload" size={18} />
-                  {uploadingScene ? '上传中…' : '上传背景图'}
-                </Button>
-                <Button onClick={handleSaveScene} loading={savingScene}>
-                  <MaterialSymbol icon="save" size={18} />
-                  保存场景设置
-                </Button>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/8 px-4 py-3 text-sm leading-6 text-emerald-200">
-              当前公开站点只在首页 Hero 使用背景图。天气层、全站固定 scene 背景和页面勾选先保留数据，前台暂时不渲染。
-            </div>
-
-            <div className="overflow-hidden rounded-[24px] border border-border/70 bg-background/36">
-              <div
-                className="relative aspect-[16/9] bg-muted"
-                style={{
-                  backgroundImage: sceneForm.image.url ? `url(${sceneForm.image.url})` : undefined,
-                  backgroundSize: sceneForm.image.size,
-                  backgroundPosition: sceneForm.image.position,
-                }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/60" />
-                {!sceneForm.image.url ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                    <MaterialSymbol icon="wallpaper" size={28} />
-                    <span className="text-sm">还没有设置背景图</span>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="背景位置">
-                <input
-                  value={sceneForm.image.position}
-                  onChange={(event) =>
-                    updateScene((current) => ({
-                      ...current,
-                      image: { ...current.image, position: event.target.value },
-                    }))
-                  }
-                  className={INPUT_CLASS}
-                />
-              </Field>
-              <Field label="背景尺寸">
-                <input
-                  value={sceneForm.image.size}
-                  onChange={(event) =>
-                    updateScene((current) => ({
-                      ...current,
-                      image: { ...current.image, size: event.target.value },
-                    }))
-                  }
-                  className={INPUT_CLASS}
-                />
-              </Field>
-              <SliderField
-                label="图片透明度"
-                value={sceneForm.image.opacity}
-                onChange={(value) =>
-                  updateScene((current) => ({
-                    ...current,
-                    image: { ...current.image, opacity: value },
-                  }))
-                }
-              />
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Button
-                variant="secondary"
-                onClick={() => sceneFileRef.current?.click()}
-                disabled={uploadingScene}
-              >
-                <MaterialSymbol icon="image_arrow_up" size={18} />
-                更换背景图
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={handleClearSceneImage}
-                disabled={clearingScene || !sceneForm.image.url}
-              >
-                <MaterialSymbol icon="delete" size={18} />
-                {clearingScene ? '清除中…' : '清除背景图'}
-              </Button>
-            </div>
-
-            <SectionHeader
-              icon="thunderstorm"
-              title="天气层"
-              description="继续保留天气 preset 和范围配置，方便后面重新接回前台。"
-            />
-
-            <p className="text-xs leading-6 text-muted-foreground">
-              提示：当前这些天气配置仍会保存，但公开前台暂不渲染雨滴、闪电和固定背景气氛层。
-            </p>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="天气预设">
-                <select
-                  value={sceneForm.weather.preset}
-                  onChange={(event) =>
-                    updateScene((current) => ({
-                      ...current,
-                      weather: {
-                        ...current.weather,
-                        preset: event.target.value as BackgroundSceneSettings['weather']['preset'],
-                      },
-                    }))
-                  }
-                  className={INPUT_CLASS}
-                >
-                  <option value="none">none</option>
-                  <option value="storm">storm</option>
-                </select>
-              </Field>
-              <SliderField
-                label="天气强度"
-                value={sceneForm.weather.intensity}
-                onChange={(value) =>
-                  updateScene((current) => ({
-                    ...current,
-                    weather: { ...current.weather, intensity: value },
-                  }))
-                }
-              />
-            </div>
-
-            <div className="grid gap-3">
-              {ENABLED_PAGES.map((page) => {
-                const checked = sceneForm.weather.enabledPages.includes(page.key)
-                return (
-                  <label
-                    key={page.key}
-                    className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border/70 bg-background/38 px-4 py-4 transition-colors hover:border-border hover:bg-background/48"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() =>
-                        updateScene((current) => ({
-                          ...current,
-                          weather: {
-                            ...current.weather,
-                            enabledPages: checked
-                              ? current.weather.enabledPages.filter((item) => item !== page.key)
-                              : [...current.weather.enabledPages, page.key],
-                          },
-                        }))
-                      }
-                      className="mt-1 h-4 w-4 rounded border-border bg-background"
+          <AdminSection
+            title="头像与默认文章封面"
+            description="编辑器封面留空时，会自动使用这里的默认文章封面。两者都支持直接从相册里选择。"
+            aside={<AdminStatusBadge tone="accent">Media Linked</AdminStatusBadge>}
+          >
+            <div className="grid gap-4 xl:grid-cols-2">
+              <MediaAssetCard
+                eyebrow="Avatar"
+                title="站点头像"
+                description="导航、首页资料卡和作者信息都会复用这张头像。"
+                preview={
+                  profileForm.avatarUrl ? (
+                    <img
+                      src={profileForm.avatarUrl}
+                      alt={profileForm.ownerName}
+                      className="h-full w-full object-cover"
                     />
-                    <span>
-                      <span className="block text-sm font-medium text-foreground">{page.label}</span>
-                      <span className="block text-sm leading-6 text-muted-foreground">
-                        {page.description}
-                      </span>
+                  ) : (
+                    <span className="text-4xl font-semibold text-primary">
+                      {profileForm.ownerInitial || 'L'}
                     </span>
-                  </label>
-                )
-              })}
-            </div>
-
-            <SectionHeader
-              icon="filter"
-              title="滤镜层"
-              description="这些值仍会保存，当前主要影响首页 Hero 以及后台预览。"
-            />
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <ColorField
-                label="氛围色"
-                value={sceneForm.filter.tintColor}
-                onChange={(value) =>
-                  updateScene((current) => ({
-                    ...current,
-                    filter: { ...current.filter, tintColor: value },
-                  }))
+                  )
+                }
+                controls={
+                  <>
+                    <MediaLibraryPicker
+                      value={profileForm.avatarUrl}
+                      onSelect={(url) => updateProfile('avatarUrl', url)}
+                      buttonLabel="从相册选择"
+                      dialogTitle="选择站点头像"
+                      description="优先复用相册里的资源，也可以在弹窗中继续补传。"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => avatarFileRef.current?.click()}
+                      loading={uploadingAvatar}
+                    >
+                      <MaterialSymbol icon="image_arrow_up" size={16} />
+                      上传头像
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={!profileForm.avatarUrl}
+                      onClick={() => updateProfile('avatarUrl', null)}
+                    >
+                      <MaterialSymbol icon="delete" size={16} />
+                      清空
+                    </Button>
+                  </>
                 }
               />
-              <SliderField
-                label="叠层浓度"
+
+              <MediaAssetCard
+                eyebrow="Default Cover"
+                title="默认文章封面"
+                description="当文章本身没有设置封面时，前台文章列表、推荐位和正文页都会自动回退到这里。"
+                preview={
+                  profileForm.defaultPostCoverUrl ? (
+                    <img
+                      src={profileForm.defaultPostCoverUrl}
+                      alt="默认文章封面"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/16 via-card to-muted text-primary/70">
+                      <MaterialSymbol icon="image" size={34} />
+                    </div>
+                  )
+                }
+                controls={
+                  <>
+                    <MediaLibraryPicker
+                      value={profileForm.defaultPostCoverUrl}
+                      onSelect={(url) => updateProfile('defaultPostCoverUrl', url)}
+                      category="artwork"
+                      buttonLabel="从相册选择"
+                      dialogTitle="选择默认文章封面"
+                      description="这里会作为文章封面的全局兜底图，建议选一张耐看的大图。"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => defaultCoverFileRef.current?.click()}
+                      loading={uploadingDefaultCover}
+                    >
+                      <MaterialSymbol icon="image_arrow_up" size={16} />
+                      上传新封面
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={!profileForm.defaultPostCoverUrl}
+                      onClick={() => updateProfile('defaultPostCoverUrl', null)}
+                    >
+                      <MaterialSymbol icon="delete" size={16} />
+                      清空
+                    </Button>
+                  </>
+                }
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <AdminField label="头像地址" hint="可以手动粘贴，也可以直接从相册选择或上传。">
+                <input
+                  value={profileForm.avatarUrl ?? ''}
+                  onChange={(event) => updateProfile('avatarUrl', event.target.value || null)}
+                  className={ADMIN_INPUT_CLASS}
+                  placeholder="https://example.com/avatar.jpg"
+                />
+              </AdminField>
+              <AdminField
+                label="默认封面地址"
+                hint="留空则文章没有封面时显示默认占位图。设置后会成为全站文章封面的回退图。"
+              >
+                <input
+                  value={profileForm.defaultPostCoverUrl ?? ''}
+                  onChange={(event) =>
+                    updateProfile('defaultPostCoverUrl', event.target.value || null)
+                  }
+                  className={ADMIN_INPUT_CLASS}
+                  placeholder="https://example.com/default-cover.jpg"
+                />
+              </AdminField>
+            </div>
+          </AdminSection>
+        </div>
+
+        <input
+          ref={avatarFileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleAvatarUpload}
+        />
+        <input
+          ref={defaultCoverFileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleDefaultCoverUpload}
+        />
+      </AdminPanel>
+
+      <AdminPanel
+        title="首页场景与天气预设"
+        description="当前前台真正启用的是首页 Hero 背景。天气和页面范围继续保留配置，后面可以直接接回去。"
+        icon="wallpaper"
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => sceneFileRef.current?.click()}
+              loading={uploadingScene}
+            >
+              <MaterialSymbol icon="image_arrow_up" size={18} />
+              上传背景图
+            </Button>
+            <Button variant="ghost" onClick={handleClearSceneImage} disabled={clearingScene || !sceneForm.image.url}>
+              <MaterialSymbol icon="delete" size={18} />
+              {clearingScene ? '清除中' : '清除背景图'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-6">
+          <AdminSection
+            title="首页 Hero 预览"
+            description="这里模拟前台首页首屏的背景层叠关系，方便你直观看图、滤镜和亮度。"
+          >
+            <div className="space-y-4">
+              <div className="overflow-hidden rounded-[24px] border border-border/70 bg-background/40">
+                <div
+                  className="relative aspect-[16/8] overflow-hidden"
+                  style={{
+                    backgroundImage: previewBackground,
+                    backgroundPosition: sceneForm.image.position,
+                    backgroundSize: sceneForm.image.size,
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/68" />
+                  <div className="absolute inset-x-0 bottom-0 px-6 pb-6">
+                    <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-white/45">
+                      Front Hero
+                    </p>
+                    <h3 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-white">
+                      {profileForm.siteName}
+                    </h3>
+                    <p className="mt-2 max-w-lg text-sm leading-7 text-white/66">
+                      {profileForm.slogan}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <AdminField label="背景位置">
+                  <input
+                    value={sceneForm.image.position}
+                    onChange={(event) =>
+                      updateScene((current) => ({
+                        ...current,
+                        image: { ...current.image, position: event.target.value },
+                      }))
+                    }
+                    className={ADMIN_INPUT_CLASS}
+                  />
+                </AdminField>
+                <AdminField label="背景尺寸">
+                  <input
+                    value={sceneForm.image.size}
+                    onChange={(event) =>
+                      updateScene((current) => ({
+                        ...current,
+                        image: { ...current.image, size: event.target.value },
+                      }))
+                    }
+                    className={ADMIN_INPUT_CLASS}
+                  />
+                </AdminField>
+                <RangeField
+                  label="图片透明度"
+                  value={sceneForm.image.opacity}
+                  onChange={(value) =>
+                    updateScene((current) => ({
+                      ...current,
+                      image: { ...current.image, opacity: value },
+                    }))
+                  }
+                />
+              </div>
+            </div>
+          </AdminSection>
+
+          <AdminSection
+            title="滤镜与氛围"
+            description="把对比度、蒙层和渐变控制放在一起，便于压住图片同时保留层次。"
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <RangeField
+                label="暗色蒙层"
                 value={sceneForm.filter.overlay}
                 onChange={(value) =>
                   updateScene((current) => ({
@@ -687,8 +682,8 @@ export default function SettingsPage() {
                   }))
                 }
               />
-              <SliderField
-                label="渐变强度"
+              <RangeField
+                label="渐变深度"
                 value={sceneForm.filter.gradient}
                 onChange={(value) =>
                   updateScene((current) => ({
@@ -697,30 +692,21 @@ export default function SettingsPage() {
                   }))
                 }
               />
-              <SliderField
-                label="模糊半径"
-                value={sceneForm.filter.blur}
-                max={24}
-                step={1}
-                onChange={(value) =>
-                  updateScene((current) => ({
-                    ...current,
-                    filter: { ...current.filter, blur: value },
-                  }))
-                }
-              />
-              <SliderField
-                label="噪点强度"
-                value={sceneForm.filter.noise}
-                onChange={(value) =>
-                  updateScene((current) => ({
-                    ...current,
-                    filter: { ...current.filter, noise: value },
-                  }))
-                }
-              />
-              <SliderField
-                label="边缘压暗"
+              <AdminField label="色彩倾向">
+                <input
+                  type="color"
+                  value={sceneForm.filter.tintColor}
+                  onChange={(event) =>
+                    updateScene((current) => ({
+                      ...current,
+                      filter: { ...current.filter, tintColor: event.target.value },
+                    }))
+                  }
+                  className="h-11 w-full rounded-[18px] border border-border/70 bg-background/55 px-2"
+                />
+              </AdminField>
+              <RangeField
+                label="边缘暗角"
                 value={sceneForm.filter.vignette}
                 onChange={(value) =>
                   updateScene((current) => ({
@@ -730,216 +716,152 @@ export default function SettingsPage() {
                 }
               />
             </div>
+          </AdminSection>
 
-            <input
-              ref={sceneFileRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/avif"
-              className="hidden"
-              onChange={handleSceneUpload}
-            />
-          </CardBody>
-        </Card>
-
-      <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
-          <CardBody className="space-y-6">
-            <SectionHeader
-              icon="preview"
-              title="实时预览"
-              description="预览站点资料和场景参数组合后的首页 Hero 气质。"
-            />
-
-            <div className="overflow-hidden rounded-[26px] border border-border/70 bg-[#020617]">
-              <div
-                className="relative aspect-[4/5]"
-                style={{
-                  backgroundImage: previewBackground,
-                  backgroundPosition: sceneForm.image.position,
-                  backgroundSize: sceneForm.image.size,
-                  opacity: sceneForm.image.opacity,
-                }}
-              >
-                <div className="scene-terminal-grid absolute inset-0 opacity-[0.04]" />
-                <div
-                  className="scene-noise absolute inset-0"
-                  style={{ opacity: sceneForm.filter.noise }}
+          <AdminSection
+            title="天气层预设"
+            description="先把天气层的数据维护好。后面需要重新启用时，不用再回头补结构。"
+            aside={<AdminStatusBadge tone="neutral">Preset Ready</AdminStatusBadge>}
+          >
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <AdminField label="天气预设">
+                  <select
+                    value={sceneForm.weather.preset}
+                    onChange={(event) =>
+                      updateScene((current) => ({
+                        ...current,
+                        weather: {
+                          ...current.weather,
+                          preset: event.target.value as BackgroundSceneSettings['weather']['preset'],
+                        },
+                      }))
+                    }
+                    className={ADMIN_INPUT_CLASS}
+                  >
+                    <option value="none">none</option>
+                    <option value="storm">storm</option>
+                  </select>
+                </AdminField>
+                <RangeField
+                  label="天气强度"
+                  value={sceneForm.weather.intensity}
+                  onChange={(value) =>
+                    updateScene((current) => ({
+                      ...current,
+                      weather: { ...current.weather, intensity: value },
+                    }))
+                  }
                 />
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: `radial-gradient(circle at top, ${toRgba(
-                      sceneForm.filter.tintColor,
-                      sceneForm.filter.gradient * 0.18
-                    )} 0%, transparent 42%)`,
-                  }}
-                />
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    boxShadow: `inset 0 0 160px rgba(2, 6, 23, ${sceneForm.filter.vignette})`,
-                    backdropFilter: `blur(${sceneForm.filter.blur}px)`,
-                    WebkitBackdropFilter: `blur(${sceneForm.filter.blur}px)`,
-                  }}
-                />
+              </div>
 
-                <div className="absolute inset-x-0 top-0 p-5">
-                  <div className="rounded-2xl border border-border/60 bg-black/28 px-4 py-3 backdrop-blur-lg">
-                    <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-primary/70">
-                      Homepage Hero
-                    </p>
-                    <div className="mt-4 flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/10">
-                        {profileForm.avatarUrl ? (
-                          <img
-                            src={profileForm.avatarUrl}
-                            alt={profileForm.ownerName}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-lg font-semibold text-white">
-                            {profileForm.ownerInitial}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-white">{profileForm.ownerName}</p>
-                        <p className="text-xs text-white/68">{profileForm.roleLine}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="grid gap-3">
+                {ENABLED_PAGES.map((page) => {
+                  const checked = sceneForm.weather.enabledPages.includes(page.key)
 
-                <div className="absolute inset-x-0 bottom-0 p-5">
-                  <div className="rounded-[24px] border border-white/10 bg-black/30 p-5 backdrop-blur-lg">
-                    <p className="text-lg font-semibold text-white">{profileForm.siteName}</p>
-                    <p className="mt-2 text-sm leading-7 text-slate-200/78">{profileForm.bio}</p>
-                    <p className="mt-3 text-sm leading-7 text-slate-300/70">
-                      背景透明度 {sceneForm.image.opacity.toFixed(2)} · 天气 {sceneForm.weather.preset}
-                      {' · '}模糊 {sceneForm.filter.blur}px
-                    </p>
-                  </div>
-                </div>
+                  return (
+                    <label
+                      key={page.key}
+                      className="flex cursor-pointer items-start gap-3 rounded-[22px] border border-border/70 bg-background/38 px-4 py-4 transition-colors hover:border-border hover:bg-background/48"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() =>
+                          updateScene((current) => ({
+                            ...current,
+                            weather: {
+                              ...current.weather,
+                              enabledPages: checked
+                                ? current.weather.enabledPages.filter((item) => item !== page.key)
+                                : [...current.weather.enabledPages, page.key],
+                            },
+                          }))
+                        }
+                        className="mt-1 h-4 w-4 rounded border-border bg-background"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-foreground">{page.label}</span>
+                        <span className="mt-1 block text-sm leading-6 text-muted-foreground">
+                          {page.description}
+                        </span>
+                      </span>
+                    </label>
+                  )
+                })}
               </div>
             </div>
+          </AdminSection>
+        </div>
 
-            <div className={`${ADMIN_MUTED_PANEL_CLASS} p-5`}>
-              <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
-                Notes
-              </p>
-              <ul className="mt-3 space-y-2 text-sm leading-7 text-muted-foreground">
-                <li>站点资料保存后，导航、首页、关于页和 moments 作者信息会同步刷新。</li>
-                <li>如果只想保留静态背景图，把天气预设保持在 `none` 即可。</li>
-                <li>觉得首屏太灰时，优先降低“叠层浓度”和“渐变强度”。</li>
-                <li>建议背景图宽度至少 1920px，这样首页 Hero 更稳。</li>
-              </ul>
-            </div>
-          </CardBody>
-        </Card>
-      </div>
+        <input
+          ref={sceneFileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleSceneUpload}
+        />
+      </AdminPanel>
     </div>
   )
 }
 
-function SectionHeader({
-  icon,
+function MediaAssetCard({
+  eyebrow,
   title,
   description,
+  preview,
+  controls,
 }: {
-  icon: string
+  eyebrow: string
   title: string
   description: string
+  preview: ReactNode
+  controls: ReactNode
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <span className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-background/55 text-primary">
-        <MaterialSymbol icon={icon} size={20} />
-      </span>
-      <div>
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="mt-1 text-sm leading-7 text-muted-foreground">{description}</p>
+    <div className={`${ADMIN_MUTED_PANEL_CLASS} p-4`}>
+      <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+        {eyebrow}
+      </p>
+      <div className="mt-4 overflow-hidden rounded-[22px] border border-border/70 bg-background/44">
+        <div className="aspect-[16/10] overflow-hidden">{preview}</div>
       </div>
+      <div className="mt-4">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">{controls}</div>
     </div>
   )
 }
 
-function Field({
-  label,
-  children,
-  fullWidth = false,
-}: {
-  label: string
-  children: React.ReactNode
-  fullWidth?: boolean
-}) {
-  return <AdminField label={label} fullWidth={fullWidth}>{children}</AdminField>
-}
-
-function SliderField({
+function RangeField({
   label,
   value,
   onChange,
-  min = 0,
-  max = 1,
-  step = 0.01,
 }: {
   label: string
   value: number
   onChange: (value: number) => void
-  min?: number
-  max?: number
-  step?: number
 }) {
   return (
-    <Field label={label}>
-      <div className="rounded-[18px] border border-border/70 bg-background/42 px-4 py-3">
-        <div className="flex items-center justify-between text-sm text-foreground">
-          <span>{value.toFixed(step >= 1 ? 0 : 2)}</span>
-          <span className="text-xs text-muted-foreground">
-            {min} - {max}
-          </span>
-        </div>
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(event) => onChange(Number(event.target.value))}
-          className="mt-3 w-full accent-[hsl(var(--ember))]"
-        />
+    <div className="space-y-2.5">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+          {label}
+        </span>
+        <span className="text-[11px] font-mono text-muted-foreground">{value.toFixed(2)}</span>
       </div>
-    </Field>
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.01}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="h-11 w-full accent-[hsl(var(--primary))]"
+      />
+    </div>
   )
 }
-
-function ColorField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-}) {
-  return (
-    <Field label={label}>
-      <div className="flex items-center gap-3 rounded-[18px] border border-border/70 bg-background/42 px-4 py-3">
-        <input
-          type="color"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className="h-11 w-14 cursor-pointer rounded-xl border border-border/70 bg-transparent p-1"
-        />
-        <input
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          className={`${INPUT_CLASS} h-11 flex-1`}
-        />
-      </div>
-    </Field>
-  )
-}
-
-const INPUT_CLASS = ADMIN_INPUT_CLASS
-
-const TEXTAREA_CLASS = ADMIN_TEXTAREA_CLASS

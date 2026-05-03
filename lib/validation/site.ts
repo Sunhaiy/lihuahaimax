@@ -30,6 +30,24 @@ export const siteProfileSchema = z.object({
     .refine((value) => !value || isUploadOrAbsoluteUrl(value), 'Invalid avatar URL')
     .nullable()
     .optional(),
+  defaultPostCoverUrl: z
+    .string()
+    .trim()
+    .refine((value) => !value || isUploadOrAbsoluteUrl(value), 'Invalid default post cover URL')
+    .nullable()
+    .optional(),
+  siteUrl: z
+    .string()
+    .trim()
+    .refine((value) => !value || isAbsoluteUrl(value), 'Invalid site URL')
+    .default(''),
+  rssUrl: z
+    .string()
+    .trim()
+    .refine((value) => !value || isUploadOrAbsoluteUrl(value), 'Invalid RSS URL')
+    .default(''),
+  friendLinkIntro: z.string().trim().max(260).default(''),
+  friendLinkRequirements: z.string().trim().max(1000).default(''),
   githubUrl: z
     .string()
     .trim()
@@ -42,4 +60,3 @@ export const siteProfileSchema = z.object({
     .default(''),
   footerText: z.string().trim().max(140).default(''),
 })
-

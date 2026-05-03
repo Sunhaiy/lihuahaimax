@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { auth } from '@/auth'
 import { SceneShell } from '@/components/scene/SceneShell'
 import { NavBar } from '@/components/ui/NavBar'
-import { PageTransition } from '@/components/ui/PageTransition'
 import { findCategories } from '@/lib/db/dao/postDao'
 import { getBackgroundSceneSettings } from '@/lib/scene'
 import { getSiteProfile } from '@/lib/site'
@@ -26,9 +25,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
           }}
         />
 
-        <main className="flex-1 pt-16">
-          <PageTransition>{children}</PageTransition>
-        </main>
+        <main className="flex-1 pt-16">{children}</main>
 
         <footer className="mt-16 border-t border-border py-8">
           <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">

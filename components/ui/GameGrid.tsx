@@ -5,12 +5,12 @@ interface Props {
   games: GameRow[]
 }
 
-const STATUS_META: Record<string, { label: string; className: string }> = {
-  playing: { label: '游玩中', className: 'border-emerald-400/28 bg-emerald-400/14 text-emerald-200' },
-  completed: { label: '已通关', className: 'border-white/10 bg-black/26 text-white/70' },
-  abandoned: { label: '弃坑', className: 'border-rose-400/28 bg-rose-400/14 text-rose-200' },
-  plan_to_play: { label: '计划', className: 'border-primary/28 bg-primary/14 text-primary' },
-  platinum: { label: '白金', className: 'border-amber-300/28 bg-amber-300/14 text-amber-200' },
+const STATUS_META: Record<string, { label: string; dotClass: string }> = {
+  playing: { label: '游玩中', dotClass: 'bg-emerald-300' },
+  completed: { label: '已通关', dotClass: 'bg-white/60' },
+  abandoned: { label: '弃坑', dotClass: 'bg-rose-300' },
+  plan_to_play: { label: '计划', dotClass: 'bg-primary' },
+  platinum: { label: '白金', dotClass: 'bg-amber-300' },
 }
 
 const PLATFORM_META: Record<string, { icon: string; label: string }> = {
@@ -22,6 +22,9 @@ const PLATFORM_META: Record<string, { icon: string; label: string }> = {
   mobile: { icon: 'smartphone', label: 'Mobile' },
   other: { icon: 'deployed_code', label: 'Other' },
 }
+
+const OVERLAY_BADGE_CLASS =
+  'inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-black/54 px-2.5 py-1 text-[10px] font-semibold text-white shadow-[0_10px_28px_rgba(0,0,0,0.28)] backdrop-blur-xl'
 
 function getFootnote(game: GameRow) {
   if (game.play_hours != null) return `${game.play_hours}h 游玩`
@@ -69,27 +72,26 @@ export function GameGrid({ games }: Props) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/20 to-transparent" />
 
               <div className="absolute left-3 top-3">
-                <span
-                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-medium backdrop-blur-xl ${status.className}`}
-                >
+                <span className={OVERLAY_BADGE_CLASS}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${status.dotClass}`} />
                   {status.label}
                 </span>
               </div>
 
-              <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/30 px-2.5 py-1 text-[10px] font-medium text-white/84 backdrop-blur-xl">
+              <div className={`absolute right-3 top-3 ${OVERLAY_BADGE_CLASS}`}>
                 <MaterialSymbol icon={platform.icon} size={12} />
                 {platform.label}
               </div>
 
-              <div className="absolute inset-x-3 bottom-3 rounded-[18px] border border-white/10 bg-black/28 px-3.5 py-3 backdrop-blur-xl">
+              <div className="absolute inset-x-3 bottom-3 rounded-[18px] border border-white/10 bg-black/30 px-3.5 py-3 backdrop-blur-xl">
                 <p className="line-clamp-2 text-sm font-semibold leading-5 text-white">{game.title}</p>
-                <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-white/62">
+                <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-white/70">
                   <span className="inline-flex min-w-0 items-center gap-1.5">
                     <MaterialSymbol icon="schedule" size={12} />
                     <span className="truncate">{getFootnote(game)}</span>
                   </span>
                   {rating != null && !Number.isNaN(rating) ? (
-                    <span className="inline-flex items-center gap-1 font-mono text-white/82">
+                    <span className="inline-flex items-center gap-1 font-mono text-white/84">
                       <MaterialSymbol icon="star" size={12} fill />
                       {rating.toFixed(1)}
                     </span>
@@ -104,18 +106,14 @@ export function GameGrid({ games }: Props) {
                   <MaterialSymbol icon={platform.icon} size={12} />
                   {platform.label}
                 </span>
-                <span className="font-mono tracking-[0.16em] text-muted-foreground/80">
-                  {status.label}
-                </span>
+                <span className="font-mono tracking-[0.16em] text-muted-foreground/80">{status.label}</span>
               </div>
 
               {game.short_review ? (
-                <p className="line-clamp-3 text-[12px] leading-5 text-muted-foreground">
-                  {game.short_review}
-                </p>
+                <p className="line-clamp-3 text-[12px] leading-5 text-muted-foreground">{game.short_review}</p>
               ) : (
                 <p className="line-clamp-2 text-[12px] leading-5 text-muted-foreground/72">
-                  这张卡片留给那些会在很久以后，还能一下子想起手感和情绪的游戏。
+                  这张卡片留给那些会在很久以后，还是能一下子想起手感和情绪的游戏。
                 </p>
               )}
             </div>

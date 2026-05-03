@@ -240,7 +240,11 @@ export default async function HomePage({
                   <>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       {postsResult.data.map((post) => (
-                        <PostCard key={post.id} post={post} />
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          fallbackCoverUrl={siteProfile.defaultPostCoverUrl}
+                        />
                       ))}
                     </div>
 

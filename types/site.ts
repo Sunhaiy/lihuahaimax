@@ -7,8 +7,12 @@ export interface SiteProfile {
   roleLine: string
   bio: string
   avatarUrl: string | null
+  defaultPostCoverUrl: string | null
+  siteUrl: string
+  rssUrl: string
+  friendLinkIntro: string
+  friendLinkRequirements: string
   githubUrl: string
   email: string
   footerText: string
 }
-

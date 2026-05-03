@@ -6,12 +6,18 @@ import type { SiteProfile } from '@/types/site'
 export const DEFAULT_SITE_PROFILE: SiteProfile = {
   siteName: '梨花海',
   siteNameEn: 'LIHUA HAI',
-  ownerName: '梨花海',
-  ownerInitial: '梨',
-  slogan: '极客视角的个人数字中枢',
-  roleLine: '极客 · 二次元 · 代码诗人',
-  bio: '热爱 coding，追番打游戏，记录凌晨 3 点的一切。',
+  ownerName: '素心',
+  ownerInitial: '素',
+  slogan: '期待是醒着的梦',
+  roleLine: '程序员',
+  bio: '嵌入式工程师、全栈构建者，也认真记录深夜、项目和碎碎念。',
   avatarUrl: null,
+  defaultPostCoverUrl: null,
+  siteUrl: 'https://lihuahai.dev',
+  rssUrl: '/rss.xml',
+  friendLinkIntro: '如果你也在认真写作、长期更新，欢迎把站点信息留在这里。看到合适的站点后，我会尽快回访并补上链接。',
+  friendLinkRequirements:
+    '1. 站点可以稳定访问\n2. 有持续更新的内容\n3. 优先博客、作品集、个人主页或有明确主题的工具站\n4. 简介尽量简洁，方便我快速了解你的站点',
   githubUrl: 'https://github.com',
   email: 'hello@lihuahai.dev',
   footerText: '用代码记录生活',
@@ -49,6 +55,12 @@ export function normalizeSiteProfile(input?: Partial<SiteProfile> | null): SiteP
     roleLine: cleanText(source.roleLine) || DEFAULT_SITE_PROFILE.roleLine,
     bio: cleanText(source.bio) || DEFAULT_SITE_PROFILE.bio,
     avatarUrl: cleanOptionalUrl(source.avatarUrl),
+    defaultPostCoverUrl: cleanOptionalUrl(source.defaultPostCoverUrl),
+    siteUrl: cleanText(source.siteUrl) || DEFAULT_SITE_PROFILE.siteUrl,
+    rssUrl: cleanText(source.rssUrl) || DEFAULT_SITE_PROFILE.rssUrl,
+    friendLinkIntro: cleanText(source.friendLinkIntro) || DEFAULT_SITE_PROFILE.friendLinkIntro,
+    friendLinkRequirements:
+      cleanText(source.friendLinkRequirements) || DEFAULT_SITE_PROFILE.friendLinkRequirements,
     githubUrl: cleanText(source.githubUrl) || DEFAULT_SITE_PROFILE.githubUrl,
     email: cleanText(source.email) || DEFAULT_SITE_PROFILE.email,
     footerText: cleanText(source.footerText) || DEFAULT_SITE_PROFILE.footerText,
@@ -58,9 +70,7 @@ export function normalizeSiteProfile(input?: Partial<SiteProfile> | null): SiteP
 function fromLegacySettings(legacyName: string, legacyValues: Partial<SiteProfile>): Partial<SiteProfile> {
   const trimmedName = legacyName.trim()
 
-  if (!trimmedName) {
-    return legacyValues
-  }
+  if (!trimmedName) return legacyValues
 
   if (looksAsciiLabel(trimmedName)) {
     return {

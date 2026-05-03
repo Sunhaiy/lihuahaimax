@@ -19,6 +19,9 @@ export const ADMIN_SELECT_CLASS = ADMIN_INPUT_CLASS
 export const ADMIN_TEXTAREA_CLASS =
   'w-full rounded-[18px] border border-border/70 bg-background/55 px-4 py-3 text-sm leading-6 text-foreground placeholder:text-muted-foreground/55 transition-colors focus:border-primary/28 focus:outline-none focus:ring-2 focus:ring-primary/14'
 
+export const ADMIN_NOTICE_CLASS =
+  'rounded-[22px] border px-4 py-3 text-sm leading-6 backdrop-blur-md'
+
 export function AdminPageHeader({
   eyebrow = 'Console',
   title,
@@ -155,7 +158,7 @@ export function AdminStatusBadge({
   const toneClass = {
     neutral: 'border-border/70 bg-background/55 text-muted-foreground',
     accent: 'border-primary/24 bg-primary/10 text-primary',
-    success: 'border-emerald-500/24 bg-emerald-500/10 text-emerald-300',
+    success: 'border-primary/24 bg-primary/12 text-primary',
     warning: 'border-amber-500/24 bg-amber-500/10 text-amber-300',
     danger: 'border-red-500/24 bg-red-500/10 text-red-300',
   }[tone]
@@ -212,4 +215,22 @@ export function AdminEmptyState({
       {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
     </div>
   )
+}
+
+export function AdminNotice({
+  tone = 'neutral',
+  children,
+}: {
+  tone?: 'neutral' | 'accent' | 'success' | 'warning' | 'danger'
+  children: ReactNode
+}) {
+  const toneClass = {
+    neutral: 'border-border/70 bg-background/45 text-muted-foreground',
+    accent: 'border-primary/22 bg-primary/10 text-foreground',
+    success: 'border-primary/22 bg-primary/10 text-foreground',
+    warning: 'border-amber-500/20 bg-amber-500/10 text-amber-200',
+    danger: 'border-red-500/20 bg-red-500/10 text-red-300',
+  }[tone]
+
+  return <div className={cn(ADMIN_NOTICE_CLASS, toneClass)}>{children}</div>
 }

@@ -9,11 +9,18 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react'
+import { resolveMediaUrl } from '@/lib/media'
 import type { PostRow } from '@/types/post'
 
 type CarouselPost = Pick<PostRow, 'id' | 'slug' | 'title' | 'cover_url' | 'published_at' | 'category'>
 
-export function FeaturedCarousel({ posts }: { posts: CarouselPost[] }) {
+export function FeaturedCarousel({
+  posts,
+  fallbackCoverUrl,
+}: {
+  posts: CarouselPost[]
+  fallbackCoverUrl?: string | null
+}) {
   const [page, setPage] = useState(0)
   const PER = 3
   const totalPages = Math.ceil(posts.length / PER)
@@ -24,15 +31,17 @@ export function FeaturedCarousel({ posts }: { posts: CarouselPost[] }) {
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {visible.map((post) => (
+        {visible.map((post) => {
+          const coverUrl = resolveMediaUrl(post.cover_url, fallbackCoverUrl)
+          return (
           <Link
             key={post.id}
             href={`/posts/${post.slug}`}
             className="group relative block aspect-[3/2] overflow-hidden rounded-xl border border-border/80 bg-card/92 transition-colors duration-300 hover:border-border/90"
           >
-            {post.cover_url ? (
+            {coverUrl ? (
               <img
-                src={post.cover_url}
+                src={coverUrl}
                 alt={post.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -60,7 +69,8 @@ export function FeaturedCarousel({ posts }: { posts: CarouselPost[] }) {
               </time>
             </div>
           </Link>
-        ))}
+          )
+        })}
       </div>
 
       {/* 翻页控件 */}

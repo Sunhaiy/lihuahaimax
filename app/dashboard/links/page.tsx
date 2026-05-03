@@ -1,17 +1,29 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import useSWR from 'swr'
 import {
+  AdminEmptyState,
   AdminField,
+  AdminNotice,
+  AdminPageHeader,
+  AdminPanel,
+  AdminSection,
+  AdminStatusBadge,
   ADMIN_INPUT_CLASS,
   ADMIN_MUTED_PANEL_CLASS,
   ADMIN_TEXTAREA_CLASS,
 } from '@/components/admin/AdminPrimitives'
+import { MediaLibraryPicker } from '@/components/admin/MediaLibraryPicker'
 import { Button } from '@/components/ui/Button'
-import { Card, CardBody } from '@/components/ui/Card'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
-import type { LinkCategory, LinkRow } from '@/types/link'
+import type {
+  LinkCategory,
+  LinkRow,
+  LinkSubmissionRow,
+  LinkSubmissionStatus,
+} from '@/types/link'
+import type { SiteProfile } from '@/types/site'
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json())
 
@@ -45,6 +57,12 @@ const CATEGORY_LABELS: Record<LinkCategory, string> = {
   other: '其他',
 }
 
+const SUBMISSION_STATUS_LABELS: Record<LinkSubmissionStatus, string> = {
+  pending: '待处理',
+  approved: '已采纳',
+  rejected: '已忽略',
+}
+
 function readApiError(payload: unknown, fallback: string) {
   if (!payload || typeof payload !== 'object') return fallback
 
@@ -52,9 +70,7 @@ function readApiError(payload: unknown, fallback: string) {
     error?: string | { fieldErrors?: Record<string, string[]>; formErrors?: string[] }
   }
 
-  if (typeof source.error === 'string' && source.error.trim()) {
-    return source.error
-  }
+  if (typeof source.error === 'string' && source.error.trim()) return source.error
 
   if (source.error && typeof source.error === 'object') {
     const formError = source.error.formErrors?.find(Boolean)
@@ -84,52 +100,102 @@ function toFormState(link?: LinkRow | null): LinkFormState {
   }
 }
 
-async function uploadAvatar(file: File) {
+async function uploadImage(file: File) {
   const formData = new FormData()
   formData.append('file', file)
 
-  const res = await fetch('/api/upload/image', {
+  const response = await fetch('/api/upload/image', {
     method: 'POST',
     body: formData,
   })
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => null)
-    throw new Error(readApiError(error, '头像上传失败'))
+  if (!response.ok) {
+    const error = await response.json().catch(() => null)
+    throw new Error(readApiError(error, '图片上传失败'))
   }
 
-  return res.json() as Promise<{ url: string }>
+  return response.json() as Promise<{ url: string }>
+}
+
+async function saveSiteProfile(profile: SiteProfile) {
+  const response = await fetch('/api/settings/site-profile', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(profile),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null)
+    throw new Error(readApiError(error, '保存友链页资料失败'))
+  }
+
+  return response.json() as Promise<SiteProfile>
+}
+
+function toneForSubmissionStatus(status: LinkSubmissionStatus) {
+  if (status === 'approved') return 'success' as const
+  if (status === 'rejected') return 'danger' as const
+  return 'warning' as const
 }
 
 export default function DashboardLinksPage() {
-  const { data, isLoading, mutate } = useSWR<LinkRow[]>('/api/links?admin=true', fetcher)
+  const linksRequest = useSWR<LinkRow[]>('/api/links?admin=true', fetcher)
+  const profileRequest = useSWR<SiteProfile>('/api/settings/site-profile', fetcher)
+  const submissionsRequest = useSWR<LinkSubmissionRow[]>('/api/link-submissions', fetcher)
+
   const [form, setForm] = useState<LinkFormState>(EMPTY_FORM)
+  const [profileForm, setProfileForm] = useState<SiteProfile | null>(null)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadingProfileAvatar, setUploadingProfileAvatar] = useState(false)
+  const [submissionSavingId, setSubmissionSavingId] = useState<number | null>(null)
+  const [submissionNotes, setSubmissionNotes] = useState<Record<number, string>>({})
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
   const fileRef = useRef<HTMLInputElement>(null)
+  const profileAvatarRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!data?.length) return
-
-    if (selectedId == null) return
-
-    const current = data.find((item) => item.id === selectedId)
+    if (!linksRequest.data?.length || selectedId == null) return
+    const current = linksRequest.data.find((item) => item.id === selectedId)
     if (current) setForm(toFormState(current))
-  }, [data, selectedId])
+  }, [linksRequest.data, selectedId])
 
-  function resetNotice() {
+  useEffect(() => {
+    if (profileRequest.data) setProfileForm(profileRequest.data)
+  }, [profileRequest.data])
+
+  useEffect(() => {
+    const submissions = submissionsRequest.data
+    if (!submissions) return
+    setSubmissionNotes((current) => {
+      const next = { ...current }
+      for (const item of submissions) {
+        if (next[item.id] === undefined) {
+          next[item.id] = item.admin_note ?? ''
+        }
+      }
+      return next
+    })
+  }, [submissionsRequest.data])
+
+  function clearNotice() {
     setError('')
     setSuccess('')
+  }
+
+  function updateProfile<Key extends keyof SiteProfile>(key: Key, value: SiteProfile[Key]) {
+    setProfileForm((current) => (current ? { ...current, [key]: value } : current))
   }
 
   function startNew() {
     setSelectedId(null)
     setForm(EMPTY_FORM)
-    resetNotice()
+    clearNotice()
   }
 
   async function handleSave() {
@@ -139,7 +205,7 @@ export default function DashboardLinksPage() {
     }
 
     setSaving(true)
-    resetNotice()
+    clearNotice()
 
     try {
       const response = await fetch(form.id ? `/api/links/${form.id}` : '/api/links', {
@@ -161,13 +227,15 @@ export default function DashboardLinksPage() {
         throw new Error(readApiError(payload, form.id ? '更新失败' : '创建失败'))
       }
 
-      await mutate()
+      await linksRequest.mutate()
+
       if (payload?.id) {
         setSelectedId(payload.id)
         setForm(toFormState(payload))
       } else {
         startNew()
       }
+
       setSuccess(form.id ? '友链已更新。' : '友链已创建。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '保存失败')
@@ -177,10 +245,10 @@ export default function DashboardLinksPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('确定删除这个友链吗？')) return
+    if (!confirm('确定删除这条友链吗？')) return
 
-    setDeleting(true)
-    resetNotice()
+    setDeletingId(id)
+    clearNotice()
 
     try {
       const response = await fetch(`/api/links/${id}`, { method: 'DELETE' })
@@ -189,27 +257,27 @@ export default function DashboardLinksPage() {
         throw new Error(readApiError(payload, '删除失败'))
       }
 
-      await mutate()
+      await linksRequest.mutate()
       if (selectedId === id) startNew()
       setSuccess('友链已删除。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '删除失败')
     } finally {
-      setDeleting(false)
+      setDeletingId(null)
     }
   }
 
-  async function handleAvatarUpload(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleAvatarUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file) return
 
     setUploading(true)
-    resetNotice()
+    clearNotice()
 
     try {
-      const result = await uploadAvatar(file)
+      const result = await uploadImage(file)
       setForm((current) => ({ ...current, avatarUrl: result.url }))
-      setSuccess('头像已上传，记得保存友链。')
+      setSuccess('友链头像已上传，记得保存这条友链。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '头像上传失败')
     } finally {
@@ -218,160 +286,392 @@ export default function DashboardLinksPage() {
     }
   }
 
+  async function handleProfileAvatarUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file || !profileForm) return
+
+    setUploadingProfileAvatar(true)
+    clearNotice()
+
+    try {
+      const result = await uploadImage(file)
+      updateProfile('avatarUrl', result.url)
+      setSuccess('站点头像已上传，记得保存友链页资料。')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '站点头像上传失败')
+    } finally {
+      setUploadingProfileAvatar(false)
+      if (profileAvatarRef.current) profileAvatarRef.current.value = ''
+    }
+  }
+
+  async function handleSaveProfile() {
+    if (!profileForm) return
+
+    setSavingProfile(true)
+    clearNotice()
+
+    try {
+      const next = await saveSiteProfile(profileForm)
+      profileRequest.mutate(next, false)
+      setProfileForm(next)
+      setSuccess('友链页资料已保存。')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '保存友链页资料失败')
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
+  async function updateSubmissionStatus(id: number, status: LinkSubmissionStatus) {
+    setSubmissionSavingId(id)
+    clearNotice()
+
+    try {
+      const response = await fetch(`/api/link-submissions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, adminNote: submissionNotes[id] ?? '' }),
+      })
+
+      const payload = await response.json().catch(() => null)
+      if (!response.ok) {
+        throw new Error(readApiError(payload, '更新申请状态失败'))
+      }
+
+      await submissionsRequest.mutate()
+      setSuccess(`申请状态已更新为“${SUBMISSION_STATUS_LABELS[status]}”。`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '更新申请状态失败')
+    } finally {
+      setSubmissionSavingId(null)
+    }
+  }
+
+  async function saveSubmissionNote(id: number) {
+    setSubmissionSavingId(id)
+    clearNotice()
+
+    try {
+      const response = await fetch(`/api/link-submissions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminNote: submissionNotes[id] ?? '' }),
+      })
+
+      const payload = await response.json().catch(() => null)
+      if (!response.ok) {
+        throw new Error(readApiError(payload, '保存备注失败'))
+      }
+
+      await submissionsRequest.mutate()
+      setSuccess('申请备注已保存。')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '保存备注失败')
+    } finally {
+      setSubmissionSavingId(null)
+    }
+  }
+
+  function loadSubmissionIntoForm(submission: LinkSubmissionRow) {
+    setForm({
+      id: null,
+      name: submission.site_name,
+      url: submission.site_url,
+      description: submission.site_description ?? '',
+      avatarUrl: submission.site_avatar_url ?? '',
+      category: 'friend',
+      sortOrder: 0,
+      isActive: true,
+    })
+    setSelectedId(null)
+    setSuccess('已把申请信息带入右侧编辑器，可以直接补充后创建友链。')
+  }
+
+  const pendingCount =
+    submissionsRequest.data?.filter((item) => item.status === 'pending').length ?? 0
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
-            Links Directory
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">友情链接</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-            这里不仅能新增友链，也能随时编辑头像、分类、排序和显隐状态。头像预览区可以直接点击上传，
-            不需要再跑去右上角找按钮。
-          </p>
-        </div>
-        <Button onClick={startNew}>
-          <MaterialSymbol icon="add_link" size={18} />
-          新建友链
-        </Button>
-      </div>
+      <AdminPageHeader
+        eyebrow="Links Directory"
+        title="友情链接与申请"
+        description="一边维护公开友链，一边配置前台资料卡和申请文案。申请表收到的数据也会直接落在这里。"
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="secondary" onClick={handleSaveProfile} loading={savingProfile}>
+              <MaterialSymbol icon="settings" size={18} />
+              保存页面资料
+            </Button>
+            <Button onClick={startNew}>
+              <MaterialSymbol icon="add_link" size={18} />
+              新建友链
+            </Button>
+          </div>
+        }
+        meta={
+          <>
+            <AdminStatusBadge tone="accent">{linksRequest.data?.length ?? 0} 条公开记录</AdminStatusBadge>
+            <AdminStatusBadge tone={pendingCount > 0 ? 'warning' : 'neutral'}>
+              {pendingCount} 条待处理申请
+            </AdminStatusBadge>
+          </>
+        }
+      />
 
-      {error ? (
-        <div className="rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          {error}
-        </div>
-      ) : null}
+      {error ? <AdminNotice tone="danger">{error}</AdminNotice> : null}
+      {success ? <AdminNotice tone="success">{success}</AdminNotice> : null}
 
-      {success ? (
-        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-          {success}
-        </div>
-      ) : null}
-
-      <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
-        <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
-          <CardBody className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">友链列表</h2>
-              <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
-                {data?.length ?? 0} items
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {isLoading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="h-24 animate-pulse rounded-[22px] border border-border bg-background/60"
-                    />
-                  ))}
-                </div>
-              ) : !data?.length ? (
-                <div className="rounded-[22px] border border-border/70 bg-background/36 px-5 py-12 text-center text-sm text-muted-foreground">
-                  还没有友链，先新建一个吧。
-                </div>
-              ) : (
-                data.map((link) => (
-                  <div
-                    key={link.id}
-                    className={`rounded-[22px] border px-4 py-4 transition-all duration-200 ${
-                      selectedId === link.id
-                        ? 'border-primary/20 bg-primary/10'
-                        : 'border-border/70 bg-background/38 hover:border-border hover:bg-background/48'
-                    }`}
+      {profileForm ? (
+        <AdminPanel
+          title="友链页资料"
+          description="前台顶部的本站信息、申请说明和审核规则都在这里维护。"
+          icon="badge"
+        >
+          <div className="space-y-6">
+            <AdminSection
+              title="本站卡片"
+              description="这部分会直接出现在友情链接页最上面，给来访者一个清晰的交换对象。"
+            >
+              <div className="grid gap-5 xl:grid-cols-[220px_minmax(0,1fr)]">
+                <div className={`${ADMIN_MUTED_PANEL_CLASS} p-5`}>
+                  <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
+                    Avatar
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => profileAvatarRef.current?.click()}
+                    className="group mt-4 block w-full rounded-[24px] border border-dashed border-border/70 bg-background/36 p-4 text-left transition-colors hover:border-primary/18 hover:bg-background/48"
                   >
-                    <div className="flex items-start gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedId(link.id)
-                          setForm(toFormState(link))
-                        }}
-                        className="flex min-w-0 flex-1 items-start gap-3 text-left"
-                      >
-                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
-                          {link.avatar_url ? (
-                            <img
-                              src={link.avatar_url}
-                              alt={link.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-base font-semibold text-foreground">
-                              {link.name.charAt(0).toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="truncate text-sm font-medium text-foreground">{link.name}</p>
-                            <span className="rounded-full border border-border/70 bg-background/50 px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
-                              {CATEGORY_LABELS[link.category]}
-                            </span>
-                            {!link.is_active ? (
-                              <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.18em] text-amber-300">
-                                hidden
-                              </span>
-                            ) : null}
-                          </div>
-                          {link.description ? (
-                            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                              {link.description}
-                            </p>
-                          ) : null}
-                          <p className="mt-2 truncate text-[11px] font-mono text-muted-foreground/75">
-                            sort {link.sort_order} · {link.url}
-                          </p>
-                        </div>
-                      </button>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-400 hover:text-red-300"
-                        onClick={() => handleDelete(link.id)}
-                        disabled={deleting}
-                      >
-                        删除
-                      </Button>
+                    <div className="flex justify-center">
+                      <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[24px] border border-border/70 bg-background/50">
+                        {profileForm.avatarUrl ? (
+                          <img
+                            src={profileForm.avatarUrl}
+                            alt={profileForm.ownerName}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-3xl font-semibold text-foreground">
+                            {profileForm.ownerInitial}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    <p className="mt-4 text-center text-sm font-medium text-foreground">
+                      {uploadingProfileAvatar ? '上传中…' : '点击上传站点头像'}
+                    </p>
+                  </button>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <MediaLibraryPicker
+                      value={profileForm.avatarUrl}
+                      onSelect={(url) => updateProfile('avatarUrl', url)}
+                      buttonLabel="从相册选择"
+                      dialogTitle="选择友情链接页头像"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => profileAvatarRef.current?.click()}
+                      loading={uploadingProfileAvatar}
+                    >
+                      <MaterialSymbol icon="image_arrow_up" size={16} />
+                      上传头像
+                    </Button>
                   </div>
-                ))
-              )}
-            </div>
-          </CardBody>
-        </Card>
+                </div>
 
-        <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
-          <CardBody className="space-y-7">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-lg font-semibold text-foreground">
-                  {form.id ? '编辑友链' : '新建友链'}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  点击左侧列表切换编辑对象，或直接新建一条新的友链记录。
-                </p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="站点名称">
+                    <input
+                      value={profileForm.siteName}
+                      onChange={(event) => updateProfile('siteName', event.target.value)}
+                      className={INPUT_CLASS}
+                    />
+                  </Field>
+                  <Field label="英文副标">
+                    <input
+                      value={profileForm.siteNameEn}
+                      onChange={(event) => updateProfile('siteNameEn', event.target.value)}
+                      className={INPUT_CLASS}
+                    />
+                  </Field>
+                  <Field label="站点地址">
+                    <input
+                      value={profileForm.siteUrl}
+                      onChange={(event) => updateProfile('siteUrl', event.target.value)}
+                      className={INPUT_CLASS}
+                      placeholder="https://lihuahai.dev"
+                    />
+                  </Field>
+                  <Field label="RSS 链接">
+                    <input
+                      value={profileForm.rssUrl}
+                      onChange={(event) => updateProfile('rssUrl', event.target.value)}
+                      className={INPUT_CLASS}
+                      placeholder="/rss.xml"
+                    />
+                  </Field>
+                  <Field label="友链页简介" fullWidth>
+                    <textarea
+                      value={profileForm.friendLinkIntro}
+                      onChange={(event) => updateProfile('friendLinkIntro', event.target.value)}
+                      className={TEXTAREA_CLASS}
+                      rows={4}
+                    />
+                  </Field>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                {form.id ? (
-                  <Button variant="ghost" onClick={startNew}>
-                    <MaterialSymbol icon="refresh" size={18} />
-                    切换到新建
-                  </Button>
-                ) : null}
-                <Button onClick={handleSave} loading={saving}>
-                  <MaterialSymbol icon="save" size={18} />
-                  {form.id ? '保存修改' : '创建友链'}
+            </AdminSection>
+
+            <AdminSection
+              title="申请规则"
+              description="前台申请卡片会直接读取这里的文案。建议每条一行，节奏会更干净。"
+            >
+              <div className="grid gap-4">
+                <Field label="申请要求" fullWidth>
+                  <textarea
+                    value={profileForm.friendLinkRequirements}
+                    onChange={(event) =>
+                      updateProfile('friendLinkRequirements', event.target.value)
+                    }
+                    className={TEXTAREA_CLASS}
+                    rows={6}
+                    placeholder={'1. 站点可稳定访问\n2. 有持续更新内容\n3. 简介尽量简洁'}
+                  />
+                </Field>
+              </div>
+            </AdminSection>
+          </div>
+
+          <input
+            ref={profileAvatarRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleProfileAvatarUpload}
+          />
+        </AdminPanel>
+      ) : null}
+
+      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <AdminPanel
+          title="友链列表"
+          description="选中左侧条目后在右侧编辑，列表只保留必要信息，浏览更轻。"
+          icon="link"
+          bodyClassName="space-y-3"
+        >
+          {linksRequest.isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-24 animate-pulse rounded-[22px] border border-border/70 bg-background/38"
+                />
+              ))}
+            </div>
+          ) : !linksRequest.data?.length ? (
+            <AdminEmptyState
+              icon="link"
+              title="还没有友链"
+              description="先录入第一条公开链接，后面整页的节奏就会自然起来。"
+              action={
+                <Button size="sm" onClick={startNew}>
+                  新建第一条
                 </Button>
-              </div>
-            </div>
+              }
+            />
+          ) : (
+            linksRequest.data.map((link) => {
+              const active = selectedId === link.id
 
-            <div className="grid gap-6 xl:grid-cols-[220px_1fr]">
+              return (
+                <div
+                  key={link.id}
+                  className={`rounded-[22px] border px-4 py-3 transition-colors ${
+                    active
+                      ? 'border-primary/18 bg-primary/10'
+                      : 'border-border/70 bg-background/38 hover:border-border hover:bg-background/46'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedId(link.id)
+                        setForm(toFormState(link))
+                        clearNotice()
+                      }}
+                      className="flex min-w-0 flex-1 items-start gap-3 text-left"
+                    >
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border border-border/70 bg-background/46">
+                        {link.avatar_url ? (
+                          <img src={link.avatar_url} alt={link.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-sm font-semibold text-foreground">
+                            {link.name.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-medium text-foreground">{link.name}</p>
+                          <AdminStatusBadge tone="neutral">{CATEGORY_LABELS[link.category]}</AdminStatusBadge>
+                          {!link.is_active ? <AdminStatusBadge tone="warning">隐藏</AdminStatusBadge> : null}
+                        </div>
+                        {link.description ? (
+                          <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                            {link.description}
+                          </p>
+                        ) : null}
+                        <p className="mt-2 truncate text-[11px] font-mono text-muted-foreground/75">
+                          sort {link.sort_order} · {link.url}
+                        </p>
+                      </div>
+                    </button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(link.id)}
+                      disabled={deletingId === link.id}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      删除
+                    </Button>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </AdminPanel>
+
+        <AdminPanel
+          title={form.id ? '编辑友链' : '新建友链'}
+          description="右侧只保留友链本身需要的字段，提交申请的数据可以一键带进来。"
+          icon="edit_square"
+          actions={
+            <div className="flex flex-wrap items-center gap-3">
+              {form.id ? (
+                <Button variant="ghost" onClick={startNew}>
+                  <MaterialSymbol icon="add" size={18} />
+                  切到新建
+                </Button>
+              ) : null}
+              <Button onClick={handleSave} loading={saving}>
+                <MaterialSymbol icon="save" size={18} />
+                {form.id ? '保存修改' : '创建友链'}
+              </Button>
+            </div>
+          }
+          bodyClassName="space-y-6"
+        >
+          <AdminSection
+            title="头像与基础信息"
+            description="头像、名称和链接决定了前台卡片的第一印象。"
+          >
+            <div className="grid gap-6 xl:grid-cols-[220px_minmax(0,1fr)]">
               <div className={`${ADMIN_MUTED_PANEL_CLASS} p-5`}>
                 <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
                   Avatar
@@ -379,10 +679,10 @@ export default function DashboardLinksPage() {
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="group mt-4 block w-full rounded-[24px] border border-dashed border-border/70 bg-background/34 p-4 text-left transition-colors hover:border-primary/24 hover:bg-background/48"
+                  className="group mt-4 block w-full rounded-[24px] border border-dashed border-border/70 bg-background/36 p-4 text-left transition-colors hover:border-primary/18 hover:bg-background/48"
                 >
                   <div className="flex justify-center">
-                    <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl border border-border/70 bg-background/45">
+                    <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[26px] border border-border/70 bg-background/50">
                       {form.avatarUrl ? (
                         <img
                           src={form.avatarUrl}
@@ -397,74 +697,48 @@ export default function DashboardLinksPage() {
                     </div>
                   </div>
                   <p className="mt-4 text-center text-sm font-medium text-foreground">
-                    {uploading ? '上传中...' : '点击头像上传'}
-                  </p>
-                  <p className="mt-2 text-center text-xs leading-6 text-muted-foreground">
-                    头像、首字母预览和最终前台卡片会同步更新。
+                    {uploading ? '上传中…' : '点击上传头像'}
                   </p>
                 </button>
 
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <MediaLibraryPicker
+                    value={form.avatarUrl}
+                    onSelect={(url) => setForm((current) => ({ ...current, avatarUrl: url }))}
+                    buttonLabel="从相册选择"
+                    dialogTitle="选择友链头像"
+                  />
                   <Button
                     variant="secondary"
-                    fullWidth
+                    size="sm"
                     onClick={() => fileRef.current?.click()}
-                    disabled={uploading}
+                    loading={uploading}
                   >
-                    <MaterialSymbol icon="image_arrow_up" size={18} />
-                    {uploading ? '上传中' : '更换头像'}
+                    <MaterialSymbol icon="image_arrow_up" size={16} />
+                    上传头像
                   </Button>
                   <Button
                     variant="ghost"
-                    fullWidth
+                    size="sm"
                     onClick={() => setForm((current) => ({ ...current, avatarUrl: '' }))}
                     disabled={!form.avatarUrl}
                   >
-                    <MaterialSymbol icon="delete" size={18} />
-                    清空头像
+                    <MaterialSymbol icon="delete" size={16} />
+                    清空
                   </Button>
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <Field label="站点名称">
+                <Field label="站点名称" hint="展示名称建议控制在 12 个字以内。">
                   <input
                     value={form.name}
                     onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                     className={INPUT_CLASS}
-                    placeholder="例如：即刻、Hoppscotch、某某的博客"
+                    placeholder="例如：某某的博客"
                   />
                 </Field>
-                <Field label="站点链接">
-                  <input
-                    value={form.url}
-                    onChange={(event) => setForm((current) => ({ ...current, url: event.target.value }))}
-                    className={INPUT_CLASS}
-                    placeholder="https://example.com"
-                  />
-                </Field>
-                <Field label="头像链接" fullWidth>
-                  <input
-                    value={form.avatarUrl}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, avatarUrl: event.target.value }))
-                    }
-                    className={INPUT_CLASS}
-                    placeholder="https://example.com/avatar.jpg 或 /uploads/images/..."
-                  />
-                </Field>
-                <Field label="一句话简介" fullWidth>
-                  <textarea
-                    value={form.description}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, description: event.target.value }))
-                    }
-                    className={TEXTAREA_CLASS}
-                    rows={4}
-                    placeholder="这个站点适合什么人逛，和你为什么想把它放进友链。"
-                  />
-                </Field>
-                <Field label="分类">
+                <Field label="友链分类">
                   <select
                     value={form.category}
                     onChange={(event) =>
@@ -482,68 +756,219 @@ export default function DashboardLinksPage() {
                     ))}
                   </select>
                 </Field>
-                <Field label="排序值">
+                <Field label="站点链接" fullWidth hint="前台卡片和跳转按钮都会直接使用它。">
                   <input
-                    type="number"
-                    value={form.sortOrder}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        sortOrder: Number(event.target.value || 0),
-                      }))
-                    }
+                    value={form.url}
+                    onChange={(event) => setForm((current) => ({ ...current, url: event.target.value }))}
                     className={INPUT_CLASS}
+                    placeholder="https://example.com"
                   />
                 </Field>
-                <label className="md:col-span-2 flex items-center gap-3 rounded-[22px] border border-border/70 bg-background/38 px-4 py-4">
+                <Field label="头像链接" fullWidth>
+                  <input
+                    value={form.avatarUrl}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, avatarUrl: event.target.value }))
+                    }
+                    className={INPUT_CLASS}
+                    placeholder="https://example.com/avatar.jpg"
+                  />
+                </Field>
+              </div>
+            </div>
+          </AdminSection>
+
+          <AdminSection
+            title="简介与排序"
+            description="简介尽量一句话说清楚，排序值越小越靠前。"
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="一句话简介" fullWidth>
+                <textarea
+                  value={form.description}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, description: event.target.value }))
+                  }
+                  className={TEXTAREA_CLASS}
+                  rows={4}
+                  placeholder="这个站点适合什么人逛，为什么值得放进友情链接。"
+                />
+              </Field>
+              <Field label="排序值" hint="默认 0，数值越小越靠前。">
+                <input
+                  type="number"
+                  value={form.sortOrder}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      sortOrder: Number(event.target.value || 0),
+                    }))
+                  }
+                  className={INPUT_CLASS}
+                />
+              </Field>
+              <div className="block space-y-2.5">
+                <span className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+                  发布状态
+                </span>
+                <label className="flex items-start gap-3 rounded-[22px] border border-border/70 bg-background/38 px-4 py-4">
                   <input
                     type="checkbox"
                     checked={form.isActive}
                     onChange={(event) =>
                       setForm((current) => ({ ...current, isActive: event.target.checked }))
                     }
-                    className="h-4 w-4 rounded border-border bg-background"
+                    className="mt-1 h-4 w-4 rounded border-border bg-background"
                   />
                   <span>
                     <span className="block text-sm font-medium text-foreground">公开显示</span>
-                    <span className="block text-sm text-muted-foreground">
-                      关闭后只在后台保留记录，不在前台友情链接页展示。
+                    <span className="mt-1 block text-sm leading-6 text-muted-foreground">
+                      关闭后只保留在后台，不会在前台友情链接页展示。
                     </span>
                   </span>
                 </label>
               </div>
             </div>
+          </AdminSection>
 
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarUpload}
-            />
-          </CardBody>
-        </Card>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarUpload}
+          />
+        </AdminPanel>
       </div>
+
+      <AdminPanel
+        title="友链申请"
+        description="前台申请表提交的数据会直接落在这里。可以快速标记状态，也可以一键带入右侧编辑器。"
+        icon="inbox"
+      >
+        {!submissionsRequest.data?.length ? (
+          <AdminEmptyState
+            icon="mark_email_unread"
+            title="还没有新的友链申请"
+            description="当前前台申请箱是空的，后面有提交时会自动出现在这里。"
+          />
+        ) : (
+          <div className="space-y-4">
+            {submissionsRequest.data.map((submission) => (
+              <div
+                key={submission.id}
+                className="rounded-[24px] border border-border/70 bg-background/34 p-5"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-base font-semibold text-foreground">{submission.site_name}</p>
+                      <AdminStatusBadge tone={toneForSubmissionStatus(submission.status)}>
+                        {SUBMISSION_STATUS_LABELS[submission.status]}
+                      </AdminStatusBadge>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">{submission.site_url}</p>
+                    {submission.site_description ? (
+                      <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
+                        {submission.site_description}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => loadSubmissionIntoForm(submission)}
+                    >
+                      <MaterialSymbol icon="south_west" size={16} />
+                      带入编辑器
+                    </Button>
+                    <Button
+                      size="sm"
+                      loading={submissionSavingId === submission.id}
+                      onClick={() => updateSubmissionStatus(submission.id, 'approved')}
+                    >
+                      <MaterialSymbol icon="check" size={16} />
+                      采纳
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      loading={submissionSavingId === submission.id}
+                      onClick={() => updateSubmissionStatus(submission.id, 'rejected')}
+                    >
+                      <MaterialSymbol icon="close" size={16} />
+                      忽略
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2 rounded-[20px] border border-border/70 bg-background/40 p-4 text-sm text-muted-foreground">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground/70">
+                      Submission
+                    </p>
+                    <p>邮箱：{submission.contact_email}</p>
+                    {submission.site_rss_url ? <p>RSS：{submission.site_rss_url}</p> : null}
+                    {submission.site_avatar_url ? <p>头像：{submission.site_avatar_url}</p> : null}
+                    {submission.contact_note ? <p>备注：{submission.contact_note}</p> : null}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Field label="后台备注">
+                      <textarea
+                        value={submissionNotes[submission.id] ?? ''}
+                        onChange={(event) =>
+                          setSubmissionNotes((current) => ({
+                            ...current,
+                            [submission.id]: event.target.value,
+                          }))
+                        }
+                        className={TEXTAREA_CLASS}
+                        rows={4}
+                        placeholder="记录回访情况、是否已互链、后续要跟进的内容。"
+                      />
+                    </Field>
+                    <div className="flex justify-end">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={submissionSavingId === submission.id}
+                        onClick={() => saveSubmissionNote(submission.id)}
+                      >
+                        <MaterialSymbol icon="save" size={16} />
+                        保存备注
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </AdminPanel>
     </div>
   )
 }
 
 function Field({
   label,
+  hint,
   children,
   fullWidth = false,
 }: {
   label: string
+  hint?: string
   children: React.ReactNode
   fullWidth?: boolean
 }) {
   return (
-    <AdminField label={label} fullWidth={fullWidth}>
+    <AdminField label={label} hint={hint} fullWidth={fullWidth}>
       {children}
     </AdminField>
   )
 }
 
 const INPUT_CLASS = ADMIN_INPUT_CLASS
-
 const TEXTAREA_CLASS = ADMIN_TEXTAREA_CLASS

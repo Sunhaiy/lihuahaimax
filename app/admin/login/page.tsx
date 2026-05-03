@@ -34,29 +34,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-10 text-foreground">
-      <div aria-hidden className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.08),transparent_36%),linear-gradient(180deg,rgba(7,10,14,0.98),rgba(7,10,14,0.92))]" />
-      </div>
-
+    <div className="admin-theme min-h-screen bg-background px-4 py-10 text-foreground">
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl items-center justify-center">
         <div className="grid w-full overflow-hidden rounded-[32px] border border-border/70 bg-card/76 backdrop-blur-2xl lg:grid-cols-[1.05fr_0.95fr]">
           <div className="border-b border-border/70 px-8 py-10 lg:border-b-0 lg:border-r lg:px-10 lg:py-12">
             <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-muted-foreground">
               Admin Console
             </p>
-            <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-foreground">
-              梨花海后台
-            </h1>
+            <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-foreground">梨花海后台</h1>
             <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground">
-              统一管理文章、瞬间、评论、设置和作品资料。入口也沿用前台同源的深色玻璃语义，但整体更克制、更像工作台。
+              统一管理文章、瞬间、评论、设置和作品资料。配色、边框和材质和前台保持同源，但整套交互更克制、更像工作台。
             </p>
 
             <div className="mt-10 grid gap-3 sm:grid-cols-2">
-              <InfoCard title="写作与发布" description="文章编辑器、推荐位、SEO 和封面信息放进同一条发布链路里。" />
+              <InfoCard title="写作与发布" description="文章编辑器、推荐位、SEO 和封面信息被放进同一条发布链路里。" />
               <InfoCard title="内容管理" description="列表页统一搜索、筛选、状态语义和危险操作反馈。" />
               <InfoCard title="后台壳层" description="左侧导航固定，右侧内容独立滚动，长页不再拖着整个控制台跑。" />
-              <InfoCard title="同源配色" description="主强调色、边框和材质跟前台站到一条线上，不再混出两套气质。" />
+              <InfoCard title="同源配色" description="主强调色、边框和玻璃材质跟前台站到同一条线上。" />
             </div>
           </div>
 

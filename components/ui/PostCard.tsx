@@ -6,13 +6,17 @@
  */
 
 import Link from 'next/link'
+import { resolveMediaUrl } from '@/lib/media'
 import type { PostRow } from '@/types/post'
 
 interface PostCardProps {
   post: Pick<PostRow, 'id' | 'slug' | 'title' | 'excerpt' | 'cover_url' | 'category' | 'tags' | 'published_at'>
+  fallbackCoverUrl?: string | null
 }
 
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post, fallbackCoverUrl }: PostCardProps) {
+  const coverUrl = resolveMediaUrl(post.cover_url, fallbackCoverUrl)
+
   return (
     <Link href={`/posts/${post.slug}`} className="block group h-full">
       <div className={`relative h-full overflow-hidden rounded-[22px] border border-border/80 bg-card/92 backdrop-blur-sm
@@ -22,9 +26,9 @@ export function PostCard({ post }: PostCardProps) {
 
         {/* ── 封面区 ── */}
         <div className="relative aspect-[16/9] flex-shrink-0 overflow-hidden">
-          {post.cover_url ? (
+          {coverUrl ? (
             <img
-              src={post.cover_url}
+              src={coverUrl}
               alt={post.title}
               className="w-full h-full object-cover
                          group-hover:scale-105 transition-transform duration-500"

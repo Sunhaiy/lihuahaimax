@@ -1,7 +1,4 @@
 import Link from 'next/link'
-import { query } from '@/lib/db'
-import { countPendingComments } from '@/lib/db/dao/commentDao'
-import { findPosts } from '@/lib/db/dao/postDao'
 import {
   AdminEmptyState,
   AdminPageHeader,
@@ -9,6 +6,9 @@ import {
   AdminStatusBadge,
 } from '@/components/admin/AdminPrimitives'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
+import { countPendingComments } from '@/lib/db/dao/commentDao'
+import { findPosts } from '@/lib/db/dao/postDao'
+import { query } from '@/lib/db'
 
 async function getStats() {
   const [posts, moments, animes, games, gallery, pendingComments, recentPosts] = await Promise.all([
@@ -58,9 +58,9 @@ export default async function DashboardPage() {
       icon: 'dynamic_feed',
     },
     {
-      label: '评论待处理',
+      label: '评论队列',
       value: stats.pendingComments,
-      sub: '需要审核的评论',
+      sub: '需要处理的评论',
       href: '/dashboard/comments',
       icon: 'forum',
     },
@@ -78,14 +78,14 @@ export default async function DashboardPage() {
       <AdminPageHeader
         eyebrow="Control Center"
         title="后台总览"
-        description="把高频内容入口、待处理事项和最近编辑放到一个工作台里，减少在后台来回跳转。"
+        description="把高频入口、待处理事项和最近编辑放在同一块工作台里，减少在后台来回跳转。"
         meta={
           <>
-            <AdminStatusBadge tone="accent">核心页已统一设计语言</AdminStatusBadge>
+            <AdminStatusBadge tone="accent">统一后台主题</AdminStatusBadge>
             {stats.pendingComments > 0 ? (
-              <AdminStatusBadge tone="warning">{stats.pendingComments} 条评论待审核</AdminStatusBadge>
+              <AdminStatusBadge tone="warning">{stats.pendingComments} 条评论待处理</AdminStatusBadge>
             ) : (
-              <AdminStatusBadge>评论队列已清空</AdminStatusBadge>
+              <AdminStatusBadge tone="neutral">评论队列已清空</AdminStatusBadge>
             )}
           </>
         }
@@ -96,14 +96,12 @@ export default async function DashboardPage() {
           <Link
             key={card.label}
             href={card.href}
-            className="rounded-[26px] border border-border/75 bg-card/76 p-5 backdrop-blur-xl transition-colors hover:border-border hover:bg-card/86"
+            className="rounded-[26px] border border-border/75 bg-card/76 p-5 backdrop-blur-xl transition-colors hover:border-primary/18 hover:bg-card/86"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">{card.label}</p>
-                <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">
-                  {card.value}
-                </p>
+                <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">{card.value}</p>
               </div>
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-border/70 bg-background/55 text-primary">
                 <MaterialSymbol icon={card.icon} size={20} />
@@ -117,23 +115,26 @@ export default async function DashboardPage() {
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <AdminPanel
           title="最近编辑"
-          description="最近的内容放在前面，方便继续改、继续发，或者快速校对状态。"
+          description="把最近内容放在前面，方便继续改、继续发，或者快速校对状态。"
           icon="history"
         >
           {stats.recentPosts.length === 0 ? (
-            <AdminEmptyState title="还没有文章" description="先写一篇文章，后台工作台就会从这里长起来。" />
+            <AdminEmptyState
+              title="还没有文章"
+              description="先写一篇文章，后台工作台就会从这里长起来。"
+            />
           ) : (
             <div className="space-y-3">
               {stats.recentPosts.map((post) => (
                 <Link
                   key={post.id}
                   href={`/dashboard/editor/${post.id}`}
-                  className="flex items-center justify-between gap-4 rounded-[22px] border border-border/70 bg-background/40 px-4 py-4 transition-colors hover:border-border hover:bg-background/58"
+                  className="flex items-center justify-between gap-4 rounded-[22px] border border-border/70 bg-background/40 px-4 py-4 transition-colors hover:border-primary/18 hover:bg-background/58"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">{post.title}</p>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      {post.category ? <span>{post.category}</span> : null}
+                      {post.category ? <span>{post.category}</span> : <span>未分类</span>}
                       <span>·</span>
                       <span>
                         {post.published_at
@@ -165,7 +166,7 @@ export default async function DashboardPage() {
         <div className="space-y-6">
           <AdminPanel
             title="待处理"
-            description="把真正需要你立即决策的事放在这里。"
+            description="把真正需要你立刻决策的事情收在一处。"
             icon="notifications_active"
           >
             <div className="space-y-3">
@@ -177,7 +178,7 @@ export default async function DashboardPage() {
                     ? `${stats.pendingComments} 条评论还没处理。`
                     : '目前没有待审核评论。'
                 }
-                tone={stats.pendingComments > 0 ? 'warning' : 'neutral'}
+                tone={stats.pendingComments > 0 ? 'accent' : 'neutral'}
               />
               <QuickTask
                 href="/dashboard/posts"
@@ -192,11 +193,7 @@ export default async function DashboardPage() {
             </div>
           </AdminPanel>
 
-          <AdminPanel
-            title="快捷入口"
-            description="常用动作直接一步到位。"
-            icon="bolt"
-          >
+          <AdminPanel title="快捷入口" description="常用动作直接一步到位。" icon="bolt">
             <div className="grid gap-3 sm:grid-cols-2">
               <QuickEntry href="/dashboard/editor" icon="edit_square" label="新建文章" />
               <QuickEntry href="/dashboard/moments" icon="dynamic_feed" label="发布瞬间" />
@@ -219,18 +216,17 @@ function QuickTask({
   href: string
   title: string
   description: string
-  tone: 'neutral' | 'accent' | 'warning'
+  tone: 'neutral' | 'accent'
 }) {
   const toneClass = {
     neutral: 'border-border/70 bg-background/40',
     accent: 'border-primary/18 bg-primary/8',
-    warning: 'border-amber-500/18 bg-amber-500/8',
   }[tone]
 
   return (
     <Link
       href={href}
-      className={`flex items-center justify-between gap-4 rounded-[22px] border px-4 py-4 transition-colors hover:border-border ${toneClass}`}
+      className={`flex items-center justify-between gap-4 rounded-[22px] border px-4 py-4 transition-colors hover:border-primary/18 hover:bg-background/56 ${toneClass}`}
     >
       <div>
         <p className="text-sm font-medium text-foreground">{title}</p>
@@ -253,7 +249,7 @@ function QuickEntry({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-[22px] border border-border/70 bg-background/40 px-4 py-4 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-background/58"
+      className="flex items-center gap-3 rounded-[22px] border border-border/70 bg-background/40 px-4 py-4 text-sm font-medium text-foreground transition-colors hover:border-primary/18 hover:bg-background/58"
     >
       <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-background/55 text-primary">
         <MaterialSymbol icon={icon} size={18} />

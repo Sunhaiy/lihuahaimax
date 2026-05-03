@@ -21,6 +21,7 @@ export async function PATCH(req: NextRequest) {
     normalizeSiteProfile({
       ...parsed.data,
       avatarUrl: parsed.data.avatarUrl || null,
+      defaultPostCoverUrl: parsed.data.defaultPostCoverUrl || null,
     })
   )
 

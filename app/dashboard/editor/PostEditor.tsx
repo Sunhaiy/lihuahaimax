@@ -11,6 +11,7 @@ import {
   ADMIN_MUTED_PANEL_CLASS,
   ADMIN_TEXTAREA_CLASS,
 } from '@/components/admin/AdminPrimitives'
+import { MediaLibraryPicker } from '@/components/admin/MediaLibraryPicker'
 import { Button } from '@/components/ui/Button'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { TiptapEditor, type EditorStats } from '@/features/editor/TiptapEditor'
@@ -495,12 +496,23 @@ export function PostEditor({ post }: PostEditorProps) {
                         <MaterialSymbol icon="image_arrow_up" size={16} />
                         {coverUploading ? '上传中' : coverUrl ? '替换封面' : '上传封面'}
                       </Button>
+                      <MediaLibraryPicker
+                        value={coverUrl}
+                        onSelect={setCoverUrl}
+                        category="artwork"
+                        buttonLabel="从相册选择"
+                        dialogTitle="选择文章封面"
+                        description="可以直接复用已经上传到相册里的图片，也可以在弹窗里继续上传新图。"
+                      />
                       <Button variant="ghost" size="sm" disabled={!coverUrl} onClick={() => setCoverUrl('')}>
                         <MaterialSymbol icon="delete" size={16} />
                         清空封面
                       </Button>
                     </div>
                   </div>
+                  <p className="mt-3 text-xs leading-6 text-muted-foreground">
+                    如果这里留空，前台会自动回退到全局设置里的默认文章封面。
+                  </p>
                 </AdminField>
 
                 <AdminField label="封面 Alt" hint="给前台图片语义和 SEO 使用。">

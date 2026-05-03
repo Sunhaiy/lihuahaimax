@@ -38,12 +38,10 @@ export default async function CommentsPage() {
       <AdminPageHeader
         eyebrow="Comment Queue"
         title="评论管理"
-        description="统一查看待审核与已发布评论，把高频审核操作收在一处。"
+        description="统一查看待审核与已发布评论，把高频审核动作收在同一处，不再让队列像旧式列表页散着放。"
         meta={
           <>
-            <AdminStatusBadge tone={pending.length ? 'warning' : 'neutral'}>
-              待审核 {pending.length}
-            </AdminStatusBadge>
+            <AdminStatusBadge tone={pending.length ? 'accent' : 'neutral'}>待处理 {pending.length}</AdminStatusBadge>
             <AdminStatusBadge tone="neutral">总计 {comments.length}</AdminStatusBadge>
           </>
         }
@@ -59,9 +57,7 @@ export default async function CommentsPage() {
         <>
           <AdminListToolbar className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <AdminStatusBadge tone={pending.length ? 'warning' : 'neutral'}>
-                待审核 {pending.length}
-              </AdminStatusBadge>
+              <AdminStatusBadge tone={pending.length ? 'accent' : 'neutral'}>待处理 {pending.length}</AdminStatusBadge>
               <AdminStatusBadge tone="success">已发布 {approved.length}</AdminStatusBadge>
             </div>
             <p className="text-sm text-muted-foreground">优先处理待审核评论，已发布评论保留轻量删除入口。</p>
@@ -77,7 +73,7 @@ export default async function CommentsPage() {
               {pending.map((comment) => (
                 <article
                   key={comment.id}
-                  className="rounded-[24px] border border-amber-500/16 bg-amber-500/6 p-5"
+                  className="rounded-[24px] border border-primary/16 bg-primary/8 p-5 backdrop-blur-sm"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
@@ -92,7 +88,7 @@ export default async function CommentsPage() {
                         <span>文章 #{comment.post_id}</span>
                       </div>
                     </div>
-                    <AdminStatusBadge tone="warning">待审核</AdminStatusBadge>
+                    <AdminStatusBadge tone="accent">待审核</AdminStatusBadge>
                   </div>
 
                   <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">
@@ -123,14 +119,14 @@ export default async function CommentsPage() {
           {approved.length ? (
             <AdminPanel
               title="已发布"
-              description="这些评论已经出现在前台。"
+              description="这些评论已经在前台可见。"
               icon="task_alt"
               bodyClassName="space-y-4"
             >
               {approved.map((comment) => (
                 <article
                   key={comment.id}
-                  className="rounded-[24px] border border-border/70 bg-background/36 p-5 transition-colors hover:bg-background/48"
+                  className="rounded-[24px] border border-border/70 bg-background/36 p-5 transition-colors hover:border-primary/16 hover:bg-background/48"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
