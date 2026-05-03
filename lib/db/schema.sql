@@ -18,6 +18,10 @@ CREATE TABLE IF NOT EXISTS posts (
   content        JSONB       NOT NULL DEFAULT '{}',
   excerpt        TEXT,
   cover_url      TEXT,
+  cover_alt      TEXT,
+  seo_title      TEXT,
+  seo_description TEXT,
+  is_featured    BOOLEAN     NOT NULL DEFAULT FALSE,
   status         TEXT        NOT NULL DEFAULT 'draft'
                    CHECK (status IN ('draft', 'published', 'archived')),
   tags           TEXT[]      NOT NULL DEFAULT '{}',
@@ -34,6 +38,11 @@ ALTER TABLE posts ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'æœªåˆ
 
 CREATE INDEX IF NOT EXISTS idx_posts_slug        ON posts (slug);
 CREATE INDEX IF NOT EXISTS idx_posts_status      ON posts (status);
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS cover_alt TEXT;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS seo_title TEXT;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS seo_description TEXT;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS is_featured BOOLEAN NOT NULL DEFAULT FALSE;
+CREATE INDEX IF NOT EXISTS idx_posts_featured    ON posts (is_featured) WHERE is_featured = TRUE;
 CREATE INDEX IF NOT EXISTS idx_posts_published   ON posts (published_at DESC NULLS LAST)
   WHERE status = 'published';
 CREATE INDEX IF NOT EXISTS idx_posts_tags        ON posts USING GIN (tags);

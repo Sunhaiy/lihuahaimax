@@ -2,6 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react'
 import useSWR from 'swr'
+import {
+  AdminField,
+  ADMIN_INPUT_CLASS,
+  ADMIN_MUTED_PANEL_CLASS,
+  ADMIN_TEXTAREA_CLASS,
+} from '@/components/admin/AdminPrimitives'
 import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
@@ -244,7 +250,7 @@ export default function DashboardLinksPage() {
       ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
-        <Card className="rounded-[28px] border-white/8 bg-card/75 backdrop-blur-xl">
+        <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
           <CardBody className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">友链列表</h2>
@@ -264,7 +270,7 @@ export default function DashboardLinksPage() {
                   ))}
                 </div>
               ) : !data?.length ? (
-                <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-12 text-center text-sm text-muted-foreground">
+                <div className="rounded-[22px] border border-border/70 bg-background/36 px-5 py-12 text-center text-sm text-muted-foreground">
                   还没有友链，先新建一个吧。
                 </div>
               ) : (
@@ -273,8 +279,8 @@ export default function DashboardLinksPage() {
                     key={link.id}
                     className={`rounded-[22px] border px-4 py-4 transition-all duration-200 ${
                       selectedId === link.id
-                        ? 'border-ember/30 bg-ember/10 shadow-[0_0_0_1px_rgba(255,138,107,0.12)]'
-                        : 'border-white/8 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.05]'
+                        ? 'border-primary/20 bg-primary/10'
+                        : 'border-border/70 bg-background/38 hover:border-border hover:bg-background/48'
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -303,7 +309,7 @@ export default function DashboardLinksPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="truncate text-sm font-medium text-foreground">{link.name}</p>
-                            <span className="rounded-full border border-white/8 bg-white/[0.04] px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
+                            <span className="rounded-full border border-border/70 bg-background/50 px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
                               {CATEGORY_LABELS[link.category]}
                             </span>
                             {!link.is_active ? (
@@ -340,7 +346,7 @@ export default function DashboardLinksPage() {
           </CardBody>
         </Card>
 
-        <Card className="rounded-[28px] border-white/8 bg-card/75 backdrop-blur-xl">
+        <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
           <CardBody className="space-y-7">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -366,17 +372,17 @@ export default function DashboardLinksPage() {
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[220px_1fr]">
-              <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+              <div className={`${ADMIN_MUTED_PANEL_CLASS} p-5`}>
                 <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
                   Avatar
                 </p>
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  className="group mt-4 block w-full rounded-[24px] border border-dashed border-white/12 bg-black/20 p-4 text-left transition-colors hover:border-ember/30 hover:bg-black/30"
+                  className="group mt-4 block w-full rounded-[24px] border border-dashed border-border/70 bg-background/34 p-4 text-left transition-colors hover:border-primary/24 hover:bg-background/48"
                 >
                   <div className="flex justify-center">
-                    <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04]">
+                    <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl border border-border/70 bg-background/45">
                       {form.avatarUrl ? (
                         <img
                           src={form.avatarUrl}
@@ -489,7 +495,7 @@ export default function DashboardLinksPage() {
                     className={INPUT_CLASS}
                   />
                 </Field>
-                <label className="md:col-span-2 flex items-center gap-3 rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4">
+                <label className="md:col-span-2 flex items-center gap-3 rounded-[22px] border border-border/70 bg-background/38 px-4 py-4">
                   <input
                     type="checkbox"
                     checked={form.isActive}
@@ -532,17 +538,12 @@ function Field({
   fullWidth?: boolean
 }) {
   return (
-    <label className={`block space-y-2 ${fullWidth ? 'md:col-span-2' : ''}`}>
-      <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
-        {label}
-      </span>
+    <AdminField label={label} fullWidth={fullWidth}>
       {children}
-    </label>
+    </AdminField>
   )
 }
 
-const INPUT_CLASS =
-  'h-12 w-full rounded-2xl border border-white/8 bg-white/[0.03] px-4 text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus:ring-2 focus:ring-ocean/35'
+const INPUT_CLASS = ADMIN_INPUT_CLASS
 
-const TEXTAREA_CLASS =
-  'w-full rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus:ring-2 focus:ring-ocean/35'
+const TEXTAREA_CLASS = ADMIN_TEXTAREA_CLASS

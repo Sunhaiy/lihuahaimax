@@ -1,141 +1,171 @@
-/**
- * app/dashboard/comments/page.tsx
- *
- * 评论管理 — 全量评论列表（待审 + 已审），支持一键审核 / 删除。
- */
-
 import { revalidatePath } from 'next/cache'
-import { findAllComments } from '@/lib/db/dao/commentDao'
-import { approveComment, deleteComment } from '@/lib/db/dao/commentDao'
+import {
+  AdminEmptyState,
+  AdminListToolbar,
+  AdminPageHeader,
+  AdminPanel,
+  AdminStatusBadge,
+} from '@/components/admin/AdminPrimitives'
+import { Button } from '@/components/ui/Button'
+import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
+import { approveComment, deleteComment, findAllComments } from '@/lib/db/dao/commentDao'
 
 async function handleApprove(formData: FormData) {
   'use server'
   const id = Number(formData.get('id'))
-  if (id) {
-    await approveComment(id)
-    revalidatePath('/dashboard/comments')
-  }
+  if (!id) return
+
+  await approveComment(id)
+  revalidatePath('/dashboard/comments')
 }
 
 async function handleDelete(formData: FormData) {
   'use server'
   const id = Number(formData.get('id'))
-  if (id) {
-    await deleteComment(id)
-    revalidatePath('/dashboard/comments')
-  }
+  if (!id) return
+
+  await deleteComment(id)
+  revalidatePath('/dashboard/comments')
 }
 
 export default async function CommentsPage() {
   const comments = await findAllComments()
-  const pending = comments.filter((c) => !c.is_approved)
-  const approved = comments.filter((c) => c.is_approved)
+  const pending = comments.filter((item) => !item.is_approved)
+  const approved = comments.filter((item) => item.is_approved)
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">评论管理</h1>
-        {pending.length > 0 && (
-          <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-ember/15 text-ember border border-ember/25">
-            {pending.length} 条待审
-          </span>
-        )}
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        eyebrow="Comment Queue"
+        title="评论管理"
+        description="统一查看待审核与已发布评论，把高频审核操作收在一处。"
+        meta={
+          <>
+            <AdminStatusBadge tone={pending.length ? 'warning' : 'neutral'}>
+              待审核 {pending.length}
+            </AdminStatusBadge>
+            <AdminStatusBadge tone="neutral">总计 {comments.length}</AdminStatusBadge>
+          </>
+        }
+      />
 
       {comments.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground text-sm">暂无评论。</div>
+        <AdminEmptyState
+          icon="chat_bubble"
+          title="还没有评论"
+          description="前台收到第一条留言后，这里会开始形成审核队列。"
+        />
       ) : (
-        <div className="space-y-8">
+        <>
+          <AdminListToolbar className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <AdminStatusBadge tone={pending.length ? 'warning' : 'neutral'}>
+                待审核 {pending.length}
+              </AdminStatusBadge>
+              <AdminStatusBadge tone="success">已发布 {approved.length}</AdminStatusBadge>
+            </div>
+            <p className="text-sm text-muted-foreground">优先处理待审核评论，已发布评论保留轻量删除入口。</p>
+          </AdminListToolbar>
 
-          {/* 待审区 */}
-          {pending.length > 0 && (
-            <section>
-              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-3">待审核</p>
-              <div className="rounded-card border border-ember/20 overflow-hidden divide-y divide-border">
-                {pending.map((c) => (
-                  <div key={c.id} className="px-5 py-4 bg-ember/[0.03] flex flex-col sm:flex-row sm:items-start gap-4">
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-foreground">{c.author_name}</span>
-                        {c.author_email && (
-                          <span className="text-xs text-muted-foreground font-mono">{c.author_email}</span>
-                        )}
-                        <span className="text-[10px] text-muted-foreground font-mono ml-auto">
-                          {new Date(c.created_at).toLocaleString('zh-CN')}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          文章 #{c.post_id}
-                        </span>
+          {pending.length ? (
+            <AdminPanel
+              title="待审核"
+              description="这些评论还没有进入前台展示。"
+              icon="pending_actions"
+              bodyClassName="space-y-4"
+            >
+              {pending.map((comment) => (
+                <article
+                  key={comment.id}
+                  className="rounded-[24px] border border-amber-500/16 bg-amber-500/6 p-5"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-semibold text-foreground">{comment.author_name}</h3>
+                        {comment.author_email ? (
+                          <span className="text-xs text-muted-foreground">{comment.author_email}</span>
+                        ) : null}
                       </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{c.content}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-muted-foreground">
+                        <span>{new Date(comment.created_at).toLocaleString('zh-CN')}</span>
+                        <span>文章 #{comment.post_id}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <form action={handleApprove}>
-                        <input type="hidden" name="id" value={c.id} />
-                        <button
-                          type="submit"
-                          className="text-xs px-3 py-1.5 rounded border border-green-500/30
-                                     text-green-400 hover:bg-green-400/10 transition-colors"
-                        >
-                          通过
-                        </button>
-                      </form>
-                      <form action={handleDelete}>
-                        <input type="hidden" name="id" value={c.id} />
-                        <button
-                          type="submit"
-                          className="text-xs px-3 py-1.5 rounded border border-red-500/20
-                                     text-red-400 hover:bg-red-400/10 transition-colors"
-                        >
-                          删除
-                        </button>
-                      </form>
-                    </div>
+                    <AdminStatusBadge tone="warning">待审核</AdminStatusBadge>
                   </div>
-                ))}
-              </div>
-            </section>
-          )}
 
-          {/* 已审区 */}
-          {approved.length > 0 && (
-            <section>
-              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-3">已发布</p>
-              <div className="rounded-card border border-border overflow-hidden divide-y divide-border">
-                {approved.map((c) => (
-                  <div key={c.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-start gap-4 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-foreground">{c.author_name}</span>
-                        {c.author_email && (
-                          <span className="text-xs text-muted-foreground font-mono">{c.author_email}</span>
-                        )}
-                        <span className="text-[10px] text-muted-foreground font-mono ml-auto">
-                          {new Date(c.created_at).toLocaleString('zh-CN')}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          文章 #{c.post_id}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{c.content}</p>
-                    </div>
-                    <form action={handleDelete} className="shrink-0">
-                      <input type="hidden" name="id" value={c.id} />
-                      <button
-                        type="submit"
-                        className="text-xs px-3 py-1.5 rounded border border-red-500/20
-                                   text-red-400 hover:bg-red-400/10 transition-colors"
-                      >
+                  <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">
+                    {comment.content}
+                  </p>
+
+                  <div className="mt-5 flex flex-wrap justify-end gap-3">
+                    <form action={handleApprove}>
+                      <input type="hidden" name="id" value={comment.id} />
+                      <Button type="submit">
+                        <MaterialSymbol icon="check_circle" size={18} />
+                        通过审核
+                      </Button>
+                    </form>
+                    <form action={handleDelete}>
+                      <input type="hidden" name="id" value={comment.id} />
+                      <Button type="submit" variant="danger">
+                        <MaterialSymbol icon="delete" size={18} />
                         删除
-                      </button>
+                      </Button>
                     </form>
                   </div>
-                ))}
-              </div>
-            </section>
-          )}
+                </article>
+              ))}
+            </AdminPanel>
+          ) : null}
 
-        </div>
+          {approved.length ? (
+            <AdminPanel
+              title="已发布"
+              description="这些评论已经出现在前台。"
+              icon="task_alt"
+              bodyClassName="space-y-4"
+            >
+              {approved.map((comment) => (
+                <article
+                  key={comment.id}
+                  className="rounded-[24px] border border-border/70 bg-background/36 p-5 transition-colors hover:bg-background/48"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-semibold text-foreground">{comment.author_name}</h3>
+                        {comment.author_email ? (
+                          <span className="text-xs text-muted-foreground">{comment.author_email}</span>
+                        ) : null}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-muted-foreground">
+                        <span>{new Date(comment.created_at).toLocaleString('zh-CN')}</span>
+                        <span>文章 #{comment.post_id}</span>
+                      </div>
+                    </div>
+                    <AdminStatusBadge tone="success">已发布</AdminStatusBadge>
+                  </div>
+
+                  <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">
+                    {comment.content}
+                  </p>
+
+                  <div className="mt-5 flex justify-end">
+                    <form action={handleDelete}>
+                      <input type="hidden" name="id" value={comment.id} />
+                      <Button type="submit" variant="ghost">
+                        <MaterialSymbol icon="delete" size={18} />
+                        删除评论
+                      </Button>
+                    </form>
+                  </div>
+                </article>
+              ))}
+            </AdminPanel>
+          ) : null}
+        </>
       )}
     </div>
   )

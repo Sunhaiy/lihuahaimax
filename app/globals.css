@@ -20,13 +20,13 @@
     --muted-foreground: 215 16% 47%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 192 84% 45%;
-    --primary: 192 84% 45%;
+    --ring: 160 84% 34%;
+    --primary: 160 84% 34%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 32% 96%;
     --secondary-foreground: 215 25% 27%;
-    --accent: 24 94% 64%;
-    --accent-foreground: 24 38% 18%;
+    --accent: 160 66% 45%;
+    --accent-foreground: 160 52% 14%;
     --surface: 0 0% 100%;
     --surface-foreground: 222 47% 11%;
     --line: 214 28% 84%;
@@ -35,8 +35,8 @@
     --hero-muted: 215 22% 28%;
     --hero-subtle: 215 16% 42%;
     --hero-panel: 0 0% 100%;
-    --hero-panel-border: 214 28% 78%;
-    --weather-rain: 198 94% 74%;
+    --hero-panel-border: 160 24% 74%;
+    --weather-rain: 160 40% 76%;
     --weather-flash: 210 100% 97%;
     --ember: var(--accent);
     --scene-image-dim: 0.45;
@@ -55,13 +55,13 @@
     --muted-foreground: 214 14% 72%;
     --border: 217 18% 20%;
     --input: 217 18% 20%;
-    --ring: 190 88% 56%;
-    --primary: 190 88% 56%;
-    --primary-foreground: 220 28% 8%;
+    --ring: 160 84% 38%;
+    --primary: 160 84% 38%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 216 20% 16%;
     --secondary-foreground: 210 22% 92%;
-    --accent: 26 96% 68%;
-    --accent-foreground: 24 40% 16%;
+    --accent: 152 62% 52%;
+    --accent-foreground: 0 0% 100%;
     --surface: 220 22% 13%;
     --surface-foreground: 210 25% 97%;
     --line: 215 18% 28%;
@@ -70,8 +70,8 @@
     --hero-muted: 212 18% 82%;
     --hero-subtle: 212 14% 66%;
     --hero-panel: 220 24% 12%;
-    --hero-panel-border: 192 42% 38%;
-    --weather-rain: 196 100% 88%;
+    --hero-panel-border: 160 32% 28%;
+    --weather-rain: 160 28% 68%;
     --weather-flash: 210 100% 98%;
     --ember: var(--accent);
     --scene-image-dim: 0.62;
@@ -271,8 +271,8 @@
   }
 
   .glow-ember:hover {
-    border-color: hsl(var(--ember) / 0.5);
-    box-shadow: 0 0 0 1px hsl(var(--ember) / 0.15);
+    border-color: hsl(var(--ember) / 0.36);
+    box-shadow: 0 0 0 1px hsl(var(--ember) / 0.08);
   }
 
   .glow-ocean {
@@ -280,8 +280,8 @@
   }
 
   .glow-ocean:hover {
-    border-color: hsl(var(--primary) / 0.48);
-    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.12);
+    border-color: hsl(var(--primary) / 0.34);
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.08);
   }
 
   .scene-copy {

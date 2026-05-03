@@ -19,13 +19,16 @@ const STATUS_TABS = [
 
 type StatusKey = (typeof STATUS_TABS)[number]['key']
 
-const STATUS_BADGE: Record<string, { text: string; className: string }> = {
-  watching: { text: '连载中', className: 'border-emerald-400/28 bg-emerald-400/14 text-emerald-200' },
-  plan_to_watch: { text: '想看', className: 'border-primary/28 bg-primary/14 text-primary' },
-  on_hold: { text: '搁置', className: 'border-amber-400/28 bg-amber-400/14 text-amber-200' },
-  dropped: { text: '弃坑', className: 'border-rose-400/28 bg-rose-400/14 text-rose-200' },
-  completed: { text: '看完', className: 'border-white/10 bg-black/26 text-white/70' },
+const STATUS_BADGE: Record<string, { text: string; dotClass: string }> = {
+  watching: { text: '连载中', dotClass: 'bg-emerald-300' },
+  plan_to_watch: { text: '想看', dotClass: 'bg-primary' },
+  on_hold: { text: '搁置', dotClass: 'bg-amber-300' },
+  dropped: { text: '弃坑', dotClass: 'bg-rose-300' },
+  completed: { text: '看完', dotClass: 'bg-white/60' },
 }
+
+const OVERLAY_BADGE_CLASS =
+  'inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-black/54 px-2.5 py-1 text-[10px] font-semibold text-white shadow-[0_10px_28px_rgba(0,0,0,0.28)] backdrop-blur-xl'
 
 function getEpisodeText(anime: AnimeRow) {
   if (anime.episodes_total) {
@@ -52,9 +55,7 @@ export function AnimeGrid({ animes }: Props) {
     return nextCounts
   }, [animes])
 
-  const visibleTabs = STATUS_TABS.filter(
-    (tab) => tab.key === 'all' || (counts[tab.key] ?? 0) > 0
-  )
+  const visibleTabs = STATUS_TABS.filter((tab) => tab.key === 'all' || (counts[tab.key] ?? 0) > 0)
 
   const filtered =
     activeStatus === 'all' ? animes : animes.filter((anime) => anime.status === activeStatus)
@@ -109,31 +110,31 @@ export function AnimeGrid({ animes }: Props) {
                     </div>
                   )}
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/18 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/18 to-transparent" />
+
                   <div className="absolute left-3 top-3">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-medium backdrop-blur-xl ${badge.className}`}
-                    >
+                    <span className={OVERLAY_BADGE_CLASS}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${badge.dotClass}`} />
                       {badge.text}
                     </span>
                   </div>
 
                   {rating != null && !Number.isNaN(rating) ? (
-                    <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/30 px-2.5 py-1 text-[10px] font-semibold text-white/88 backdrop-blur-xl">
+                    <span className={`absolute right-3 top-3 ${OVERLAY_BADGE_CLASS}`}>
                       <MaterialSymbol icon="star" size={12} fill />
                       {rating.toFixed(1)}
                     </span>
                   ) : null}
 
-                  <div className="absolute inset-x-3 bottom-3 rounded-[18px] border border-white/10 bg-black/28 px-3.5 py-3 backdrop-blur-xl">
+                  <div className="absolute inset-x-3 bottom-3 rounded-[18px] border border-white/10 bg-black/30 px-3.5 py-3 backdrop-blur-xl">
                     <p className="line-clamp-2 text-sm font-semibold leading-5 text-white">{title}</p>
-                    <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-white/62">
+                    <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-white/70">
                       <span className="inline-flex min-w-0 items-center gap-1.5">
                         <MaterialSymbol icon="tv" size={12} />
                         <span className="truncate">{episodeText ?? anime.type.toUpperCase()}</span>
                       </span>
                       {anime.start_season ? (
-                        <span className="truncate font-mono text-white/46">{anime.start_season}</span>
+                        <span className="truncate font-mono text-white/52">{anime.start_season}</span>
                       ) : null}
                     </div>
                   </div>
@@ -149,12 +150,10 @@ export function AnimeGrid({ animes }: Props) {
                   </div>
 
                   {anime.short_review ? (
-                    <p className="line-clamp-3 text-[12px] leading-5 text-muted-foreground">
-                      {anime.short_review}
-                    </p>
+                    <p className="line-clamp-3 text-[12px] leading-5 text-muted-foreground">{anime.short_review}</p>
                   ) : (
                     <p className="line-clamp-2 text-[12px] leading-5 text-muted-foreground/72">
-                      收藏一部会想反复回来的作品，把追番的情绪和进度都安静记下来。
+                      收藏一部会想反复回来的作品，把追番时的情绪和进度都安静记下来。
                     </p>
                   )}
                 </div>

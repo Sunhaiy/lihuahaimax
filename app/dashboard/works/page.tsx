@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import useSWR from 'swr'
+import {
+  AdminField,
+  ADMIN_INPUT_CLASS,
+  ADMIN_TEXTAREA_CLASS,
+} from '@/components/admin/AdminPrimitives'
 import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
@@ -206,7 +211,7 @@ export default function DashboardWorksPage() {
       ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
-        <Card className="rounded-[28px] border-white/8 bg-card/75 backdrop-blur-xl">
+        <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
           <CardBody className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">项目列表</h2>
@@ -223,7 +228,7 @@ export default function DashboardWorksPage() {
                   ))}
                 </div>
               ) : !data?.length ? (
-                <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-12 text-center text-sm text-muted-foreground">
+                <div className="rounded-[22px] border border-border/70 bg-background/36 px-5 py-12 text-center text-sm text-muted-foreground">
                   还没有项目，先新建一个吧。
                 </div>
               ) : (
@@ -237,8 +242,8 @@ export default function DashboardWorksPage() {
                     }}
                     className={`w-full rounded-[22px] border px-4 py-4 text-left transition-all duration-200 ${
                       selectedId === item.id
-                        ? 'border-ember/30 bg-ember/10 shadow-[0_0_0_1px_rgba(255,138,107,0.12)]'
-                        : 'border-white/8 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.05]'
+                        ? 'border-primary/20 bg-primary/10'
+                        : 'border-border/70 bg-background/38 hover:border-border hover:bg-background/48'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -382,7 +387,7 @@ export default function DashboardWorksPage() {
           <SectionCard title="贡献者" icon="group">
             <div className="space-y-4">
               {form.contributors.map((item, index) => (
-                <div key={index} className="grid gap-3 rounded-[22px] border border-white/8 bg-white/[0.03] p-4 md:grid-cols-[1fr_1fr_1fr_auto]">
+                <div key={index} className="grid gap-3 rounded-[22px] border border-border/70 bg-background/38 p-4 md:grid-cols-[1fr_1fr_1fr_auto]">
                   <input
                     value={item.name}
                     onChange={(event) =>
@@ -446,7 +451,7 @@ export default function DashboardWorksPage() {
           <SectionCard title="里程碑" icon="timeline">
             <div className="space-y-4">
               {form.milestones.map((item, index) => (
-                <div key={index} className="space-y-3 rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+                <div key={index} className="space-y-3 rounded-[22px] border border-border/70 bg-background/38 p-4">
                   <div className="grid gap-3 md:grid-cols-[180px_1fr_auto]">
                     <input
                       value={item.date}
@@ -539,7 +544,7 @@ export default function DashboardWorksPage() {
                   className={INPUT_CLASS}
                 />
               </Field>
-              <label className="flex items-center gap-3 rounded-[22px] border border-white/8 bg-white/[0.03] px-4 py-4">
+              <label className="flex items-center gap-3 rounded-[22px] border border-border/70 bg-background/38 px-4 py-4">
                 <input
                   type="checkbox"
                   checked={form.is_published}
@@ -587,10 +592,10 @@ function SectionCard({
   children: React.ReactNode
 }) {
   return (
-    <Card className="rounded-[28px] border-white/8 bg-card/75 backdrop-blur-xl">
+    <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
       <CardBody className="space-y-5">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-ember/12 text-ember">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-background/55 text-primary">
             <MaterialSymbol icon={icon} size={20} />
           </span>
           <h2 className="text-lg font-semibold">{title}</h2>
@@ -611,17 +616,12 @@ function Field({
   fullWidth?: boolean
 }) {
   return (
-    <label className={`block space-y-2 ${fullWidth ? 'md:col-span-2' : ''}`}>
-      <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
-        {label}
-      </span>
+    <AdminField label={label} fullWidth={fullWidth}>
       {children}
-    </label>
+    </AdminField>
   )
 }
 
-const INPUT_CLASS =
-  'h-11 w-full rounded-2xl border border-white/8 bg-white/[0.03] px-4 text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus:ring-2 focus:ring-ocean/40'
+const INPUT_CLASS = ADMIN_INPUT_CLASS
 
-const TEXTAREA_CLASS =
-  'w-full rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus:ring-2 focus:ring-ocean/40'
+const TEXTAREA_CLASS = ADMIN_TEXTAREA_CLASS

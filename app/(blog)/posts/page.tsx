@@ -9,7 +9,6 @@ import Link from 'next/link'
 import { findPosts, findAllTags, findCategories } from '@/lib/db/dao/postDao'
 import { FeaturedCarousel } from '@/components/ui/FeaturedCarousel'
 import { PostsFilter } from '@/components/ui/PostsFilter'
-import { SHIMMER } from '@/lib/styles'
 
 export const metadata: Metadata = { title: '文章 · 梨花海' }
 export const revalidate = 60
@@ -41,8 +40,10 @@ export default async function PostsPage({
   ])
 
   const carouselPosts = [
-    ...featuredResult.data.filter(p => p.cover_url),
-    ...featuredResult.data.filter(p => !p.cover_url),
+    ...featuredResult.data.filter((post) => post.is_featured && post.cover_url),
+    ...featuredResult.data.filter((post) => post.is_featured && !post.cover_url),
+    ...featuredResult.data.filter((post) => !post.is_featured && post.cover_url),
+    ...featuredResult.data.filter((post) => !post.is_featured && !post.cover_url),
   ].slice(0, 9)
 
   const totalPublished = featuredResult.total
@@ -98,8 +99,8 @@ export default async function PostsPage({
             <Link key={post.id} href={`/posts/${post.slug}`} className="group block h-full">
               <div className={`relative rounded-xl overflow-hidden border border-border
                                flex flex-col h-full
-                               hover:border-primary/35 hover:shadow-[0_16px_36px_rgba(5,150,105,0.12)]
-                               transition-all duration-300 ${SHIMMER}`}>
+                               hover:border-border/90
+                               transition-all duration-300`}>
                 {/* 封面 */}
                 <div className="aspect-[16/10] overflow-hidden bg-muted flex-shrink-0">
                   {post.cover_url ? (

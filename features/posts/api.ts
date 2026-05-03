@@ -5,7 +5,15 @@
  * 对接 /api/posts/* 接口。
  */
 
-import type { Post, PostListItem, PaginatedResult, PostQueryParams, CreatePostInput, UpdatePostInput } from './types'
+import type {
+  Post,
+  PostListItem,
+  PaginatedResult,
+  PostQueryParams,
+  CreatePostInput,
+  UpdatePostInput,
+  PostRow,
+} from './types'
 
 const BASE = '/api/posts'
 
@@ -29,7 +37,7 @@ export async function fetchPostBySlug(slug: string): Promise<Post> {
   return res.json()
 }
 
-export async function createPost(input: CreatePostInput): Promise<Post> {
+export async function createPost(input: CreatePostInput): Promise<PostRow> {
   const res = await fetch(BASE, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -43,7 +51,7 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
   return res.json()
 }
 
-export async function updatePost(id: number, input: UpdatePostInput): Promise<Post> {
+export async function updatePost(id: number, input: UpdatePostInput): Promise<PostRow> {
   const res = await fetch(`${BASE}/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

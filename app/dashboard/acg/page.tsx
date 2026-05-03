@@ -3,6 +3,14 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import useSWR from 'swr'
+import {
+  AdminField,
+  AdminPageHeader,
+  AdminStatusBadge,
+  ADMIN_INPUT_CLASS,
+  ADMIN_MUTED_PANEL_CLASS,
+  ADMIN_TEXTAREA_CLASS,
+} from '@/components/admin/AdminPrimitives'
 import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
@@ -216,8 +224,28 @@ export default function DashboardAcgPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[28px] border border-white/8 bg-card/75 p-6 backdrop-blur-xl">
-        <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+      <AdminPageHeader
+        eyebrow="ACG Library"
+        title="动漫 / 游戏管理"
+        description="把追番、游玩和评分记录放到同一套后台语言里，编辑、筛选和上传都保持工具化节奏。"
+        actions={
+          <Button variant="secondary" asChild>
+            <Link href="/dashboard/works">
+              <MaterialSymbol icon="deployed_code" size={18} />
+              打开作品管理
+            </Link>
+          </Button>
+        }
+        meta={
+          <>
+            <AdminStatusBadge tone="accent">高频编辑</AdminStatusBadge>
+            <AdminStatusBadge tone="neutral">图片上传</AdminStatusBadge>
+          </>
+        }
+      />
+      <div className="rounded-[28px] border border-border/75 bg-card/76 p-6 backdrop-blur-xl">
+        <div className="hidden">
+        <p className="hidden text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
           ACG Library
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">动漫 / 游戏管理</h1>
@@ -225,6 +253,8 @@ export default function DashboardAcgPage() {
           这一页负责把追番和游戏收藏真正管理起来，不再只是“输个标题就结束”的演示表单。
           项目字段已经由独立的 <code>/dashboard/works</code> 完整管理，这里聚焦把 ACG 链路补全。
         </p>
+
+        </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
           {(['anime', 'game'] as const).map((item) => (
@@ -234,15 +264,15 @@ export default function DashboardAcgPage() {
               onClick={() => setTab(item)}
               className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
                 tab === item
-                  ? 'border-ember/30 bg-ember/12 text-ember'
-                  : 'border-white/8 text-muted-foreground hover:text-foreground'
+                  ? 'border-primary/20 bg-primary/10 text-foreground'
+                  : 'border-border/70 bg-background/45 text-muted-foreground hover:border-border hover:text-foreground'
               }`}
             >
               {item === 'anime' ? '动漫' : '游戏'}
             </button>
           ))}
 
-          <Button variant="secondary" className="ml-auto" asChild>
+          <Button variant="secondary" className="ml-auto hidden" asChild>
             <Link href="/dashboard/works">
               <MaterialSymbol icon="deployed_code" size={18} />
               打开项目管理
@@ -892,7 +922,7 @@ function LibraryListCard({
   children: React.ReactNode
 }) {
   return (
-    <Card className="rounded-[28px] border-white/8 bg-card/75 backdrop-blur-xl">
+    <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
       <CardBody className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">{title}</h2>
@@ -912,7 +942,7 @@ function LibraryListCard({
               ))}
             </div>
           ) : count === 0 ? (
-            <div className="rounded-[22px] border border-white/8 bg-white/[0.03] px-5 py-12 text-center text-sm text-muted-foreground">
+            <div className="rounded-[22px] border border-border/70 bg-background/36 px-5 py-12 text-center text-sm text-muted-foreground">
               {emptyText}
             </div>
           ) : (
@@ -945,12 +975,12 @@ function SelectableListItem({
       onClick={onClick}
       className={`w-full rounded-[22px] border px-4 py-4 text-left transition-all duration-200 ${
         active
-          ? 'border-ember/30 bg-ember/10 shadow-[0_0_0_1px_rgba(255,138,107,0.12)]'
-          : 'border-white/8 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.05]'
+          ? 'border-primary/20 bg-primary/10'
+          : 'border-border/70 bg-background/42 hover:border-border hover:bg-background/55'
       }`}
     >
       <div className="flex items-start gap-3">
-        <div className="flex h-16 w-12 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
+        <div className="flex h-16 w-12 items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-background/42">
           {imageUrl ? (
             <img src={imageUrl} alt={title} className="h-full w-full object-cover" />
           ) : (
@@ -993,7 +1023,7 @@ function EditorCard({
   children: React.ReactNode
 }) {
   return (
-    <Card className="rounded-[28px] border-white/8 bg-card/75 backdrop-blur-xl">
+    <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
       <CardBody className="space-y-7">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -1059,17 +1089,17 @@ function ImageUploadPanel({
   note: string
 }) {
   return (
-    <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+    <div className={`${ADMIN_MUTED_PANEL_CLASS} p-5`}>
       <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
         {label}
       </p>
       <button
         type="button"
         onClick={onUpload}
-        className="group mt-4 block w-full rounded-[24px] border border-dashed border-white/12 bg-black/20 p-4 text-left transition-colors hover:border-ember/30 hover:bg-black/30"
+        className="group mt-4 block w-full rounded-[24px] border border-dashed border-border/70 bg-background/34 p-4 text-left transition-colors hover:border-primary/24 hover:bg-background/48"
       >
         <div className="flex justify-center">
-          <div className="flex h-32 w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
+          <div className="flex h-32 w-full items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-background/45">
             {imageUrl ? (
               <img src={imageUrl} alt={label} className="h-full w-full object-cover" />
             ) : (
@@ -1107,17 +1137,12 @@ function Field({
   fullWidth?: boolean
 }) {
   return (
-    <label className={`block space-y-2 ${fullWidth ? 'md:col-span-2' : ''}`}>
-      <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
-        {label}
-      </span>
+    <AdminField label={label} fullWidth={fullWidth}>
       {children}
-    </label>
+    </AdminField>
   )
 }
 
-const INPUT_CLASS =
-  'h-11 w-full rounded-2xl border border-white/8 bg-white/[0.03] px-4 text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus:ring-2 focus:ring-ocean/40'
+const INPUT_CLASS = ADMIN_INPUT_CLASS
 
-const TEXTAREA_CLASS =
-  'w-full rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus:ring-2 focus:ring-ocean/40'
+const TEXTAREA_CLASS = ADMIN_TEXTAREA_CLASS

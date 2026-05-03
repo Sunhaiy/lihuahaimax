@@ -1,13 +1,17 @@
-/**
- * app/dashboard/categories/page.tsx
- *
- * 分类管理 — 重命名 / 删除分类（批量更新关联文章）。
- */
-
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import {
+  AdminEmptyState,
+  AdminListToolbar,
+  AdminPageHeader,
+  AdminPanel,
+  AdminStatusBadge,
+  ADMIN_INPUT_CLASS,
+} from '@/components/admin/AdminPrimitives'
+import { Button } from '@/components/ui/Button'
+import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 
 interface CategoryItem {
   category: string
@@ -25,13 +29,15 @@ export default function CategoriesPage() {
 
   async function load() {
     setLoading(true)
-    const res = await fetch('/api/categories')
-    const data = await res.json()
-    setCategories(data)
+    const response = await fetch('/api/categories')
+    const payload = await response.json()
+    setCategories(payload)
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+  }, [])
 
   useEffect(() => {
     if (editingName !== null) inputRef.current?.focus()
@@ -39,159 +45,176 @@ export default function CategoriesPage() {
 
   async function handleRename(oldName: string) {
     const newName = editValue.trim()
-    if (!newName || newName === oldName) { setEditingName(null); return }
+    if (!newName || newName === oldName) {
+      setEditingName(null)
+      return
+    }
+
     setBusy(true)
     setError('')
-    const res = await fetch('/api/categories', {
+
+    const response = await fetch('/api/categories', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ oldName, newName }),
     })
-    if (res.ok) {
+
+    if (response.ok) {
       setEditingName(null)
       await load()
     } else {
-      setError('重命名失败')
+      setError('分类重命名失败。')
     }
+
     setBusy(false)
   }
 
   async function handleDelete(name: string) {
-    if (!confirm(`确定要删除分类「${name}」吗？该分类下的文章将重置为"未分类"。`)) return
+    if (!confirm(`确认删除分类“${name}”吗？该分类下的文章会自动归入“未分类”。`)) return
+
     setBusy(true)
     setError('')
-    const res = await fetch('/api/categories', {
+
+    const response = await fetch('/api/categories', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
     })
-    if (res.ok) {
+
+    if (response.ok) {
       await load()
     } else {
-      setError('删除失败')
+      setError('分类删除失败。')
     }
+
     setBusy(false)
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">分类管理</h1>
-        <Link
-          href="/dashboard/posts"
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          ← 返回文章管理
-        </Link>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        eyebrow="Content Taxonomy"
+        title="分类管理"
+        description="统一整理文章分类，保留轻量编辑流程，同时避免误删影响内容结构。"
+        actions={
+          <Button variant="secondary" asChild>
+            <Link href="/dashboard/posts">
+              <MaterialSymbol icon="article" size={18} />
+              返回文章
+            </Link>
+          </Button>
+        }
+        meta={<AdminStatusBadge tone="neutral">分类 {categories.length}</AdminStatusBadge>}
+      />
 
-      {error && (
-        <p className="text-sm text-red-400 mb-4">{error}</p>
-      )}
+      {error ? (
+        <div className="rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {error}
+        </div>
+      ) : null}
 
       {loading ? (
-        <div className="text-center py-20 text-muted-foreground text-sm">加载中…</div>
+        <div className="grid gap-4">
+          <div className="h-16 animate-pulse rounded-[24px] border border-border bg-card/70" />
+          <div className="h-[420px] animate-pulse rounded-[28px] border border-border bg-card/70" />
+        </div>
       ) : categories.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground text-sm">
-          暂无分类。发布文章时会自动创建分类。
-        </div>
+        <AdminEmptyState
+          icon="folder"
+          title="还没有分类"
+          description="发布文章时使用新分类，这里就会开始形成可维护的目录。"
+        />
       ) : (
-        <div className="rounded-card border border-border overflow-hidden">
-          <div className="grid grid-cols-[1fr_auto_auto] text-xs text-muted-foreground
-                          px-5 py-3 border-b border-border font-medium
-                          bg-black/[0.02] dark:bg-white/[0.02]">
-            <span>分类名称</span>
-            <span className="pr-10">文章数</span>
-            <span>操作</span>
-          </div>
-
-          {categories.map(({ category, count }) => (
-            <div
-              key={category}
-              className="grid grid-cols-[1fr_auto_auto] items-center
-                         px-5 py-3.5 border-b last:border-b-0 border-border
-                         hover:bg-black/[0.01] dark:hover:bg-white/[0.01] transition-colors"
-            >
-              {/* 分类名 / 内联编辑 */}
-              {editingName === category ? (
-                <div className="flex items-center gap-2 pr-4">
-                  <input
-                    ref={inputRef}
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleRename(category)
-                      if (e.key === 'Escape') setEditingName(null)
-                    }}
-                    className="flex-1 text-sm px-2 py-1 rounded border border-ember/50 bg-background
-                               focus:outline-none focus:ring-1 focus:ring-ember/50"
-                    disabled={busy}
-                  />
-                  <button
-                    onClick={() => handleRename(category)}
-                    disabled={busy}
-                    className="text-[11px] px-2 py-1 rounded bg-ember text-white
-                               hover:bg-ember/90 transition-colors disabled:opacity-50"
-                  >
-                    确定
-                  </button>
-                  <button
-                    onClick={() => setEditingName(null)}
-                    disabled={busy}
-                    className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    取消
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 pr-4 min-w-0">
-                  <span className="text-sm font-medium text-foreground truncate">
-                    {category}
-                  </span>
-                  {category === '未分类' && (
-                    <span className="text-[10px] text-muted-foreground font-mono">（默认）</span>
-                  )}
-                </div>
-              )}
-
-              {/* 文章数 */}
-              <span className="text-sm text-muted-foreground font-mono pr-10 text-right">
-                {count}
-              </span>
-
-              {/* 操作 */}
-              {editingName === category ? null : (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => { setEditingName(category); setEditValue(category) }}
-                    disabled={busy}
-                    className="text-[11px] px-2.5 py-1 rounded border border-border
-                               text-muted-foreground hover:text-foreground hover:border-ember/40
-                               transition-colors disabled:opacity-50"
-                  >
-                    重命名
-                  </button>
-                  {category !== '未分类' && (
-                    <button
-                      onClick={() => handleDelete(category)}
-                      disabled={busy}
-                      className="text-[11px] px-2.5 py-1 rounded border border-red-500/20
-                                 text-red-400 hover:bg-red-400/10 transition-colors
-                                 disabled:opacity-50"
-                    >
-                      删除
-                    </button>
-                  )}
-                </div>
-              )}
+        <>
+          <AdminListToolbar className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <AdminStatusBadge tone="neutral">总数 {categories.length}</AdminStatusBadge>
+              <AdminStatusBadge tone="accent">默认保留 未分类</AdminStatusBadge>
             </div>
-          ))}
-        </div>
-      )}
+            <p className="text-sm text-muted-foreground">删除分类不会删除文章，文章会自动回落到“未分类”。</p>
+          </AdminListToolbar>
 
-      <p className="text-xs text-muted-foreground mt-6">
-        删除分类不会删除文章，该分类下的文章会自动归入"未分类"。
-      </p>
+          <AdminPanel
+            title="分类列表"
+            description="在这里维护名称与文章数量，后续批量工具可以沿用这一套表格结构。"
+            icon="folder_managed"
+            bodyClassName="overflow-hidden p-0"
+          >
+            <div className="grid grid-cols-[minmax(0,1fr)_120px_220px] border-b border-border/70 bg-background/40 px-6 py-4 text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+              <span>分类名称</span>
+              <span className="text-right">文章数</span>
+              <span className="text-right">操作</span>
+            </div>
+
+            {categories.map(({ category, count }) => {
+              const isDefault = category === '未分类'
+              const isEditing = editingName === category
+
+              return (
+                <div
+                  key={category}
+                  className="grid grid-cols-[minmax(0,1fr)_120px_220px] items-center gap-4 border-b border-border/65 px-6 py-4 last:border-b-0"
+                >
+                  {isEditing ? (
+                    <div className="flex items-center gap-3">
+                      <input
+                        ref={inputRef}
+                        value={editValue}
+                        onChange={(event) => setEditValue(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') handleRename(category)
+                          if (event.key === 'Escape') setEditingName(null)
+                        }}
+                        className={ADMIN_INPUT_CLASS}
+                        disabled={busy}
+                      />
+                      <Button onClick={() => handleRename(category)} disabled={busy}>
+                        确认
+                      </Button>
+                      <Button variant="ghost" onClick={() => setEditingName(null)} disabled={busy}>
+                        取消
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-sm font-medium text-foreground">{category}</p>
+                        {isDefault ? <AdminStatusBadge tone="neutral">默认</AdminStatusBadge> : null}
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-right text-sm font-mono text-muted-foreground">{count}</p>
+
+                  <div className="flex justify-end gap-2">
+                    {!isEditing ? (
+                      <>
+                        <Button
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => {
+                            setEditingName(category)
+                            setEditValue(category)
+                          }}
+                        >
+                          <MaterialSymbol icon="edit" size={18} />
+                          重命名
+                        </Button>
+                        {!isDefault ? (
+                          <Button variant="danger" disabled={busy} onClick={() => handleDelete(category)}>
+                            <MaterialSymbol icon="delete" size={18} />
+                            删除
+                          </Button>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              )
+            })}
+          </AdminPanel>
+        </>
+      )}
     </div>
   )
 }

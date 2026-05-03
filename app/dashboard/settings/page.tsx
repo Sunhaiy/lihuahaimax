@@ -2,6 +2,14 @@
 
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import useSWR from 'swr'
+import {
+  AdminField,
+  AdminPageHeader,
+  AdminStatusBadge,
+  ADMIN_INPUT_CLASS,
+  ADMIN_MUTED_PANEL_CLASS,
+  ADMIN_TEXTAREA_CLASS,
+} from '@/components/admin/AdminPrimitives'
 import { Button } from '@/components/ui/Button'
 import { Card, CardBody } from '@/components/ui/Card'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
@@ -280,7 +288,19 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <AdminPageHeader
+        eyebrow="Site Console"
+        title="站点设置中心"
+        description="统一维护前台资料、首页背景与预览参数，让高频编辑和低频配置都落在同一套后台语义里。"
+        meta={
+          <>
+            <AdminStatusBadge tone="accent">前台资料</AdminStatusBadge>
+            <AdminStatusBadge tone="neutral">背景场景</AdminStatusBadge>
+            <AdminStatusBadge tone="neutral">实时预览</AdminStatusBadge>
+          </>
+        }
+      />
+      <div className="hidden flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-muted-foreground">
             Site Console
@@ -304,7 +324,7 @@ export default function SettingsPage() {
         </div>
       ) : null}
 
-      <Card className="rounded-[28px] border-white/8 bg-card/75 backdrop-blur-xl">
+      <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
         <CardBody className="space-y-7">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <SectionHeader
@@ -319,17 +339,17 @@ export default function SettingsPage() {
           </div>
 
           <div className="grid gap-6 xl:grid-cols-[260px_1fr]">
-            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+            <div className={`${ADMIN_MUTED_PANEL_CLASS} p-5`}>
               <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
                 Avatar
               </p>
               <button
                 type="button"
                 onClick={() => avatarFileRef.current?.click()}
-                className="group mt-4 block w-full rounded-[24px] border border-dashed border-white/12 bg-black/20 p-4 text-left transition-colors hover:border-ember/30 hover:bg-black/30"
+                className="group mt-4 block w-full rounded-[24px] border border-dashed border-border/70 bg-background/34 p-4 text-left transition-colors hover:border-primary/24 hover:bg-background/48"
               >
                 <div className="flex justify-center">
-                  <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-gradient-to-br from-ember/40 to-ember/10">
+                    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-background/55">
                     {profileForm.avatarUrl ? (
                       <img
                         src={profileForm.avatarUrl}
@@ -337,7 +357,7 @@ export default function SettingsPage() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span className="text-4xl font-bold text-ember">
+                      <span className="text-4xl font-bold text-primary">
                         {profileForm.ownerInitial || '站'}
                       </span>
                     )}
@@ -461,7 +481,7 @@ export default function SettingsPage() {
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="rounded-[28px] border-white/8 bg-card/75 backdrop-blur-xl">
+      <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
           <CardBody className="space-y-7">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <SectionHeader
@@ -489,7 +509,7 @@ export default function SettingsPage() {
               当前公开站点只在首页 Hero 使用背景图。天气层、全站固定 scene 背景和页面勾选先保留数据，前台暂时不渲染。
             </div>
 
-            <div className="overflow-hidden rounded-[24px] border border-white/8 bg-black/30">
+            <div className="overflow-hidden rounded-[24px] border border-border/70 bg-background/36">
               <div
                 className="relative aspect-[16/9] bg-muted"
                 style={{
@@ -611,7 +631,7 @@ export default function SettingsPage() {
                 return (
                   <label
                     key={page.key}
-                    className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-4"
+                    className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border/70 bg-background/38 px-4 py-4 transition-colors hover:border-border hover:bg-background/48"
                   >
                     <input
                       type="checkbox"
@@ -721,7 +741,7 @@ export default function SettingsPage() {
           </CardBody>
         </Card>
 
-        <Card className="rounded-[28px] border-white/8 bg-card/75 backdrop-blur-xl">
+      <Card className="rounded-[28px] border border-border/75 bg-card/76 backdrop-blur-xl">
           <CardBody className="space-y-6">
             <SectionHeader
               icon="preview"
@@ -729,7 +749,7 @@ export default function SettingsPage() {
               description="预览站点资料和场景参数组合后的首页 Hero 气质。"
             />
 
-            <div className="overflow-hidden rounded-[26px] border border-white/8 bg-[#020617]">
+            <div className="overflow-hidden rounded-[26px] border border-border/70 bg-[#020617]">
               <div
                 className="relative aspect-[4/5]"
                 style={{
@@ -763,12 +783,12 @@ export default function SettingsPage() {
                 />
 
                 <div className="absolute inset-x-0 top-0 p-5">
-                  <div className="rounded-2xl border border-primary/15 bg-black/25 px-4 py-3 backdrop-blur-lg">
+                  <div className="rounded-2xl border border-border/60 bg-black/28 px-4 py-3 backdrop-blur-lg">
                     <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-primary/70">
                       Homepage Hero
                     </p>
                     <div className="mt-4 flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-ember/15">
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/10">
                         {profileForm.avatarUrl ? (
                           <img
                             src={profileForm.avatarUrl}
@@ -776,7 +796,7 @@ export default function SettingsPage() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <span className="text-lg font-semibold text-ember">
+                          <span className="text-lg font-semibold text-white">
                             {profileForm.ownerInitial}
                           </span>
                         )}
@@ -802,7 +822,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+            <div className={`${ADMIN_MUTED_PANEL_CLASS} p-5`}>
               <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
                 Notes
               </p>
@@ -831,7 +851,7 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-ember/12 text-ember">
+      <span className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-background/55 text-primary">
         <MaterialSymbol icon={icon} size={20} />
       </span>
       <div>
@@ -851,14 +871,7 @@ function Field({
   children: React.ReactNode
   fullWidth?: boolean
 }) {
-  return (
-    <label className={`block space-y-2 ${fullWidth ? 'md:col-span-2' : ''}`}>
-      <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
-        {label}
-      </span>
-      {children}
-    </label>
-  )
+  return <AdminField label={label} fullWidth={fullWidth}>{children}</AdminField>
 }
 
 function SliderField({
@@ -878,7 +891,7 @@ function SliderField({
 }) {
   return (
     <Field label={label}>
-      <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+      <div className="rounded-[18px] border border-border/70 bg-background/42 px-4 py-3">
         <div className="flex items-center justify-between text-sm text-foreground">
           <span>{value.toFixed(step >= 1 ? 0 : 2)}</span>
           <span className="text-xs text-muted-foreground">
@@ -910,12 +923,12 @@ function ColorField({
 }) {
   return (
     <Field label={label}>
-      <div className="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+      <div className="flex items-center gap-3 rounded-[18px] border border-border/70 bg-background/42 px-4 py-3">
         <input
           type="color"
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-11 w-14 cursor-pointer rounded-xl border border-white/8 bg-transparent p-1"
+          className="h-11 w-14 cursor-pointer rounded-xl border border-border/70 bg-transparent p-1"
         />
         <input
           value={value}
@@ -927,8 +940,6 @@ function ColorField({
   )
 }
 
-const INPUT_CLASS =
-  'h-11 w-full rounded-2xl border border-white/8 bg-white/[0.03] px-4 text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus:ring-2 focus:ring-ring/40'
+const INPUT_CLASS = ADMIN_INPUT_CLASS
 
-const TEXTAREA_CLASS =
-  'w-full rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/45 focus:outline-none focus:ring-2 focus:ring-ring/40'
+const TEXTAREA_CLASS = ADMIN_TEXTAREA_CLASS

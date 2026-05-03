@@ -10,7 +10,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react'
 import type { PostRow } from '@/types/post'
-import { SHIMMER } from '@/lib/styles'
 
 type CarouselPost = Pick<PostRow, 'id' | 'slug' | 'title' | 'cover_url' | 'published_at' | 'category'>
 
@@ -29,7 +28,7 @@ export function FeaturedCarousel({ posts }: { posts: CarouselPost[] }) {
           <Link
             key={post.id}
             href={`/posts/${post.slug}`}
-            className={`group relative rounded-xl overflow-hidden block aspect-[3/2] ${SHIMMER}`}
+            className="group relative block aspect-[3/2] overflow-hidden rounded-xl border border-border/80 bg-card/92 transition-colors duration-300 hover:border-border/90"
           >
             {post.cover_url ? (
               <img

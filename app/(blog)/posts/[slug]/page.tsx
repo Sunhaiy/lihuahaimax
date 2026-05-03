@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { auth } from '@/auth'
 import {
   findAdjacentPosts,
   findPostBySlug,
@@ -31,11 +32,11 @@ export async function generateMetadata({
   if (!post) return { title: '文章不存在' }
 
   return {
-    title: post.title,
-    description: post.excerpt ?? undefined,
+    title: post.seo_title || post.title,
+    description: post.seo_description || post.excerpt || undefined,
     openGraph: {
-      title: post.title,
-      description: post.excerpt ?? undefined,
+      title: post.seo_title || post.title,
+      description: post.seo_description || post.excerpt || undefined,
       images: post.cover_url ? [post.cover_url] : [],
       type: 'article',
       publishedTime: post.published_at?.toISOString(),
@@ -43,13 +44,24 @@ export async function generateMetadata({
   }
 }
 
-export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PostPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ preview?: string }>
+}) {
   const { slug } = await params
+  const { preview } = await searchParams
   const post = await findPostBySlug(slug)
+  const session = await auth()
+  const canPreviewDraft = preview === '1' && !!session
 
-  if (!post || post.status !== 'published') notFound()
+  if (!post || (post.status !== 'published' && !canPreviewDraft)) notFound()
 
-  incrementViewCount(post.id).catch(() => {})
+  if (post.status === 'published') {
+    incrementViewCount(post.id).catch(() => {})
+  }
 
   const [adjacent, siteProfile] = await Promise.all([
     post.published_at
@@ -68,8 +80,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         {hasCover ? (
           <img
             src={post.cover_url!}
-            alt=""
-            aria-hidden
+            alt={post.cover_alt || post.title}
             className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (

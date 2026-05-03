@@ -1,32 +1,41 @@
-/**
- * app/dashboard/page.tsx
- *
- * 后台概览页 — 数据统计卡片。
- */
-
+import Link from 'next/link'
 import { query } from '@/lib/db'
-import { Card, CardBody } from '@/components/ui/Card'
+import { countPendingComments } from '@/lib/db/dao/commentDao'
+import { findPosts } from '@/lib/db/dao/postDao'
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminPanel,
+  AdminStatusBadge,
+} from '@/components/admin/AdminPrimitives'
+import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 
 async function getStats() {
-  const [posts, moments, animes, games, gallery] = await Promise.all([
-    query<{ count: string; published: string }>(
+  const [posts, moments, animes, games, gallery, pendingComments, recentPosts] = await Promise.all([
+    query<{ count: string; published: string; drafts: string }>(
       `SELECT COUNT(*) as count,
-              COUNT(*) FILTER (WHERE status = 'published') as published
+              COUNT(*) FILTER (WHERE status = 'published') as published,
+              COUNT(*) FILTER (WHERE status = 'draft') as drafts
        FROM posts`
     ),
     query<{ count: string }>(`SELECT COUNT(*) as count FROM moments`),
     query<{ count: string }>(`SELECT COUNT(*) as count FROM animes`),
     query<{ count: string }>(`SELECT COUNT(*) as count FROM games`),
     query<{ count: string }>(`SELECT COUNT(*) as count FROM gallery_items`),
+    countPendingComments(),
+    findPosts({ pageSize: 5 }),
   ])
 
   return {
     postCount: Number(posts.rows[0]?.count ?? 0),
     publishedCount: Number(posts.rows[0]?.published ?? 0),
+    draftCount: Number(posts.rows[0]?.drafts ?? 0),
     momentCount: Number(moments.rows[0]?.count ?? 0),
     animeCount: Number(animes.rows[0]?.count ?? 0),
     gameCount: Number(games.rows[0]?.count ?? 0),
     galleryCount: Number(gallery.rows[0]?.count ?? 0),
+    pendingComments,
+    recentPosts: recentPosts.data,
   }
 }
 
@@ -34,32 +43,222 @@ export default async function DashboardPage() {
   const stats = await getStats()
 
   const cards = [
-    { label: '文章总数', value: stats.postCount, sub: `${stats.publishedCount} 已发布`, color: 'text-ocean' },
-    { label: '极客瞬间', value: stats.momentCount, sub: '条记录', color: 'text-ember' },
-    { label: '追番数', value: stats.animeCount, sub: '部动漫', color: 'text-purple-400' },
-    { label: '游戏收藏', value: stats.gameCount, sub: '款游戏', color: 'text-green-400' },
-    { label: '光影相册', value: stats.galleryCount, sub: '张图片', color: 'text-yellow-400' },
+    {
+      label: '文章',
+      value: stats.postCount,
+      sub: `${stats.publishedCount} 已发布 · ${stats.draftCount} 草稿`,
+      href: '/dashboard/posts',
+      icon: 'article',
+    },
+    {
+      label: '瞬间',
+      value: stats.momentCount,
+      sub: '动态与状态记录',
+      href: '/dashboard/moments',
+      icon: 'dynamic_feed',
+    },
+    {
+      label: '评论待处理',
+      value: stats.pendingComments,
+      sub: '需要审核的评论',
+      href: '/dashboard/comments',
+      icon: 'forum',
+    },
+    {
+      label: 'ACG',
+      value: stats.animeCount + stats.gameCount,
+      sub: `${stats.animeCount} 动漫 · ${stats.gameCount} 游戏`,
+      href: '/dashboard/acg',
+      icon: 'stadia_controller',
+    },
   ]
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-8">概览</h1>
+    <div className="space-y-6">
+      <AdminPageHeader
+        eyebrow="Control Center"
+        title="后台总览"
+        description="把高频内容入口、待处理事项和最近编辑放到一个工作台里，减少在后台来回跳转。"
+        meta={
+          <>
+            <AdminStatusBadge tone="accent">核心页已统一设计语言</AdminStatusBadge>
+            {stats.pendingComments > 0 ? (
+              <AdminStatusBadge tone="warning">{stats.pendingComments} 条评论待审核</AdminStatusBadge>
+            ) : (
+              <AdminStatusBadge>评论队列已清空</AdminStatusBadge>
+            )}
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
-          <Card key={card.label}>
-            <CardBody className="py-5">
-              <p className="text-xs text-muted-foreground mb-1">{card.label}</p>
-              <p className={`text-3xl font-bold font-mono ${card.color}`}>{card.value}</p>
-              <p className="text-xs text-muted-foreground mt-1">{card.sub}</p>
-            </CardBody>
-          </Card>
+          <Link
+            key={card.label}
+            href={card.href}
+            className="rounded-[26px] border border-border/75 bg-card/76 p-5 backdrop-blur-xl transition-colors hover:border-border hover:bg-card/86"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">{card.label}</p>
+                <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">
+                  {card.value}
+                </p>
+              </div>
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-border/70 bg-background/55 text-primary">
+                <MaterialSymbol icon={card.icon} size={20} />
+              </span>
+            </div>
+            <p className="mt-4 text-sm leading-6 text-muted-foreground">{card.sub}</p>
+          </Link>
         ))}
-      </div>
+      </section>
 
-      <div className="text-sm text-muted-foreground">
-        <p>欢迎回来。使用左侧导航管理内容。</p>
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <AdminPanel
+          title="最近编辑"
+          description="最近的内容放在前面，方便继续改、继续发，或者快速校对状态。"
+          icon="history"
+        >
+          {stats.recentPosts.length === 0 ? (
+            <AdminEmptyState title="还没有文章" description="先写一篇文章，后台工作台就会从这里长起来。" />
+          ) : (
+            <div className="space-y-3">
+              {stats.recentPosts.map((post) => (
+                <Link
+                  key={post.id}
+                  href={`/dashboard/editor/${post.id}`}
+                  className="flex items-center justify-between gap-4 rounded-[22px] border border-border/70 bg-background/40 px-4 py-4 transition-colors hover:border-border hover:bg-background/58"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{post.title}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      {post.category ? <span>{post.category}</span> : null}
+                      <span>·</span>
+                      <span>
+                        {post.published_at
+                          ? new Date(post.published_at).toLocaleDateString('zh-CN')
+                          : '未发布'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <AdminStatusBadge
+                      tone={
+                        post.status === 'published'
+                          ? 'success'
+                          : post.status === 'draft'
+                            ? 'neutral'
+                            : 'warning'
+                      }
+                    >
+                      {post.status === 'published' ? '已发布' : post.status === 'draft' ? '草稿' : '归档'}
+                    </AdminStatusBadge>
+                    <MaterialSymbol icon="arrow_forward" size={18} className="text-muted-foreground" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </AdminPanel>
+
+        <div className="space-y-6">
+          <AdminPanel
+            title="待处理"
+            description="把真正需要你立即决策的事放在这里。"
+            icon="notifications_active"
+          >
+            <div className="space-y-3">
+              <QuickTask
+                href="/dashboard/comments"
+                title="评论审核"
+                description={
+                  stats.pendingComments > 0
+                    ? `${stats.pendingComments} 条评论还没处理。`
+                    : '目前没有待审核评论。'
+                }
+                tone={stats.pendingComments > 0 ? 'warning' : 'neutral'}
+              />
+              <QuickTask
+                href="/dashboard/posts"
+                title="草稿整理"
+                description={
+                  stats.draftCount > 0
+                    ? `${stats.draftCount} 篇草稿还没发布。`
+                    : '当前没有待整理草稿。'
+                }
+                tone={stats.draftCount > 0 ? 'accent' : 'neutral'}
+              />
+            </div>
+          </AdminPanel>
+
+          <AdminPanel
+            title="快捷入口"
+            description="常用动作直接一步到位。"
+            icon="bolt"
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <QuickEntry href="/dashboard/editor" icon="edit_square" label="新建文章" />
+              <QuickEntry href="/dashboard/moments" icon="dynamic_feed" label="发布瞬间" />
+              <QuickEntry href="/dashboard/settings" icon="wallpaper" label="站点设置" />
+              <QuickEntry href="/dashboard/acg" icon="stadia_controller" label="管理 ACG" />
+            </div>
+          </AdminPanel>
+        </div>
       </div>
     </div>
+  )
+}
+
+function QuickTask({
+  href,
+  title,
+  description,
+  tone,
+}: {
+  href: string
+  title: string
+  description: string
+  tone: 'neutral' | 'accent' | 'warning'
+}) {
+  const toneClass = {
+    neutral: 'border-border/70 bg-background/40',
+    accent: 'border-primary/18 bg-primary/8',
+    warning: 'border-amber-500/18 bg-amber-500/8',
+  }[tone]
+
+  return (
+    <Link
+      href={href}
+      className={`flex items-center justify-between gap-4 rounded-[22px] border px-4 py-4 transition-colors hover:border-border ${toneClass}`}
+    >
+      <div>
+        <p className="text-sm font-medium text-foreground">{title}</p>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">{description}</p>
+      </div>
+      <MaterialSymbol icon="arrow_forward" size={18} className="text-muted-foreground" />
+    </Link>
+  )
+}
+
+function QuickEntry({
+  href,
+  icon,
+  label,
+}: {
+  href: string
+  icon: string
+  label: string
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 rounded-[22px] border border-border/70 bg-background/40 px-4 py-4 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-background/58"
+    >
+      <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-background/55 text-primary">
+        <MaterialSymbol icon={icon} size={18} />
+      </span>
+      {label}
+    </Link>
   )
 }

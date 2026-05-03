@@ -7,7 +7,6 @@
 
 import Link from 'next/link'
 import type { PostRow } from '@/types/post'
-import { SHIMMER } from '@/lib/styles'
 
 interface PostCardProps {
   post: Pick<PostRow, 'id' | 'slug' | 'title' | 'excerpt' | 'cover_url' | 'category' | 'tags' | 'published_at'>
@@ -19,8 +18,7 @@ export function PostCard({ post }: PostCardProps) {
       <div className={`relative h-full overflow-hidden rounded-[22px] border border-border/80 bg-card/92 backdrop-blur-sm
                       flex flex-col h-full
                       transition-all duration-300
-                      hover:-translate-y-0.5 hover:border-primary/35
-                      ${SHIMMER}`}>
+                      hover:-translate-y-0.5 hover:border-border/90`}>
 
         {/* ── 封面区 ── */}
         <div className="relative aspect-[16/9] flex-shrink-0 overflow-hidden">

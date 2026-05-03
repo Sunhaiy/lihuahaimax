@@ -1,9 +1,3 @@
-/**
- * app/admin/login/page.tsx
- *
- * 管理员登录页（不受 middleware 保护）。
- */
-
 'use client'
 
 import { useState } from 'react'
@@ -18,8 +12,8 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault()
     setError('')
     setLoading(true)
 
@@ -33,76 +27,114 @@ export default function LoginPage() {
 
     if (result?.error) {
       setError('邮箱或密码错误，请重试。')
-    } else {
-      router.push('/dashboard')
+      return
     }
+
+    router.push('/dashboard')
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      {/* 背景光晕 */}
+    <div className="min-h-screen bg-background px-4 py-10 text-foreground">
       <div aria-hidden className="fixed inset-0 -z-10">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
-                        w-[500px] h-[500px] rounded-full bg-ocean/6 blur-[120px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.08),transparent_36%),linear-gradient(180deg,rgba(7,10,14,0.98),rgba(7,10,14,0.92))]" />
       </div>
 
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <p className="text-2xl font-bold text-foreground">梨花海</p>
-          <p className="text-sm text-muted-foreground mt-1">后台中控台</p>
-        </div>
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl items-center justify-center">
+        <div className="grid w-full overflow-hidden rounded-[32px] border border-border/70 bg-card/76 backdrop-blur-2xl lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="border-b border-border/70 px-8 py-10 lg:border-b-0 lg:border-r lg:px-10 lg:py-12">
+            <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-muted-foreground">
+              Admin Console
+            </p>
+            <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-foreground">
+              梨花海后台
+            </h1>
+            <p className="mt-4 max-w-md text-sm leading-7 text-muted-foreground">
+              统一管理文章、瞬间、评论、设置和作品资料。入口也沿用前台同源的深色玻璃语义，但整体更克制、更像工作台。
+            </p>
 
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-surface border border-border bg-card p-8 space-y-5"
-        >
-          {error && (
-            <div className="rounded-base px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-              {error}
+            <div className="mt-10 grid gap-3 sm:grid-cols-2">
+              <InfoCard title="写作与发布" description="文章编辑器、推荐位、SEO 和封面信息放进同一条发布链路里。" />
+              <InfoCard title="内容管理" description="列表页统一搜索、筛选、状态语义和危险操作反馈。" />
+              <InfoCard title="后台壳层" description="左侧导航固定，右侧内容独立滚动，长页不再拖着整个控制台跑。" />
+              <InfoCard title="同源配色" description="主强调色、边框和材质跟前台站到一条线上，不再混出两套气质。" />
             </div>
-          )}
-
-          <div className="space-y-2">
-            <label className="text-sm text-muted-foreground" htmlFor="email">
-              邮箱
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-10 px-3 rounded-base bg-background border border-border
-                         text-sm text-foreground placeholder:text-muted-foreground/50
-                         focus:outline-none focus:border-ocean/50 transition-colors"
-              placeholder="admin@lihuahai.com"
-            />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm text-muted-foreground" htmlFor="password">
-              密码
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-10 px-3 rounded-base bg-background border border-border
-                         text-sm text-foreground placeholder:text-muted-foreground/50
-                         focus:outline-none focus:border-ocean/50 transition-colors"
-              placeholder="••••••••"
-            />
-          </div>
+          <div className="px-8 py-10 lg:px-10 lg:py-12">
+            <div className="max-w-md">
+              <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-muted-foreground">
+                Sign In
+              </p>
+              <h2 className="mt-3 text-2xl font-semibold text-foreground">登录后台</h2>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                使用管理员凭据进入控制台。登录态只用于后台工作区，不会影响前台浏览。
+              </p>
+            </div>
 
-          <Button type="submit" fullWidth loading={loading}>
-            登录后台
-          </Button>
-        </form>
+            <form
+              onSubmit={handleSubmit}
+              className="mt-8 space-y-5 rounded-[28px] border border-border/70 bg-background/36 p-6"
+            >
+              {error ? (
+                <div className="rounded-[18px] border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                  {error}
+                </div>
+              ) : null}
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground" htmlFor="email">
+                  邮箱
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  className="h-11 w-full rounded-[18px] border border-border/70 bg-background/55 px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/55 focus:border-primary/28 focus:ring-2 focus:ring-primary/14"
+                  placeholder="admin@lihuahai.com"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground" htmlFor="password">
+                  密码
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="h-11 w-full rounded-[18px] border border-border/70 bg-background/55 px-4 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/55 focus:border-primary/28 focus:ring-2 focus:ring-primary/14"
+                  placeholder="输入管理员密码"
+                />
+              </div>
+
+              <Button type="submit" fullWidth loading={loading}>
+                登录后台
+              </Button>
+            </form>
+          </div>
+        </div>
       </div>
+    </div>
+  )
+}
+
+function InfoCard({
+  title,
+  description,
+}: {
+  title: string
+  description: string
+}) {
+  return (
+    <div className="rounded-[22px] border border-border/70 bg-background/36 px-4 py-4">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
     </div>
   )
 }
