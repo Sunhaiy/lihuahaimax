@@ -4,7 +4,7 @@ import { findGalleryItems } from '@/lib/db/dao/galleryDao'
 
 export const metadata: Metadata = {
   title: '光影相册',
-  description: '以沉浸式预览的方式浏览收藏的摄影与画面。',
+  description: '以沉浸式横向画廊的方式浏览收藏的摄影与画面。',
 }
 
 export const revalidate = 600
