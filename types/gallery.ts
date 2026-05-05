@@ -1,48 +1,61 @@
-// ============================================================
-// 光影相册 (Gallery) 类型定义
-// ============================================================
-
-/** 相册类型 */
 export type GalleryCategory = 'photo' | 'artwork' | 'screenshot' | 'other'
 
-/** 从 EXIF 解析出的相机信息 */
 export interface ExifData {
-  make: string | null           // 相机品牌，如 "Apple"
-  model: string | null          // 相机型号，如 "iPhone 15 Pro"
-  lensModel: string | null      // 镜头型号
-  focalLength: number | null    // 焦段 (mm)
+  make: string | null
+  model: string | null
+  lensModel: string | null
+  focalLength: number | null
   focalLengthIn35mm: number | null
-  aperture: number | null       // 光圈值 f/x
-  shutterSpeed: string | null   // 快门速度，如 "1/250"
-  iso: number | null            // ISO 感光度
-  flash: string | null          // 闪光灯状态
-  software: string | null       // 处理软件
-  dateTimeOriginal: string | null  // 拍摄时间 ISO8601
-  gpsLatitude: number | null    // 纬度
-  gpsLongitude: number | null   // 经度
-  gpsAltitude: number | null    // 海拔
+  aperture: number | null
+  shutterSpeed: string | null
+  iso: number | null
+  flash: string | null
+  software: string | null
+  dateTimeOriginal: string | null
+  gpsLatitude: number | null
+  gpsLongitude: number | null
+  gpsAltitude: number | null
 }
 
-/** 数据库原始行 */
-export interface GalleryItemRow {
+export interface GalleryAlbumRow {
   id: number
-  title: string | null
+  name: string
+  slug: string
   description: string | null
-  url: string                   // 对外访问 URL（/uploads/...）
-  thumbnail_url: string | null  // 缩略图 URL
-  width: number | null
-  height: number | null
-  file_size: number | null      // 字节
-  file_name: string             // 原始文件名
-  category: GalleryCategory
-  exif: ExifData | null         // JSONB
-  tags: string[]
-  is_featured: boolean
+  cover_image_url: string | null
   sort_order: number
   created_at: Date
 }
 
-/** 前端使用的驼峰形态 */
+export interface GalleryAlbum {
+  id: number
+  name: string
+  slug: string
+  description: string | null
+  coverImageUrl: string | null
+  sortOrder: number
+  createdAt: string
+}
+
+export interface GalleryItemRow {
+  id: number
+  title: string | null
+  description: string | null
+  url: string
+  thumbnail_url: string | null
+  width: number | null
+  height: number | null
+  file_size: number | null
+  file_name: string
+  category: GalleryCategory
+  exif: ExifData | null
+  tags: string[]
+  is_featured: boolean
+  sort_order: number
+  album_id: number | null
+  created_at: Date
+}
+
 export interface GalleryItem {
   id: number
   title: string | null
@@ -58,10 +71,18 @@ export interface GalleryItem {
   tags: string[]
   isFeatured: boolean
   sortOrder: number
+  albumId: number | null
   createdAt: string
 }
 
-/** 上传图片时的元数据输入 */
+export interface CreateGalleryAlbumInput {
+  name: string
+  slug?: string
+  description?: string
+  coverImageUrl?: string
+  sortOrder?: number
+}
+
 export interface CreateGalleryItemInput {
   title?: string
   description?: string
@@ -76,6 +97,7 @@ export interface CreateGalleryItemInput {
   tags?: string[]
   isFeatured?: boolean
   sortOrder?: number
+  albumId?: number | null
 }
 
 export type UpdateGalleryItemInput = Partial<Omit<CreateGalleryItemInput, 'url' | 'fileName'>>

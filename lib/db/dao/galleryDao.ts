@@ -1,11 +1,5 @@
-/**
- * lib/db/dao/galleryDao.ts
- *
- * 光影相册数据访问层。
- */
-
 import { query } from '@/lib/db'
-import type { GalleryItemRow, CreateGalleryItemInput, UpdateGalleryItemInput } from '@/types/gallery'
+import type { CreateGalleryItemInput, GalleryItemRow, UpdateGalleryItemInput } from '@/types/gallery'
 
 export async function findGalleryItems(params: {
   page?: number
@@ -13,15 +7,32 @@ export async function findGalleryItems(params: {
   category?: string
   tag?: string
   featuredOnly?: boolean
+  albumId?: number
 } = {}): Promise<{ data: GalleryItemRow[]; total: number }> {
-  const { page = 1, pageSize = 30, category, tag, featuredOnly } = params
+  const { page = 1, pageSize = 30, category, tag, featuredOnly, albumId } = params
   const conditions: string[] = []
   const values: unknown[] = []
   let idx = 1
 
-  if (category) { conditions.push(`category = $${idx++}`); values.push(category) }
-  if (tag) { conditions.push(`$${idx++} = ANY(tags)`); values.push(tag) }
-  if (featuredOnly) { conditions.push(`is_featured = $${idx++}`); values.push(true) }
+  if (category) {
+    conditions.push(`category = $${idx++}`)
+    values.push(category)
+  }
+
+  if (tag) {
+    conditions.push(`$${idx++} = ANY(tags)`)
+    values.push(tag)
+  }
+
+  if (featuredOnly) {
+    conditions.push(`is_featured = $${idx++}`)
+    values.push(true)
+  }
+
+  if (albumId !== undefined) {
+    conditions.push(`album_id = $${idx++}`)
+    values.push(albumId)
+  }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
   const offset = (page - 1) * pageSize
@@ -33,9 +44,10 @@ export async function findGalleryItems(params: {
        LIMIT $${idx++} OFFSET $${idx++}`,
       [...values, pageSize, offset]
     ),
-    query<{ count: string }>(`SELECT COUNT(*) as count FROM gallery_items ${where}`, values),
+    query<{ count: string }>(`SELECT COUNT(*) AS count FROM gallery_items ${where}`, values),
   ])
-  return { data: dataResult.rows, total: Number(countResult.rows[0].count) }
+
+  return { data: dataResult.rows, total: Number(countResult.rows[0]?.count ?? 0) }
 }
 
 export async function findGalleryItemById(id: number): Promise<GalleryItemRow | null> {
@@ -46,9 +58,9 @@ export async function findGalleryItemById(id: number): Promise<GalleryItemRow | 
 export async function insertGalleryItem(input: CreateGalleryItemInput): Promise<GalleryItemRow> {
   const result = await query<GalleryItemRow>(
     `INSERT INTO gallery_items
-       (title, description, url, thumbnail_url, width, height, file_size,
-        file_name, category, exif, tags, is_featured, sort_order)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+      (title, description, url, thumbnail_url, width, height, file_size,
+       file_name, category, exif, tags, is_featured, sort_order, album_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
      RETURNING *`,
     [
       input.title ?? null,
@@ -64,8 +76,10 @@ export async function insertGalleryItem(input: CreateGalleryItemInput): Promise<
       input.tags ?? [],
       input.isFeatured ?? false,
       input.sortOrder ?? 0,
+      input.albumId ?? null,
     ]
   )
+
   return result.rows[0]
 }
 
@@ -73,30 +87,46 @@ export async function updateGalleryItem(
   id: number,
   input: UpdateGalleryItemInput
 ): Promise<GalleryItemRow | null> {
-  const map: [keyof UpdateGalleryItemInput, string][] = [
-    ['title', 'title'], ['description', 'description'], ['thumbnailUrl', 'thumbnail_url'],
-    ['width', 'width'], ['height', 'height'], ['fileSize', 'file_size'],
-    ['category', 'category'], ['exif', 'exif'], ['tags', 'tags'],
-    ['isFeatured', 'is_featured'], ['sortOrder', 'sort_order'],
+  const map: Array<[keyof UpdateGalleryItemInput, string]> = [
+    ['title', 'title'],
+    ['description', 'description'],
+    ['thumbnailUrl', 'thumbnail_url'],
+    ['width', 'width'],
+    ['height', 'height'],
+    ['fileSize', 'file_size'],
+    ['category', 'category'],
+    ['exif', 'exif'],
+    ['tags', 'tags'],
+    ['isFeatured', 'is_featured'],
+    ['sortOrder', 'sort_order'],
+    ['albumId', 'album_id'],
   ]
+
   const setClauses: string[] = []
   const values: unknown[] = []
   let idx = 1
 
-  for (const [key, col] of map) {
+  for (const [key, column] of map) {
     if (input[key] !== undefined) {
-      const val = key === 'exif' ? JSON.stringify(input[key]) : input[key]
-      setClauses.push(`${col} = $${idx++}`)
-      values.push(val)
+      const value = key === 'exif' ? JSON.stringify(input[key]) : input[key]
+      setClauses.push(`${column} = $${idx++}`)
+      values.push(value)
     }
   }
-  if (setClauses.length === 0) return findGalleryItemById(id)
+
+  if (setClauses.length === 0) {
+    return findGalleryItemById(id)
+  }
 
   values.push(id)
   const result = await query<GalleryItemRow>(
-    `UPDATE gallery_items SET ${setClauses.join(', ')} WHERE id = $${idx} RETURNING *`,
+    `UPDATE gallery_items
+     SET ${setClauses.join(', ')}
+     WHERE id = $${idx}
+     RETURNING *`,
     values
   )
+
   return result.rows[0] ?? null
 }
 

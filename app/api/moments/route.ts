@@ -10,9 +10,19 @@ import { auth } from '@/auth'
 import { findMoments, insertMoment } from '@/lib/db/dao/momentDao'
 import { z } from 'zod'
 
+const jsonContentSchema: z.ZodType<Record<string, unknown>> = z.lazy(() =>
+  z.object({
+    type: z.string().optional(),
+    text: z.string().optional(),
+    attrs: z.record(z.unknown()).optional(),
+    content: z.array(jsonContentSchema).optional(),
+  })
+)
+
 const createSchema = z.object({
   type: z.enum(['text', 'image', 'sleep', 'steps', 'heartrate', 'mood', 'link']).default('text'),
   content: z.string().optional(),
+  contentJson: jsonContentSchema.optional(),
   images: z.array(z.string()).optional(),
   meta: z.record(z.unknown()).optional(),
   mood: z.string().optional(),

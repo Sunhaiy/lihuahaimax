@@ -4,10 +4,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { useGsapScope } from '@/hooks/useGsapScope'
-import type { GalleryItemRow } from '@/types/gallery'
+import type { GalleryAlbumRow, GalleryItemRow } from '@/types/gallery'
 
 type ImmersiveGalleryProps = {
   items: GalleryItemRow[]
+  albums: GalleryAlbumRow[]
 }
 
 type GallerySlide = {
@@ -27,9 +28,9 @@ type GalleryCollection = {
   slides: GallerySlide[]
 }
 
-export function ImmersiveGallery({ items }: ImmersiveGalleryProps) {
+export function ImmersiveGallery({ items, albums }: ImmersiveGalleryProps) {
   const slides = useMemo(() => buildSlides(items), [items])
-  const collections = useMemo(() => buildCollections(slides, items), [slides, items])
+  const collections = useMemo(() => buildCollections(slides, items, albums), [albums, slides, items])
   const [activeCollectionId, setActiveCollectionId] = useState(collections[0]?.id ?? '')
   const activeCollection = collections.find((item) => item.id === activeCollectionId) ?? collections[0]
   const activeSlides = activeCollection?.slides ?? []
@@ -50,7 +51,10 @@ export function ImmersiveGallery({ items }: ImmersiveGalleryProps) {
       if (!sidebar || !stage || !info || !ruler) return
 
       if (reduced) {
-        gsapInstance.set([sidebar, sidebarCards, stage, info, ruler], { clearProps: 'all', autoAlpha: 1 })
+        gsapInstance.set([sidebar, sidebarCards, stage, info, ruler], {
+          clearProps: 'all',
+          autoAlpha: 1,
+        })
         initialRenderRef.current = false
         return
       }
@@ -66,7 +70,12 @@ export function ImmersiveGallery({ items }: ImmersiveGalleryProps) {
         { autoAlpha: 1, y: 0, rotate: 0, duration: 0.52, stagger: 0.06 },
         '-=0.28'
       )
-      tl.fromTo(stage, { autoAlpha: 0, y: 24, scale: 0.985 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.7 }, '-=0.28')
+      tl.fromTo(
+        stage,
+        { autoAlpha: 0, y: 24, scale: 0.985 },
+        { autoAlpha: 1, y: 0, scale: 1, duration: 0.7 },
+        '-=0.28'
+      )
       tl.fromTo(info, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.34 }, '-=0.28')
       tl.fromTo(ruler, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.38 }, '-=0.18')
     },
@@ -74,7 +83,9 @@ export function ImmersiveGallery({ items }: ImmersiveGalleryProps) {
   )
 
   useEffect(() => {
-    setActiveCollectionId(collections[0]?.id ?? '')
+    setActiveCollectionId((current) =>
+      collections.some((item) => item.id === current) ? current : (collections[0]?.id ?? '')
+    )
   }, [collections])
 
   useEffect(() => {
@@ -85,13 +96,11 @@ export function ImmersiveGallery({ items }: ImmersiveGalleryProps) {
     if (!scopeRef.current || !activeSlide || prefersReducedMotion) return
 
     const activeCard = scopeRef.current.querySelector('[data-gallery-card-active="true"]')
-    const title = scopeRef.current.querySelector('[data-gallery-slide-title]')
     const description = scopeRef.current.querySelector('[data-gallery-slide-description]')
     const rulerTrack = scopeRef.current.querySelector('[data-gallery-ruler-track]')
 
     const tl = gsap.timeline({ defaults: { ease: 'power2.out' } })
     if (activeCard) tl.fromTo(activeCard, { scale: 0.985 }, { scale: 1, duration: 0.36 }, 0)
-    if (title) tl.fromTo(title, { autoAlpha: 0.45, y: 7 }, { autoAlpha: 1, y: 0, duration: 0.28 }, 0.04)
     if (description) tl.fromTo(description, { autoAlpha: 0.45, y: 6 }, { autoAlpha: 1, y: 0, duration: 0.3 }, 0.07)
     if (rulerTrack) tl.fromTo(rulerTrack, { autoAlpha: 0.82 }, { autoAlpha: 1, duration: 0.24 }, 0.02)
     return () => {
@@ -123,10 +132,15 @@ export function ImmersiveGallery({ items }: ImmersiveGalleryProps) {
     const isLocked = () => Date.now() < lockUntil
 
     const onWheel = (event: WheelEvent) => {
+      const target = event.target instanceof Element ? event.target : null
+      if (target?.closest('[data-gallery-scroll-area]')) return
+
       const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
       if (Math.abs(delta) < 18) return
+
       event.preventDefault()
       if (isLocked()) return
+
       lockUntil = Date.now() + 420
       step(delta > 0 ? 1 : -1)
     }
@@ -203,13 +217,15 @@ export function ImmersiveGallery({ items }: ImmersiveGalleryProps) {
               <MaterialSymbol icon="photo_library" size={30} className="text-white/60" />
             </div>
             <h1 className="mt-6 text-2xl font-semibold">相册里还没有图片</h1>
-            <p className="mt-3 text-sm text-white/48">
-              先去后台上传几张照片，这里就会变成沉浸式横向画廊。
-            </p>
+            <p className="mt-3 text-sm text-white/48">先去后台上传几张照片，这里就会变成沉浸式横向画廊。</p>
           </div>
         ) : (
           <div className="grid w-full items-center gap-8 xl:grid-cols-[360px_minmax(0,1fr)] xl:gap-10">
-            <aside className="space-y-6" data-gallery-sidebar>
+            <aside
+              className="max-h-[calc(100vh-8rem)] space-y-6 overflow-y-auto pr-3 [mask-image:linear-gradient(180deg,transparent_0%,black_4%,black_96%,transparent_100%)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              data-gallery-sidebar
+              data-gallery-scroll-area
+            >
               {collections.map((collection, index) => {
                 const active = collection.id === activeCollectionId
                 const preview = collection.slides[0]
@@ -257,21 +273,18 @@ export function ImmersiveGallery({ items }: ImmersiveGalleryProps) {
                   </div>
                 </div>
 
-                <div className="mt-4 w-full max-w-[760px] text-center" data-gallery-info>
-                  <p
-                    className="text-[11px] font-mono uppercase tracking-[0.28em] text-white/38"
-                    data-gallery-slide-title
-                  >
-                    {activeSlide?.title || 'Untitled'}
-                  </p>
-                  <p
-                    className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-white/52"
-                    data-gallery-slide-description
-                  >
-                    {activeSlide?.description ||
-                      '横向滑动浏览这组照片，底部刻度会跟着你正在看的画面一起流动。'}
-                  </p>
-                </div>
+                {activeSlide?.description?.trim() ? (
+                  <div className="mt-4 w-full max-w-[760px] text-center" data-gallery-info>
+                    <p
+                      className="mx-auto max-w-2xl text-sm leading-7 text-white/52"
+                      data-gallery-slide-description
+                    >
+                      {activeSlide.description.trim()}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="hidden" data-gallery-info />
+                )}
 
                 <TickRuler total={activeSlides.length} virtualIndex={virtualIndex} onSelect={jumpTo} />
               </div>
@@ -303,49 +316,50 @@ function AlbumCollectionCard({
   return (
     <div className="relative px-4 py-2">
       <div
-        className={`absolute inset-x-9 top-4 h-full rounded-[2rem] border border-white/8 bg-white/[0.03] transition-all duration-500 ${
-          active ? 'translate-x-2 rotate-[2deg] opacity-65' : 'translate-x-1 rotate-[3deg] opacity-35'
+        className={`absolute inset-x-9 top-4 h-full rounded-[2rem] border border-white/8 bg-[rgba(14,14,16,0.72)] transition-all duration-500 ${
+          active ? 'translate-x-2 rotate-[2deg] opacity-60' : 'translate-x-1 rotate-[3deg] opacity-28'
         }`}
       />
       <div
-        className={`absolute inset-x-8 top-3 h-full rounded-[2rem] border border-white/8 bg-white/[0.04] transition-all duration-500 ${
-          active ? '-translate-x-2 -rotate-[3deg] opacity-72' : '-translate-x-1 -rotate-[4deg] opacity-42'
+        className={`absolute inset-x-8 top-3 h-full rounded-[2rem] border border-white/8 bg-[rgba(18,18,20,0.78)] transition-all duration-500 ${
+          active ? '-translate-x-2 -rotate-[3deg] opacity-68' : '-translate-x-1 -rotate-[4deg] opacity-38'
         }`}
       />
       <div
         className={`relative rounded-[2rem] border px-4 pb-5 pt-4 shadow-[0_26px_60px_rgba(0,0,0,0.34)] transition-all duration-500 ${
           active
-            ? 'border-[#f8f2e8]/30 bg-[#f6f1e9] text-[#171717]'
-            : 'border-white/12 bg-[#f4efe6] text-[#171717] hover:-translate-y-1'
+            ? 'border-white/16 bg-[linear-gradient(180deg,rgba(28,28,30,0.96),rgba(16,16,18,0.96))] text-white'
+            : 'border-white/10 bg-[linear-gradient(180deg,rgba(22,22,24,0.92),rgba(12,12,14,0.94))] text-white/92 hover:-translate-y-1'
         }`}
         style={{ transform: `rotate(${rotation})` }}
       >
-        <div className="mb-3 flex items-center justify-between text-[#1f1f1f]/78">
+        <div className="mb-3 flex items-center justify-between text-white/58">
           <MaterialSymbol icon="photo_camera" size={20} />
           <p className="text-[0.82rem] font-semibold uppercase tracking-[0.18em]">{subtitle}</p>
           <MaterialSymbol icon="bookmark" size={18} />
         </div>
 
-        <div className="overflow-hidden rounded-[1.4rem] border border-black/8 bg-black/8">
+        <div className="overflow-hidden rounded-[1.4rem] border border-white/10 bg-black/24">
           {imageUrl ? (
             <img
               src={imageUrl}
               alt=""
               className={`aspect-[4/5] w-full object-cover transition-all duration-500 ${
-                active ? 'scale-[1.02]' : 'grayscale-[0.1]'
+                active ? 'scale-[1.02]' : 'brightness-[0.92] saturate-[0.92]'
               }`}
             />
           ) : (
-            <div className="aspect-[4/5] w-full bg-black/6" />
+            <div className="aspect-[4/5] w-full bg-white/6" />
           )}
+          <div className="pointer-events-none absolute inset-x-10 bottom-[6.4rem] h-10 rounded-full bg-black/30 blur-2xl" />
         </div>
 
         <div className="mt-4 flex items-end justify-between gap-4">
           <div className="min-w-0">
-            <p className="truncate text-[1.95rem] font-semibold tracking-[-0.06em]">{label}</p>
-            <p className="mt-1 text-sm text-black/56">{count} 张收藏</p>
+            <p className="truncate text-[1.95rem] font-semibold tracking-[-0.06em] text-white">{label}</p>
+            <p className="mt-1 text-sm text-white/50">{count} 张收藏</p>
           </div>
-          <div className="flex items-center gap-2 text-black/56">
+          <div className="flex items-center gap-2 text-white/50">
             <MaterialSymbol icon="favorite" size={18} />
             <MaterialSymbol icon="mode_comment" size={18} />
           </div>
@@ -475,64 +489,55 @@ function buildSlides(items: GalleryItemRow[]): GallerySlide[] {
   }))
 }
 
-function buildCollections(slides: GallerySlide[], source: GalleryItemRow[]): GalleryCollection[] {
-  const collections: GalleryCollection[] = [
-    {
+function buildCollections(
+  slides: GallerySlide[],
+  source: GalleryItemRow[],
+  albums: GalleryAlbumRow[]
+): GalleryCollection[] {
+  const collections: GalleryCollection[] = []
+
+  if (slides.length > 0) {
+    collections.push({
       id: 'recent',
       label: '最近照片',
       subtitle: 'Latest capture',
       slides,
-    },
-  ]
-
-  const featuredIds = new Set(source.filter((item) => item.is_featured).map((item) => item.id))
-  const featuredSlides = slides.filter((item) => featuredIds.has(item.id))
-  if (featuredSlides.length > 0) {
-    collections.push({
-      id: 'featured',
-      label: '精选收藏',
-      subtitle: 'Featured picks',
-      slides: featuredSlides,
     })
   }
 
-  const portraitSlides = slides.filter((item) => {
-    if (!item.width || !item.height) return false
-    return item.height > item.width
-  })
-  if (portraitSlides.length > 0) {
-    collections.push({
-      id: 'portrait',
-      label: '纵向构图',
-      subtitle: 'Portrait frame',
-      slides: portraitSlides,
-    })
-  }
-
-  const categoryMap: Record<GalleryItemRow['category'], { label: string; subtitle: string }> = {
-    photo: { label: '生活碎片', subtitle: 'Everyday moments' },
-    artwork: { label: '绘画收藏', subtitle: 'Artwork archive' },
-    screenshot: { label: '屏幕记录', subtitle: 'Screen captures' },
-    other: { label: '其他收藏', subtitle: 'Misc archive' },
-  }
-
-  Object.entries(categoryMap).forEach(([category, meta]) => {
-    const categorySlides = source
-      .filter((item) => item.category === category)
+  albums.forEach((album) => {
+    const albumSlides = source
+      .filter((item) => item.album_id === album.id)
       .map((item) => slides.find((slide) => slide.id === item.id))
       .filter((item): item is GallerySlide => Boolean(item))
 
-    if (categorySlides.length > 0) {
-      collections.push({
-        id: category,
-        label: meta.label,
-        subtitle: meta.subtitle,
-        slides: categorySlides,
-      })
-    }
+    if (albumSlides.length === 0) return
+
+    collections.push({
+      id: `album-${album.id}`,
+      label: album.name,
+      subtitle: formatAlbumSubtitle(album),
+      slides: albumSlides,
+    })
   })
 
-  return collections.filter((item) => item.slides.length > 0)
+  return collections
+}
+
+function formatAlbumSubtitle(album: GalleryAlbumRow) {
+  const description = album.description?.trim()
+  if (description && /^[a-z0-9 -]+$/i.test(description)) {
+    return description
+  }
+
+  const slugText = album.slug
+    .split('-')
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+
+  if (slugText) return slugText
+  return 'Photo archive'
 }
 
 function normalizeIndex(index: number, length: number) {

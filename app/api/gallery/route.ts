@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
     category: searchParams.get('category') ?? undefined,
     tag: searchParams.get('tag') ?? undefined,
     featuredOnly: searchParams.get('featured') === 'true',
+    albumId: searchParams.get('albumId') ? Number(searchParams.get('albumId')) : undefined,
   })
   return NextResponse.json(result)
 }

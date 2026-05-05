@@ -15,6 +15,7 @@ const updateSchema = z.object({
   tags: z.array(z.string()).optional(),
   isFeatured: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
+  albumId: z.number().int().nullable().optional(),
 })
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

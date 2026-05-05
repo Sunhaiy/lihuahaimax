@@ -1,54 +1,65 @@
-/**
- * lib/utils/extractHeadings.ts
- *
- * 从 Tiptap JSONB 内容中提取标题节点，用于生成目录（TOC）。
- */
-
 export interface Heading {
-  id: string    // 用于 anchor scroll，格式 heading-N
-  level: number // 1-6
+  id: string
+  level: number
   text: string
+}
+
+type RichNode = {
+  type?: string
+  text?: string
+  attrs?: Record<string, unknown>
+  content?: RichNode[]
+}
+
+function collectNodeText(node: RichNode | null | undefined): string {
+  if (!node) return ''
+  const own = typeof node.text === 'string' ? node.text : ''
+  const nested = Array.isArray(node.content) ? node.content.map((child) => collectNodeText(child)).join('') : ''
+  return `${own}${nested}`
+}
+
+function walkNodes(node: RichNode | null | undefined, visitor: (node: RichNode) => void) {
+  if (!node) return
+  visitor(node)
+  if (Array.isArray(node.content)) {
+    node.content.forEach((child) => walkNodes(child, visitor))
+  }
 }
 
 export function extractHeadings(content: object): Heading[] {
   const headings: Heading[] = []
 
-  function walk(node: Record<string, unknown>) {
-    if (node.type === 'heading') {
-      const level = (node.attrs as Record<string, unknown>)?.level
-      const children = node.content as Array<Record<string, unknown>> | undefined
-      const text = children?.map((n) => n.text ?? '').join('') ?? ''
-      if (text.trim()) {
-        headings.push({
-          id: `heading-${headings.length}`,
-          level: typeof level === 'number' ? level : 1,
-          text: text.trim(),
-        })
-      }
-    }
-    const children = (node as Record<string, unknown>).content as Array<Record<string, unknown>> | undefined
-    if (Array.isArray(children)) {
-      for (const child of children) walk(child)
-    }
-  }
+  walkNodes(content as RichNode, (node) => {
+    if (node.type !== 'heading') return
 
-  walk(content as Record<string, unknown>)
+    const level = typeof node.attrs?.level === 'number' ? node.attrs.level : 1
+    const text = collectNodeText(node).trim()
+    if (!text) return
+
+    headings.push({
+      id: `heading-${headings.length}`,
+      level,
+      text,
+    })
+  })
+
   return headings
 }
 
-/** 估算阅读时长（分钟），中文按每分钟 350 字计 */
-export function estimateReadTime(content: object): number {
-  let text = ''
+export function extractPlainTextFromRichContent(content: object | null | undefined): string {
+  const parts: string[] = []
 
-  function walk(node: Record<string, unknown>) {
-    if (typeof node.text === 'string') text += node.text
-    const children = node.content as Array<Record<string, unknown>> | undefined
-    if (Array.isArray(children)) {
-      for (const child of children) walk(child)
+  walkNodes((content ?? {}) as RichNode, (node) => {
+    if (typeof node.text === 'string' && node.text.trim()) {
+      parts.push(node.text.trim())
     }
-  }
+  })
 
-  walk(content as Record<string, unknown>)
+  return parts.join(' ').replace(/\s+/g, ' ').trim()
+}
+
+export function estimateReadTime(content: object): number {
+  const text = extractPlainTextFromRichContent(content)
   const chars = text.replace(/\s+/g, '').length
   return Math.max(1, Math.ceil(chars / 350))
 }

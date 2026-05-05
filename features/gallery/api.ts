@@ -1,28 +1,54 @@
-import type { GalleryItem, UpdateGalleryItemInput } from './types'
+import type {
+  CreateGalleryAlbumInput,
+  GalleryAlbumRow,
+  GalleryItemRow,
+  UpdateGalleryItemInput,
+} from './types'
 
 export async function fetchGalleryItems(params: {
   page?: number
   pageSize?: number
   category?: string
   tag?: string
+  albumId?: number
 } = {}) {
   const qs = new URLSearchParams(
-    Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])
+    Object.entries(params)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => [key, String(value)])
   )
+
   const res = await fetch(`/api/gallery?${qs}`)
   if (!res.ok) throw new Error('Failed to fetch gallery items')
-  return res.json() as Promise<{ data: GalleryItem[]; total: number }>
+  return res.json() as Promise<{ data: GalleryItemRow[]; total: number }>
 }
 
-/**
- * 上传图片文件（multipart/form-data）
- */
-export async function uploadGalleryImage(file: File, meta?: {
-  title?: string
-  description?: string
-  tags?: string[]
-  category?: string
-}): Promise<GalleryItem> {
+export async function fetchGalleryAlbums() {
+  const res = await fetch('/api/gallery/albums')
+  if (!res.ok) throw new Error('Failed to fetch gallery albums')
+  return res.json() as Promise<GalleryAlbumRow[]>
+}
+
+export async function createGalleryAlbum(input: CreateGalleryAlbumInput): Promise<GalleryAlbumRow> {
+  const res = await fetch('/api/gallery/albums', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+
+  if (!res.ok) throw new Error('Failed to create gallery album')
+  return res.json()
+}
+
+export async function uploadGalleryImage(
+  file: File,
+  meta?: {
+    title?: string
+    description?: string
+    tags?: string[]
+    category?: string
+  }
+): Promise<GalleryItemRow> {
   const form = new FormData()
   form.append('file', file)
   if (meta?.title) form.append('title', meta.title)
@@ -35,12 +61,13 @@ export async function uploadGalleryImage(file: File, meta?: {
   return res.json()
 }
 
-export async function updateGalleryItem(id: number, input: UpdateGalleryItemInput): Promise<GalleryItem> {
+export async function updateGalleryItem(id: number, input: UpdateGalleryItemInput): Promise<GalleryItemRow> {
   const res = await fetch(`/api/gallery/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   })
+
   if (!res.ok) throw new Error('Failed to update gallery item')
   return res.json()
 }

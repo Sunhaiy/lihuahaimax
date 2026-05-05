@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ImmersiveGallery } from '@/components/ui/ImmersiveGallery'
+import { findGalleryAlbums } from '@/lib/db/dao/galleryAlbumDao'
 import { findGalleryItems } from '@/lib/db/dao/galleryDao'
 
 export const metadata: Metadata = {
@@ -10,10 +11,13 @@ export const metadata: Metadata = {
 export const revalidate = 600
 
 export default async function GalleryPage() {
-  const { data: items } = await findGalleryItems({
-    page: 1,
-    pageSize: 120,
-  })
+  const [{ data: items }, albums] = await Promise.all([
+    findGalleryItems({
+      page: 1,
+      pageSize: 120,
+    }),
+    findGalleryAlbums(),
+  ])
 
-  return <ImmersiveGallery items={items} />
+  return <ImmersiveGallery items={items} albums={albums} />
 }

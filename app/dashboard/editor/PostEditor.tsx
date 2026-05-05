@@ -331,7 +331,7 @@ export function PostEditor({ post }: PostEditorProps) {
                 <span className="truncate text-foreground/72">{resolvedSlug || 'url-slug'}</span>
               </div>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                正文区保持沉浸式写作，发布信息、SEO 和封面全部收进右侧面板，编辑时更专注。
+                正文区保持沉浸式写作，发布信息、SEO 和封面都收进右侧面板，让编辑节奏更专注。
               </p>
             </div>
 
@@ -354,7 +354,7 @@ export function PostEditor({ post }: PostEditorProps) {
                 </p>
                 <h2 className="mt-2 text-lg font-semibold text-foreground">发布信息</h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  分类、标签、摘要、封面和 SEO 全部在这里集中管理，写作和发布被拆成更清晰的两条线。
+                  分类、标签、摘要、封面和 SEO 全部集中在这里，写作和发布被拆成更清晰的两条线。
                 </p>
               </div>
 
@@ -369,7 +369,7 @@ export function PostEditor({ post }: PostEditorProps) {
                   />
                 </AdminField>
 
-                <AdminField label="分类" hint="可以选择已有分类，也可以在当前页直接补一个新分类。">
+                <AdminField label="分类" hint="可以选择已有分类，也可以直接在这里补一个新分类。">
                   {creatingCategory ? (
                     <div className="flex gap-2">
                       <input
@@ -463,7 +463,7 @@ export function PostEditor({ post }: PostEditorProps) {
               </section>
 
               <section className="space-y-4 border-t border-border/65 pt-5">
-                <AdminField label="封面图" hint="支持上传、替换和清空。封面会影响前台列表和文章首屏。">
+                <AdminField label="封面图" hint="支持上传、替换和清空，封面会影响前台列表和文章首屏。">
                   <input
                     ref={coverInputRef}
                     type="file"
@@ -545,7 +545,7 @@ export function PostEditor({ post }: PostEditorProps) {
                 <div>
                   <p className="text-sm font-semibold text-foreground">SEO 信息</p>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                    这组字段和正文分开维护，写作时不会被打断，但后续前台接 SEO 会更顺。
+                    这组字段和正文分开维护，写作时不会被打断，但后续前台承接 SEO 会更顺。
                   </p>
                 </div>
 

@@ -2,13 +2,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { ActivityHeatmap } from '@/components/ui/ActivityHeatmap'
+import { HomeSidebarVisitorCard } from '@/components/ui/HomeSidebarVisitorCard'
 import { PostCard } from '@/components/ui/PostCard'
 import { getActivityHeatmap } from '@/lib/db/dao/activityDao'
 import { findMoments } from '@/lib/db/dao/momentDao'
-import { findPosts } from '@/lib/db/dao/postDao'
+import { findAllTags, findPosts } from '@/lib/db/dao/postDao'
 import { getBackgroundSceneSettings } from '@/lib/scene'
 import { toRgba } from '@/lib/scene-color'
 import { getSiteProfile } from '@/lib/site'
+import { extractPlainTextFromRichContent } from '@/lib/utils/extractHeadings'
 import type { MomentRow } from '@/types/moment'
 
 export const metadata: Metadata = {
@@ -20,6 +22,10 @@ export const revalidate = 60
 
 function getMomentPreview(moment: MomentRow): { text: string; mono: boolean } | null {
   if (moment.content) return { text: moment.content, mono: false }
+  if (moment.content_json) {
+    const text = extractPlainTextFromRichContent(moment.content_json)
+    if (text) return { text, mono: false }
+  }
   if (!moment.meta) return null
 
   if (moment.type === 'sleep') {
@@ -63,15 +69,19 @@ export default async function HomePage({
   const { page: pageParam } = await searchParams
   const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
 
-  const [postsResult, momentsResult, scene, activityData, siteProfile] = await Promise.all([
+  const [postsResult, momentsResult, scene, activityData, siteProfile, tags] = await Promise.all([
     findPosts({ status: 'published', pageSize: 6, page }),
     findMoments({ publicOnly: true, pageSize: 10 }),
     getBackgroundSceneSettings(),
     getActivityHeatmap(365),
     getSiteProfile(),
+    findAllTags(),
   ])
 
   const hasSceneImage = Boolean(scene.image.url)
+  const latestMoment = momentsResult.data[0] ?? null
+  const latestMomentPreview = latestMoment ? getMomentPreview(latestMoment) : null
+  const topTags = tags.slice(0, 18)
 
   return (
     <>
@@ -119,11 +129,11 @@ export default async function HomePage({
 
         <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-28 sm:px-8 lg:px-10">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="scene-copy-subtle text-xs font-medium tracking-[0.24em]">欢迎来到</p>
+            <p className="scene-copy-subtle text-xs tracking-[0.14em]">欢迎来到</p>
             <h1 className="scene-copy mt-5 text-6xl font-semibold tracking-[-0.08em] sm:text-8xl">
               {siteProfile.siteName}
             </h1>
-            <div className="scene-chip mt-6 max-w-2xl flex-wrap justify-center gap-2 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.22em] backdrop-blur-md">
+            <div className="scene-chip mt-6 max-w-2xl flex-wrap justify-center gap-2 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.14em] backdrop-blur-md">
               <span>{siteProfile.siteNameEn}</span>
               <span className="text-hero-subtle/40">/</span>
               <span>{siteProfile.roleLine}</span>
@@ -190,7 +200,7 @@ export default async function HomePage({
                           )}
                         </div>
 
-                        <div className="scene-copy-subtle relative z-10 mt-5 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.16em]">
+                        <div className="scene-copy-subtle relative z-10 mt-5 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.12em]">
                           <span className="inline-flex items-center gap-1.5">
                             <MaterialSymbol icon="schedule" size={13} />
                             {new Date(moment.created_at).toLocaleString('zh-CN', {
@@ -216,13 +226,13 @@ export default async function HomePage({
 
       <section className="relative z-10 rounded-t-[2rem] border-t border-hero-border/16 bg-background/96 backdrop-blur-2xl">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="grid grid-cols-1 items-start gap-8 pb-20 pt-14 lg:grid-cols-[1fr_240px]">
+          <div className="grid grid-cols-1 items-start gap-8 pb-20 pt-14 lg:grid-cols-[1fr_280px]">
             <div className="min-w-0" id="latest-posts">
               <ActivityHeatmap data={activityData} />
 
               <div className="mt-8">
                 <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-xl font-semibold tracking-[-0.04em] text-foreground">
+                  <h2 className="text-xl font-semibold tracking-[-0.03em] text-foreground">
                     最新文章
                   </h2>
                   <Link
@@ -273,58 +283,80 @@ export default async function HomePage({
               </div>
             </div>
 
-            <aside className="flex flex-col gap-3 lg:sticky lg:top-20">
-              <div className="flex flex-col items-center rounded-2xl border border-border bg-card/90 p-5 text-center">
-                <div className="relative mb-3">
-                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-primary/28 bg-gradient-to-br from-primary/28 to-primary/8">
-                    {siteProfile.avatarUrl ? (
-                      <img
-                        src={siteProfile.avatarUrl}
-                        alt={siteProfile.ownerName}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="select-none text-2xl font-semibold text-primary">
-                        {siteProfile.ownerInitial}
-                      </span>
-                    )}
+            <aside className="flex flex-col gap-3 lg:sticky lg:top-20 lg:self-start">
+              <div className="rounded-[24px] border border-border/80 bg-card/92 p-5 shadow-[0_18px_46px_rgba(10,10,12,0.05)]">
+                <div className="relative mb-4 flex items-center gap-3">
+                  <div className="relative">
+                    <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-primary/28 bg-gradient-to-br from-primary/28 to-primary/8">
+                      {siteProfile.avatarUrl ? (
+                        <img
+                          src={siteProfile.avatarUrl}
+                          alt={siteProfile.ownerName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="select-none text-2xl font-semibold text-primary">
+                          {siteProfile.ownerInitial}
+                        </span>
+                      )}
+                    </div>
+                    <div className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-card bg-emerald-500" />
                   </div>
-                  <div className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-card bg-emerald-500" />
+
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">{siteProfile.ownerName}</p>
+                    <p className="mt-1 text-[11px] tracking-[0.06em] text-primary">
+                      {siteProfile.roleLine}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm font-semibold text-foreground">{siteProfile.ownerName}</p>
-                <p className="mt-0.5 text-xs font-medium tracking-[0.08em] text-primary">
-                  {siteProfile.roleLine}
-                </p>
-                <p className="mb-4 mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                  {siteProfile.bio}
-                </p>
-                <div className="flex flex-wrap justify-center gap-1.5">
-                  {[
-                    { href: '/posts', label: '文章' },
-                    { href: '/moments', label: '瞬间' },
-                    { href: '/about', label: '关于我' },
-                  ].map(({ href, label }) => (
+
+                <p className="text-[12px] leading-6 text-muted-foreground">{siteProfile.bio}</p>
+
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <div className="rounded-[18px] border border-border/70 bg-background/45 px-4 py-3 text-center">
+                    <p className="text-2xl font-semibold leading-none text-ember">{postsResult.total}</p>
+                    <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">Posts</p>
+                  </div>
+                  <div className="rounded-[18px] border border-border/70 bg-background/45 px-4 py-3 text-center">
+                    <p className="text-2xl font-semibold leading-none text-ember">{momentsResult.total}</p>
+                    <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">Moments</p>
+                  </div>
+                </div>
+              </div>
+
+              <HomeSidebarVisitorCard />
+
+              <div className="rounded-[24px] border border-border/80 bg-card/90 p-4">
+                <p className="text-[11px] font-mono tracking-[0.12em] text-muted-foreground">标签云</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {topTags.map(({ tag, count }) => (
                     <Link
-                      key={href}
-                      href={href}
-                       className="rounded-full border border-border bg-muted px-3 py-1 text-[11px] font-medium text-muted-foreground transition-all duration-200 hover:border-primary/40 hover:bg-primary/8 hover:text-primary"
+                      key={tag}
+                      href={`/posts?tag=${encodeURIComponent(tag)}`}
+                      className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background/45 px-3 py-1.5 text-xs text-foreground/82 transition-colors hover:border-primary/30 hover:bg-primary/6 hover:text-primary"
                     >
-                      {label}
+                      <span>{tag}</span>
+                      <span className="text-[10px] text-muted-foreground">{count}</span>
                     </Link>
                   ))}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-xl border border-border bg-card p-4 text-center">
-                  <p className="text-2xl font-semibold leading-none text-ember">{postsResult.total}</p>
-                  <p className="mt-1 text-[10px] text-muted-foreground">篇文章</p>
+              {latestMoment ? (
+                <div className="rounded-[24px] border border-border/80 bg-card/90 p-4">
+                  <p className="text-[11px] font-mono tracking-[0.12em] text-muted-foreground">最新瞬间</p>
+                  <p className="mt-3 line-clamp-4 text-sm leading-7 text-foreground/84">
+                    {latestMomentPreview?.text || '这一刻还没留下文字，但它已经被收进 moments 里了。'}
+                  </p>
+                  <div className="mt-4 flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span>{new Date(latestMoment.created_at).toLocaleString('zh-CN')}</span>
+                    <Link href="/moments" className="text-primary transition-colors hover:text-primary/75">
+                      去 moments
+                    </Link>
+                  </div>
                 </div>
-                <div className="rounded-xl border border-border bg-card p-4 text-center">
-                  <p className="text-2xl font-semibold leading-none text-ember">{momentsResult.total}</p>
-                  <p className="mt-1 text-[10px] text-muted-foreground">条瞬间</p>
-                </div>
-              </div>
+              ) : null}
             </aside>
           </div>
         </div>

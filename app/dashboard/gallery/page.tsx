@@ -1,7 +1,10 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
+  ADMIN_INPUT_CLASS,
+  ADMIN_SELECT_CLASS,
+  ADMIN_TEXTAREA_CLASS,
   AdminEmptyState,
   AdminListToolbar,
   AdminNotice,
@@ -12,16 +15,46 @@ import {
 import { Button } from '@/components/ui/Button'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { GalleryImageSkeleton } from '@/components/ui/Skeleton'
-import { useDeleteGalleryItem, useGalleryItems, useUploadImage } from '@/features/gallery/hooks'
+import {
+  useCreateGalleryAlbum,
+  useDeleteGalleryItem,
+  useGalleryAlbums,
+  useGalleryItems,
+  useUpdateGalleryItem,
+  useUploadImage,
+} from '@/features/gallery/hooks'
+
+type GalleryDashboardAlbum = {
+  id: number
+  name: string
+  slug: string
+  description: string | null
+}
+
+type GalleryDashboardItem = {
+  id: number
+  thumbnail_url: string | null
+  url: string
+  file_name: string
+  title: string | null
+  description: string | null
+  album_id: number | null
+}
 
 export default function DashboardGalleryPage() {
   const { data, isLoading, mutate } = useGalleryItems({ pageSize: 60 })
+  const { data: albumData, isLoading: albumsLoading, mutate: mutateAlbums } = useGalleryAlbums()
   const { trigger: upload, isMutating: uploading } = useUploadImage()
+  const { trigger: createAlbum, isMutating: creatingAlbum } = useCreateGalleryAlbum()
   const { trigger: deleteItem } = useDeleteGalleryItem()
   const fileRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState('')
+  const [albumName, setAlbumName] = useState('')
+  const [albumSlug, setAlbumSlug] = useState('')
+  const [albumDescription, setAlbumDescription] = useState('')
 
-  const items = data?.data ?? []
+  const items = (data?.data ?? []) as GalleryDashboardItem[]
+  const albums = (albumData ?? []) as GalleryDashboardAlbum[]
 
   async function handleFiles(event: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? [])
@@ -35,14 +68,14 @@ export default function DashboardGalleryPage() {
       }
       await mutate()
     } catch (err) {
-      setError(err instanceof Error ? err.message : '图片上传失败')
+      setError(err instanceof Error ? err.message : '上传图片失败')
     } finally {
       if (fileRef.current) fileRef.current.value = ''
     }
   }
 
   async function handleDelete(id: number) {
-    if (!confirm('确定删除这张图片吗？该操作不可撤销。')) return
+    if (!confirm('确定删除这张图片吗？这个操作不可撤销。')) return
 
     setError('')
 
@@ -54,12 +87,31 @@ export default function DashboardGalleryPage() {
     }
   }
 
+  async function handleCreateAlbum(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError('')
+
+    try {
+      await createAlbum({
+        name: albumName,
+        slug: albumSlug || undefined,
+        description: albumDescription || undefined,
+      })
+      setAlbumName('')
+      setAlbumSlug('')
+      setAlbumDescription('')
+      await mutateAlbums()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '新建相册失败')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
         eyebrow="Gallery Library"
         title="相册管理"
-        description="上传、整理和删除图像资源。这里不再保留旧式卡片拼贴感，而是统一回后台的资料库与批量工作节奏。"
+        description="先创建自己的相册分类，再把图片归进对应相册。前台左侧的风格化相册集会直接读取这里的数据。"
         actions={
           <Button onClick={() => fileRef.current?.click()} loading={uploading}>
             <MaterialSymbol icon="upload" size={18} />
@@ -69,7 +121,7 @@ export default function DashboardGalleryPage() {
         meta={
           <>
             <AdminStatusBadge tone="accent">{items.length} 张图片</AdminStatusBadge>
-            <AdminStatusBadge tone="neutral">批量上传</AdminStatusBadge>
+            <AdminStatusBadge tone="neutral">{albums.length} 个相册</AdminStatusBadge>
           </>
         }
       />
@@ -80,13 +132,112 @@ export default function DashboardGalleryPage() {
         <div className="flex flex-wrap items-center gap-2">
           <AdminStatusBadge tone="neutral">支持 JPEG / PNG / WebP / AVIF</AdminStatusBadge>
           <AdminStatusBadge tone="neutral">单张上限 20MB</AdminStatusBadge>
+          <AdminStatusBadge tone="neutral">图片可独立绑定相册</AdminStatusBadge>
         </div>
-        <p className="text-sm text-muted-foreground">点击上传按钮，或直接点击下方上传面板。</p>
+        <p className="text-sm text-muted-foreground">
+          图片简介留空时，前台主图下方不会显示任何说明文案。
+        </p>
       </AdminListToolbar>
 
       <AdminPanel
+        title="相册分类"
+        description="这里的新建相册会成为前台左侧的真实分类。Slug 可选，想控制英文副标题时再填。"
+        icon="collections_bookmark"
+      >
+        <form className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]" onSubmit={handleCreateAlbum}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="space-y-2">
+              <span className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+                相册名称
+              </span>
+              <input
+                value={albumName}
+                onChange={(event) => setAlbumName(event.target.value)}
+                className={ADMIN_INPUT_CLASS}
+                placeholder="比如：海边日记"
+                required
+              />
+            </label>
+
+            <label className="space-y-2">
+              <span className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+                Slug
+              </span>
+              <input
+                value={albumSlug}
+                onChange={(event) => setAlbumSlug(event.target.value)}
+                className={ADMIN_INPUT_CLASS}
+                placeholder="beach-diary"
+              />
+            </label>
+
+            <label className="space-y-2 md:col-span-2">
+              <span className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+                说明
+              </span>
+              <textarea
+                value={albumDescription}
+                onChange={(event) => setAlbumDescription(event.target.value)}
+                rows={4}
+                className={ADMIN_TEXTAREA_CLASS}
+                placeholder="可选。写英文短句时会优先作为左侧卡片的小标题。"
+              />
+            </label>
+
+            <div className="flex items-center justify-end gap-3 md:col-span-2">
+              <Button type="submit" loading={creatingAlbum} disabled={!albumName.trim()}>
+                <MaterialSymbol icon="create_new_folder" size={18} />
+                新建相册
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-border/70 bg-background/36 p-4">
+            <p className="text-sm font-medium text-foreground">现有相册</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              新建后就可以在下方图片卡片里直接选择归属相册。
+            </p>
+
+            <div className="mt-4 space-y-3">
+              {albumsLoading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                  <GalleryImageSkeleton key={index} className="h-20 rounded-[18px]" />
+                ))
+              ) : albums.length === 0 ? (
+                <AdminEmptyState
+                  icon="photo_album"
+                  title="还没有自定义相册"
+                  description="先建一个分类，前台左侧就能出现新的风格化相册卡。"
+                />
+              ) : (
+                albums.map((album) => (
+                  <div
+                    key={album.id}
+                    className="rounded-[18px] border border-border/70 bg-background/52 px-4 py-3"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">{album.name}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">/{album.slug}</p>
+                      </div>
+                      <AdminStatusBadge tone="neutral">
+                        {items.filter((item) => item.album_id === album.id).length} 张
+                      </AdminStatusBadge>
+                    </div>
+                    {album.description ? (
+                      <p className="mt-2 text-xs leading-6 text-muted-foreground">{album.description}</p>
+                    ) : null}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </form>
+      </AdminPanel>
+
+      <AdminPanel
         title="上传面板"
-        description="这里专门负责把图片纳入资源库，和下方图库浏览区分开。"
+        description="先把图片放进图库，后面再逐张归到你的自定义相册里。"
         icon="image_arrow_up"
       >
         <button
@@ -99,53 +250,42 @@ export default function DashboardGalleryPage() {
           </span>
           <p className="mt-5 text-sm font-medium text-foreground">点击选择图片，或把文件拖到这里</p>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-            上传完成后会自动刷新图库。这里不再用旧的悬浮块样式，而是作为一块明确的资源入口。
+            上传完成后会自动刷新图库。你可以在下方继续补充简介，并把它归进指定相册。
           </p>
         </button>
       </AdminPanel>
 
       <AdminPanel
-        title="图库浏览"
-        description="按统一网格浏览最近上传的图片，删除操作保持轻但明确。"
+        title="图库编辑"
+        description="每张图都可以单独写简介、绑定相册。保存后前台会立刻同步。"
         icon="photo_library"
       >
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-            {Array.from({ length: 12 }).map((_, index) => (
-              <GalleryImageSkeleton key={index} className="aspect-square rounded-[22px]" />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="rounded-[24px] border border-border/70 bg-background/36 p-4">
+                <GalleryImageSkeleton className="aspect-[16/10] rounded-[18px]" />
+                <GalleryImageSkeleton className="mt-4 h-5 w-40 rounded-full" />
+                <GalleryImageSkeleton className="mt-3 h-24 w-full rounded-[18px]" />
+              </div>
             ))}
           </div>
         ) : items.length === 0 ? (
           <AdminEmptyState
             icon="imagesmode"
             title="还没有图片"
-            description="先上传几张图，图库浏览区会在这里建立起来。"
+            description="先上传几张图片，下面就会出现可编辑的图库卡片。"
           />
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-            {items.map((item: { id: number; thumbnail_url: string | null; url: string; file_name: string; title: string | null }) => (
-              <article
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+            {items.map((item) => (
+              <GalleryItemEditorCard
                 key={item.id}
-                className="group overflow-hidden rounded-[22px] border border-border/70 bg-background/36 transition-colors hover:border-primary/18 hover:bg-background/48"
-              >
-                <div className="relative aspect-square overflow-hidden">
-                  <img
-                    src={item.thumbnail_url ?? item.url}
-                    alt={item.title ?? item.file_name}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                  />
-                  <button
-                    onClick={() => void handleDelete(item.id)}
-                    className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-xl border border-red-500/20 bg-black/45 text-red-300 opacity-0 backdrop-blur-md transition-all hover:bg-red-500/18 group-hover:opacity-100"
-                    title="删除图片"
-                  >
-                    <MaterialSymbol icon="delete" size={16} />
-                  </button>
-                </div>
-                <div className="px-3 py-3">
-                  <p className="truncate text-xs font-medium text-foreground">{item.title ?? item.file_name}</p>
-                </div>
-              </article>
+                item={item}
+                albums={albums}
+                onDelete={handleDelete}
+                onSaved={() => void mutate()}
+              />
             ))}
           </div>
         )}
@@ -160,5 +300,117 @@ export default function DashboardGalleryPage() {
         onChange={handleFiles}
       />
     </div>
+  )
+}
+
+function GalleryItemEditorCard({
+  item,
+  albums,
+  onDelete,
+  onSaved,
+}: {
+  item: GalleryDashboardItem
+  albums: GalleryDashboardAlbum[]
+  onDelete: (id: number) => Promise<void>
+  onSaved: () => void
+}) {
+  const { trigger: saveItem, isMutating: saving } = useUpdateGalleryItem(item.id)
+  const [description, setDescription] = useState(item.description ?? '')
+  const [albumId, setAlbumId] = useState(item.album_id ? String(item.album_id) : '')
+  const [error, setError] = useState('')
+
+  const dirty =
+    description !== (item.description ?? '') || albumId !== (item.album_id ? String(item.album_id) : '')
+
+  useEffect(() => {
+    setDescription(item.description ?? '')
+    setAlbumId(item.album_id ? String(item.album_id) : '')
+  }, [item.album_id, item.description])
+
+  async function handleSave() {
+    setError('')
+
+    try {
+      await saveItem({
+        description: description.trim() || '',
+        albumId: albumId ? Number(albumId) : null,
+      })
+      onSaved()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '保存图片信息失败')
+    }
+  }
+
+  return (
+    <article className="overflow-hidden rounded-[24px] border border-border/70 bg-background/36">
+      <div className="relative aspect-[16/10] overflow-hidden border-b border-border/70">
+        <img
+          src={item.thumbnail_url ?? item.url}
+          alt={item.title ?? item.file_name}
+          className="h-full w-full object-cover"
+        />
+        <button
+          onClick={() => void onDelete(item.id)}
+          className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-500/20 bg-black/45 text-red-300 backdrop-blur-md transition-all hover:bg-red-500/18"
+          title="删除图片"
+        >
+          <MaterialSymbol icon="delete" size={16} />
+        </button>
+      </div>
+
+      <div className="space-y-4 p-4">
+        <div className="space-y-1">
+          <p className="truncate text-sm font-medium text-foreground">{item.title ?? item.file_name}</p>
+          <p className="text-xs text-muted-foreground">{item.file_name}</p>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+            所属相册
+          </label>
+          <select
+            value={albumId}
+            onChange={(event) => setAlbumId(event.target.value)}
+            className={ADMIN_SELECT_CLASS}
+          >
+            <option value="">未归档</option>
+            {albums.map((album) => (
+              <option key={album.id} value={album.id}>
+                {album.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+            图片简介
+          </label>
+          <textarea
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            rows={4}
+            className={ADMIN_TEXTAREA_CLASS}
+            placeholder="这张图想展示什么、记录什么，都可以写在这里。留空则前台不显示。"
+          />
+        </div>
+
+        {error ? <AdminNotice tone="danger">{error}</AdminNotice> : null}
+
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs text-muted-foreground">保存后，前台说明和相册分类都会直接同步。</p>
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={saving}
+            disabled={!dirty && !saving}
+            onClick={() => void handleSave()}
+          >
+            <MaterialSymbol icon="save" size={16} />
+            保存
+          </Button>
+        </div>
+      </div>
+    </article>
   )
 }

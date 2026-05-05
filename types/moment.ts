@@ -1,3 +1,5 @@
+import type { JSONContent } from '@tiptap/core'
+
 export type MomentType =
   | 'text'
   | 'image'
@@ -27,6 +29,7 @@ export interface MomentRow {
   id: number
   type: MomentType
   content: string | null
+  content_json: JSONContent | null
   images: string[]
   meta: Record<string, unknown> | null
   mood: string | null
@@ -43,6 +46,7 @@ export interface Moment {
   id: number
   type: MomentType
   content: string | null
+  contentJson: JSONContent | null
   images: string[]
   meta: Record<string, unknown> | null
   mood: string | null
@@ -58,6 +62,7 @@ export interface Moment {
 export interface CreateMomentInput {
   type: MomentType
   content?: string
+  contentJson?: JSONContent
   images?: string[]
   meta?: Record<string, unknown>
   mood?: string
@@ -66,7 +71,9 @@ export interface CreateMomentInput {
   isPublic?: boolean
 }
 
-export type UpdateMomentInput = Partial<CreateMomentInput>
+export interface UpdateMomentInput extends Partial<Omit<CreateMomentInput, 'contentJson'>> {
+  contentJson?: JSONContent | null
+}
 
 export interface MomentCommentRow {
   id: number

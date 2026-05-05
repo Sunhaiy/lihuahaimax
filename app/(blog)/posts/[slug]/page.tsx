@@ -126,7 +126,7 @@ export default async function PostPage({
                 <Link
                   key={tag}
                   href={`/posts?tags=${encodeURIComponent(tag)}`}
-                  className="rounded-full border border-white/16 bg-white/10 px-3 py-1 text-xs font-medium text-white/82 backdrop-blur-sm transition-colors hover:bg-white/18"
+                  className="rounded-full border border-white/16 bg-white/10 px-3 py-1 text-xs text-white/82 backdrop-blur-sm transition-colors hover:bg-white/18"
                 >
                   {tag}
                 </Link>
@@ -146,8 +146,8 @@ export default async function PostPage({
         </div>
 
         <div className="absolute inset-x-0 bottom-0 flex justify-center px-6 pb-6">
-          <div className="flex items-center gap-0 overflow-hidden rounded-xl border border-white/10 bg-black/35 text-xs font-mono text-white/70 backdrop-blur-md divide-x divide-white/10">
-            <div className="px-4 py-2.5 font-semibold text-white/90">{siteProfile.ownerName}</div>
+          <div className="divide-x flex items-center gap-0 overflow-hidden rounded-xl border border-white/10 bg-black/35 text-xs text-white/70 backdrop-blur-md divide-white/10">
+            <div className="px-4 py-2.5 font-medium text-white/90">{siteProfile.ownerName}</div>
 
             {post.published_at ? (
               <div className="flex items-center gap-1.5 px-4 py-2.5">
@@ -173,9 +173,9 @@ export default async function PostPage({
       </section>
 
       <div className="mx-auto max-w-7xl px-3 py-10 sm:px-5">
-        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1fr_220px]">
-          <article className="min-w-0">
-            <PostContent content={post.content as object} />
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
+          <article id="post-reading-surface" className="min-w-0">
+            <PostContent content={post.content as object} headings={headings} />
 
             <div className="mb-8 mt-12 border-t border-border" />
 
@@ -197,7 +197,7 @@ export default async function PostPage({
                 <p className="mb-0.5 text-sm font-semibold text-foreground">
                   {siteProfile.ownerName}
                 </p>
-                <p className="mb-2 text-[11px] font-medium tracking-[0.08em] text-primary">
+                <p className="mb-2 text-[11px] tracking-[0.04em] text-primary">
                   {siteProfile.roleLine}
                 </p>
                 <p className="text-xs leading-relaxed text-muted-foreground">{siteProfile.bio}</p>
@@ -216,7 +216,7 @@ export default async function PostPage({
                       className="mt-0.5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary"
                     />
                     <div className="min-w-0">
-                      <p className="mb-1 text-[10px] font-medium text-muted-foreground">上一篇</p>
+                      <p className="mb-1 text-[10px] text-muted-foreground">上一篇</p>
                       <p className="line-clamp-2 text-sm font-medium text-foreground transition-colors group-hover:text-primary">
                         {adjacent.prev.title}
                       </p>
@@ -236,7 +236,7 @@ export default async function PostPage({
                       className="mt-0.5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary"
                     />
                     <div className="min-w-0">
-                      <p className="mb-1 text-[10px] font-medium text-muted-foreground">下一篇</p>
+                      <p className="mb-1 text-[10px] text-muted-foreground">下一篇</p>
                       <p className="line-clamp-2 text-sm font-medium text-foreground transition-colors group-hover:text-primary">
                         {adjacent.next.title}
                       </p>
@@ -251,12 +251,14 @@ export default async function PostPage({
             <CommentSection postId={post.id} />
           </article>
 
-          <aside className="hidden lg:block">
-            <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-xl border border-border bg-card p-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <TOC headings={headings} />
-              {headings.length === 0 ? (
-                <p className="text-xs text-muted-foreground">本文暂无目录</p>
-              ) : null}
+          <aside className="hidden lg:block lg:self-start">
+            <div className="sticky top-24">
+              <TOC
+                headings={headings}
+                readTime={readTime}
+                publishedAt={post.published_at?.toISOString() ?? null}
+                articleSelector="#post-reading-surface"
+              />
             </div>
           </aside>
         </div>

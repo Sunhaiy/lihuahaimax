@@ -1,7 +1,9 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
+import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
+import { extractPlainTextFromRichContent } from '@/lib/utils/extractHeadings'
 import type { MomentRow, MomentType } from '@/types/moment'
 import type { SiteProfile } from '@/types/site'
 
@@ -115,7 +117,10 @@ function formatMomentSource(moment: MomentFeedItem): string {
 
 function getMomentSummary(moment: MomentFeedItem): string {
   const context = [moment.mood, moment.weather, moment.location].filter(Boolean) as string[]
-  if (context.length > 0) return context.join('，')
+  if (context.length > 0) return context.join(' · ')
+
+  const richText = moment.content_json ? extractPlainTextFromRichContent(moment.content_json) : ''
+  if (richText) return richText
 
   if (moment.type === 'sleep' && moment.meta) {
     const meta = moment.meta as {
@@ -123,10 +128,9 @@ function getMomentSummary(moment: MomentFeedItem): string {
       score?: number | null
     }
     const parts: string[] = []
-
     if (typeof meta.deepSleepMinutes === 'number') parts.push(`深睡 ${meta.deepSleepMinutes} 分钟`)
     if (typeof meta.score === 'number') parts.push(`评分 ${meta.score}`)
-    if (parts.length > 0) return parts.join('，')
+    if (parts.length > 0) return parts.join(' · ')
   }
 
   if (moment.type === 'steps' && moment.meta) {
@@ -136,11 +140,10 @@ function getMomentSummary(moment: MomentFeedItem): string {
       calories?: number
     }
     const parts: string[] = []
-
     if (typeof meta.steps === 'number') parts.push(`${meta.steps.toLocaleString()} 步`)
     if (typeof meta.distance === 'number') parts.push(formatDistance(meta.distance))
     if (typeof meta.calories === 'number') parts.push(`${meta.calories} kcal`)
-    if (parts.length > 0) return parts.join('，')
+    if (parts.length > 0) return parts.join(' · ')
   }
 
   if (moment.type === 'link' && moment.meta) {
@@ -151,9 +154,8 @@ function getMomentSummary(moment: MomentFeedItem): string {
 
   if (moment.images.length > 0) return '照片已经收好，等你下次翻到这里。'
   if (moment.type === 'link') return '把想分享的东西先挂在了这里。'
-  if (moment.content) return '这条瞬间已经被收进了回声区。'
-
-  return '这一刻已经被存进了雷雨里的玻璃盒。'
+  if (moment.content) return moment.content
+  return '这一刻已经被存进了回声里。'
 }
 
 function getMomentMetrics(moment: MomentFeedItem) {
@@ -170,9 +172,7 @@ function getMomentMetrics(moment: MomentFeedItem) {
     return [
       meta.sleepStart ? { label: '入睡', value: meta.sleepStart } : null,
       meta.sleepEnd ? { label: '起床', value: meta.sleepEnd } : null,
-      typeof meta.deepSleepMinutes === 'number'
-        ? { label: '深睡', value: `${meta.deepSleepMinutes} min` }
-        : null,
+      typeof meta.deepSleepMinutes === 'number' ? { label: '深睡', value: `${meta.deepSleepMinutes} min` } : null,
       typeof meta.score === 'number' ? { label: '评分', value: String(meta.score) } : null,
     ].filter(Boolean) as Array<{ label: string; value: string }>
   }
@@ -209,31 +209,23 @@ function getMomentLinkMeta(moment: MomentFeedItem) {
 
   const meta = moment.meta as { title?: string; url?: string; description?: string }
   if (!meta.url && !meta.title) return null
-
   return meta
 }
 
-function getLikeStripText(
-  siteProfile: SiteProfile,
-  engagement: EngagementState,
-  summary: string
-) {
+function getLikeStripText(siteProfile: SiteProfile, engagement: EngagementState, summary: string) {
   if (engagement.liked) {
-    if (engagement.likeCount > 1) return `你和 ${engagement.likeCount - 1} 位访客赞了`
-    return '你赞了'
+    if (engagement.likeCount > 1) return `你和 ${engagement.likeCount - 1} 位访客赞了这条瞬间`
+    return '你赞了这条瞬间'
   }
 
   if (engagement.likeCount > 0) {
-    return `${siteProfile.ownerName} 和 ${engagement.likeCount} 位访客收到了回应`
+    return `${siteProfile.ownerName} 和 ${engagement.likeCount} 位访客收到了这条回声`
   }
 
   return summary
 }
 
-function mergeEngagement(
-  previous: EngagementState,
-  next: Partial<EngagementState>
-): EngagementState {
+function mergeEngagement(previous: EngagementState, next: Partial<EngagementState>): EngagementState {
   return { ...previous, ...next }
 }
 
@@ -256,6 +248,10 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
   const summary = getMomentSummary(moment)
   const metrics = getMomentMetrics(moment)
   const linkMeta = getMomentLinkMeta(moment)
+  const richContentText = useMemo(
+    () => (moment.content_json ? extractPlainTextFromRichContent(moment.content_json) : ''),
+    [moment.content_json]
+  )
   const contentClass = moment.content ? getMomentContentClass(moment.content) : ''
   const [visitorKey, setVisitorKey] = useState('')
   const [engagement, setEngagement] = useState<EngagementState>({
@@ -350,9 +346,7 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
       setComments((current) => [nextComment, ...current])
       setCommentText('')
       setCommentsLoaded(true)
-      setEngagement((current) =>
-        mergeEngagement(current, { commentCount: current.commentCount + 1 })
-      )
+      setEngagement((current) => mergeEngagement(current, { commentCount: current.commentCount + 1 }))
     } finally {
       setIsSubmittingComment(false)
     }
@@ -361,7 +355,7 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
   async function handleShare() {
     const url = `${window.location.origin}/moments#moment-${moment.id}`
     const title = `${siteProfile.ownerName} 的瞬间`
-    const text = moment.content || summary
+    const text = moment.content || richContentText || summary
 
     setShareStatus('')
 
@@ -399,11 +393,7 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
       <header className="flex items-start gap-3">
         <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white/12 bg-hero-panel/60">
           {siteProfile.avatarUrl ? (
-            <img
-              src={siteProfile.avatarUrl}
-              alt={siteProfile.ownerName}
-              className="h-full w-full object-cover"
-            />
+            <img src={siteProfile.avatarUrl} alt={siteProfile.ownerName} className="h-full w-full object-cover" />
           ) : (
             <span className="flex h-full w-full items-center justify-center text-base font-semibold text-white">
               {siteProfile.ownerInitial}
@@ -416,7 +406,66 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
             {siteProfile.ownerName}.
           </p>
 
-          {moment.content ? (
+          {moment.content_json ? (
+            <div className="mt-3 max-w-[42rem]">
+              <RichTextRenderer
+                content={moment.content_json}
+                proseClassName="
+                  prose prose-invert max-w-none
+                  [&_.ProseMirror]:text-white/88
+                  [&_.ProseMirror]:leading-8
+                  [&_.ProseMirror_h2]:mt-7
+                  [&_.ProseMirror_h2]:mb-3
+                  [&_.ProseMirror_h2]:text-[1.35rem]
+                  [&_.ProseMirror_h2]:font-semibold
+                  [&_.ProseMirror_h3]:mt-6
+                  [&_.ProseMirror_h3]:mb-3
+                  [&_.ProseMirror_h3]:text-[1.12rem]
+                  [&_.ProseMirror_h3]:font-semibold
+                  [&_.ProseMirror_p]:my-4
+                  [&_.ProseMirror_p]:text-[1rem]
+                  [&_.ProseMirror_p]:leading-8
+                  [&_.ProseMirror_a]:text-primary
+                  [&_.ProseMirror_a]:underline
+                  [&_.ProseMirror_a]:underline-offset-4
+                  [&_.ProseMirror_ul]:my-4
+                  [&_.ProseMirror_ul]:space-y-2
+                  [&_.ProseMirror_ul]:pl-5
+                  [&_.ProseMirror_ol]:my-4
+                  [&_.ProseMirror_ol]:space-y-2
+                  [&_.ProseMirror_ol]:pl-5
+                  [&_.ProseMirror_li]:text-white/82
+                  [&_.ProseMirror_blockquote]:my-6
+                  [&_.ProseMirror_blockquote]:rounded-[22px]
+                  [&_.ProseMirror_blockquote]:border-l-[3px]
+                  [&_.ProseMirror_blockquote]:border-primary/34
+                  [&_.ProseMirror_blockquote]:bg-white/[0.04]
+                  [&_.ProseMirror_blockquote]:px-5
+                  [&_.ProseMirror_blockquote]:py-4
+                  [&_.ProseMirror_code]:rounded-md
+                  [&_.ProseMirror_code]:bg-primary/10
+                  [&_.ProseMirror_code]:px-1.5
+                  [&_.ProseMirror_code]:py-1
+                  [&_.ProseMirror_code]:text-primary
+                  [&_.ProseMirror_pre]:my-6
+                  [&_.ProseMirror_pre]:overflow-x-auto
+                  [&_.ProseMirror_pre]:rounded-[24px]
+                  [&_.ProseMirror_pre]:border
+                  [&_.ProseMirror_pre]:border-white/8
+                  [&_.ProseMirror_pre]:bg-black/38
+                  [&_.ProseMirror_pre_code]:block
+                  [&_.ProseMirror_pre_code]:bg-transparent
+                  [&_.ProseMirror_pre_code]:px-5
+                  [&_.ProseMirror_pre_code]:py-4
+                  [&_.ProseMirror_pre_code]:text-zinc-100
+                  [&_.ProseMirror_img]:my-6
+                  [&_.ProseMirror_img]:rounded-[22px]
+                  [&_.ProseMirror_img]:border
+                  [&_.ProseMirror_img]:border-white/10
+                "
+              />
+            </div>
+          ) : moment.content ? (
             <div className="mt-3 max-w-[40rem]">
               <p className={`whitespace-pre-line text-white/88 ${contentClass}`}>{moment.content}</p>
             </div>
@@ -449,9 +498,7 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
                 {linkMeta.title ?? linkMeta.url}
               </p>
               {linkMeta.description ? (
-                <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-white/50">
-                  {linkMeta.description}
-                </p>
+                <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-white/50">{linkMeta.description}</p>
               ) : null}
               {linkMeta.url ? (
                 <p className="mt-2 truncate font-mono text-[10px] text-primary/80">{linkMeta.url}</p>
@@ -491,18 +538,11 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
                 label="评论"
                 onClick={() => setCommentsOpen((open) => !open)}
               />
-              <ActionButton
-                count={engagement.shareCount}
-                icon="reply"
-                label="分享"
-                onClick={handleShare}
-              />
+              <ActionButton count={engagement.shareCount} icon="reply" label="分享" onClick={handleShare} />
             </div>
           </div>
 
-          {shareStatus ? (
-            <p className="mt-2 text-right text-[11px] font-medium text-white/42">{shareStatus}</p>
-          ) : null}
+          {shareStatus ? <p className="mt-2 text-right text-[11px] font-medium text-white/42">{shareStatus}</p> : null}
 
           <div className="mt-4 rounded-[14px] bg-white/[0.065] px-4 py-2.5">
             <div className="flex items-center gap-2 text-[0.95rem] font-bold leading-6 text-white/86">

@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS moments (
   type        TEXT        NOT NULL DEFAULT 'text'
                 CHECK (type IN ('text','image','sleep','steps','heartrate','mood','link')),
   content     TEXT,
+  content_json JSONB,
   images      TEXT[]      NOT NULL DEFAULT '{}',
   -- 扩展数据（手环数据、链接元信息等）
   meta        JSONB,
@@ -68,6 +69,8 @@ CREATE TABLE IF NOT EXISTS moments (
 
 ALTER TABLE moments
   ADD COLUMN IF NOT EXISTS share_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE moments
+  ADD COLUMN IF NOT EXISTS content_json JSONB;
 
 CREATE INDEX IF NOT EXISTS idx_moments_created ON moments (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_moments_type    ON moments (type);
@@ -142,6 +145,19 @@ CREATE INDEX IF NOT EXISTS idx_games_status ON games (status);
 -- ============================================================
 -- 相册表
 -- ============================================================
+CREATE TABLE IF NOT EXISTS gallery_albums (
+  id              SERIAL PRIMARY KEY,
+  name            TEXT        NOT NULL,
+  slug            TEXT        NOT NULL UNIQUE,
+  description     TEXT,
+  cover_image_url TEXT,
+  sort_order      INTEGER     NOT NULL DEFAULT 0,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_gallery_albums_sort
+  ON gallery_albums (sort_order ASC, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS gallery_items (
   id              SERIAL PRIMARY KEY,
   title           TEXT,
@@ -162,10 +178,14 @@ CREATE TABLE IF NOT EXISTS gallery_items (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE gallery_items
+  ADD COLUMN IF NOT EXISTS album_id INTEGER REFERENCES gallery_albums(id) ON DELETE SET NULL;
+
 CREATE INDEX IF NOT EXISTS idx_gallery_category   ON gallery_items (category);
 CREATE INDEX IF NOT EXISTS idx_gallery_featured   ON gallery_items (is_featured) WHERE is_featured = TRUE;
 CREATE INDEX IF NOT EXISTS idx_gallery_sort       ON gallery_items (sort_order, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_gallery_tags       ON gallery_items USING GIN (tags);
+CREATE INDEX IF NOT EXISTS idx_gallery_album      ON gallery_items (album_id, sort_order, created_at DESC);
 
 -- ============================================================
 -- 评论表

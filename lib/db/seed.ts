@@ -571,7 +571,7 @@ async function seed() {
     console.log('[seed] 清空现有数据...')
     await client.query(`
       TRUNCATE TABLE
-        comments, gallery_items, links, settings,
+        comments, gallery_items, gallery_albums, links, settings,
         animes, games, moments, posts, works
       RESTART IDENTITY CASCADE
     `)
@@ -723,24 +723,33 @@ async function seed() {
     // ── 7. 相册 ──────────────────────────────────────────────
     console.log('[seed] 插入相册...')
     await client.query(`
+      INSERT INTO gallery_albums
+        (name, slug, description, sort_order)
+      VALUES
+        ('最近照片', 'latest-capture', 'Latest capture', 1),
+        ('旅行归档', 'travel-archive', 'Travel archive', 2),
+        ('桌面与设备', 'workspace-archive', 'Workspace archive', 3)
+    `)
+
+    await client.query(`
       INSERT INTO gallery_items
-        (title, description, url, thumbnail_url, file_name, category, width, height, tags, is_featured, sort_order)
+        (title, description, url, thumbnail_url, file_name, category, width, height, tags, is_featured, sort_order, album_id)
       VALUES
         ('敦煌莫高窟黄昏','傍晚的阳光斜射在崖壁上，金色与土黄交织，说不出话来',
          '/uploads/gallery/mogao-sunset.jpg','/uploads/gallery/thumb/mogao-sunset.jpg',
-         'mogao-sunset.jpg','photo',4032,3024,'{敦煌,旅行,黄昏,历史}',TRUE,1),
+         'mogao-sunset.jpg','photo',4032,3024,'{敦煌,旅行,黄昏,历史}',TRUE,1,2),
         ('鸣沙山骆驼队','夕阳下的骆驼剪影，沙漠的极简美学',
          '/uploads/gallery/camel-silhouette.jpg','/uploads/gallery/thumb/camel-silhouette.jpg',
-         'camel-silhouette.jpg','photo',3840,2160,'{沙漠,骆驼,剪影,旅行}',TRUE,2),
+         'camel-silhouette.jpg','photo',3840,2160,'{沙漠,骆驼,剪影,旅行}',TRUE,2,2),
         ('Arch Linux 桌面截图','Hyprland + Waybar，干净清爽的工作环境',
          '/uploads/gallery/arch-desktop.png','/uploads/gallery/thumb/arch-desktop.png',
-         'arch-desktop.png','screenshot',2560,1440,'{Linux,Arch,桌面,开源}',FALSE,3),
+         'arch-desktop.png','screenshot',2560,1440,'{Linux,Arch,桌面,开源}',FALSE,3,3),
         ('ESP32-C3 开发板布线','MQTT 项目的实际接线，手工焊接功率模块',
          '/uploads/gallery/esp32c3-wiring.jpg','/uploads/gallery/thumb/esp32c3-wiring.jpg',
-         'esp32c3-wiring.jpg','photo',2448,3264,'{嵌入式,ESP32,硬件,DIY}',FALSE,4),
+         'esp32c3-wiring.jpg','photo',2448,3264,'{嵌入式,ESP32,硬件,DIY}',FALSE,4,3),
         ('某个深夜的咖啡馆','一个人，一本书，一杯美式，让城市的喧嚣退后',
          '/uploads/gallery/cafe-night.jpg','/uploads/gallery/thumb/cafe-night.jpg',
-         'cafe-night.jpg','photo',4000,3000,'{夜晚,咖啡馆,氛围,生活}',TRUE,5)
+         'cafe-night.jpg','photo',4000,3000,'{夜晚,咖啡馆,氛围,生活}',TRUE,5,1)
     `)
 
     // ── 8. 友情链接 ──────────────────────────────────────────

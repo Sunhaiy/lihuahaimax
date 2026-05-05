@@ -19,6 +19,8 @@ interface TiptapEditorProps {
   placeholder?: string
   editable?: boolean
   className?: string
+  toolbarPreset?: 'full' | 'lite'
+  proseClassName?: string
 }
 
 type ToolItem = {
@@ -47,9 +49,11 @@ export function TiptapEditor({
   initialContent,
   onChange,
   onStatsChange,
-  placeholder = '开始写作…',
+  placeholder = '开始写作...',
   editable = true,
   className = '',
+  toolbarPreset = 'full',
+  proseClassName = '',
 }: TiptapEditorProps) {
   const editor = useEditor({
     extensions: getEditorExtensions({ placeholder }),
@@ -67,50 +71,41 @@ export function TiptapEditor({
 
   if (!editor) return null
 
+  const minHeightClass =
+    toolbarPreset === 'lite' ? '[&_.ProseMirror]:min-h-[320px]' : '[&_.ProseMirror]:min-h-[760px]'
+
   return (
     <div className={`mx-auto w-full max-w-[1080px] ${className}`.trim()}>
-      <div className="overflow-hidden rounded-[32px] border border-border/75 bg-card/82 backdrop-blur-2xl">
-        {editable ? <EditorToolbar editor={editor} /> : null}
+      <div className="overflow-hidden rounded-[32px] border border-border/75 bg-card/82 shadow-[0_24px_80px_rgba(10,10,12,0.08)] backdrop-blur-2xl">
+        {editable ? <EditorToolbar editor={editor} preset={toolbarPreset} /> : null}
         <EditorContent
           editor={editor}
-          className="
-            relative prose prose-neutral max-w-none dark:prose-invert
-            [&_.ProseMirror]:min-h-[760px]
-            [&_.ProseMirror]:px-8
-            [&_.ProseMirror]:py-10
-            [&_.ProseMirror]:font-sans
-            [&_.ProseMirror]:text-[16px]
-            [&_.ProseMirror]:leading-8
-            [&_.ProseMirror]:text-foreground
-            [&_.ProseMirror]:focus:outline-none
-            [&_.ProseMirror_h1]:mb-5
-            [&_.ProseMirror_h2]:mt-10
-            [&_.ProseMirror_h3]:mt-8
-            [&_.ProseMirror_h4]:mt-6
-            [&_.ProseMirror_a]:text-primary
-            [&_.ProseMirror_a]:underline
-            [&_.ProseMirror_a]:decoration-primary/40
-            [&_.ProseMirror_blockquote]:rounded-r-[20px]
-            [&_.ProseMirror_blockquote]:border-l-2
-            [&_.ProseMirror_blockquote]:border-primary/30
-            [&_.ProseMirror_blockquote]:bg-background/42
-            [&_.ProseMirror_blockquote]:px-5
-            [&_.ProseMirror_blockquote]:py-3
-            [&_.ProseMirror_pre]:rounded-[20px]
-            [&_.ProseMirror_pre]:border
-            [&_.ProseMirror_pre]:border-border/70
-            [&_.ProseMirror_pre]:bg-background/55
-            [&_.ProseMirror_img]:rounded-[20px]
-            [&_.ProseMirror_img]:border
-            [&_.ProseMirror_img]:border-border/70
-          "
+          className={cn(
+            'relative prose prose-neutral max-w-none dark:prose-invert',
+            '[&_.ProseMirror]:px-8 [&_.ProseMirror]:py-10 [&_.ProseMirror]:font-sans [&_.ProseMirror]:text-[16px] [&_.ProseMirror]:leading-8 [&_.ProseMirror]:text-foreground [&_.ProseMirror]:focus:outline-none',
+            minHeightClass,
+            '[&_.ProseMirror_h1]:mb-5 [&_.ProseMirror_h1]:text-4xl [&_.ProseMirror_h1]:font-semibold [&_.ProseMirror_h1]:tracking-[-0.06em]',
+            '[&_.ProseMirror_h2]:mt-12 [&_.ProseMirror_h2]:mb-5 [&_.ProseMirror_h2]:text-[2rem] [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h2]:tracking-[-0.05em]',
+            '[&_.ProseMirror_h3]:mt-9 [&_.ProseMirror_h3]:mb-4 [&_.ProseMirror_h3]:text-[1.45rem] [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:tracking-[-0.04em]',
+            '[&_.ProseMirror_h4]:mt-7 [&_.ProseMirror_h4]:mb-3 [&_.ProseMirror_h4]:text-[1.12rem] [&_.ProseMirror_h4]:font-semibold',
+            '[&_.ProseMirror_p]:my-4 [&_.ProseMirror_p]:text-[1rem] [&_.ProseMirror_p]:leading-8 [&_.ProseMirror_p]:text-foreground/86',
+            '[&_.ProseMirror_a]:text-primary [&_.ProseMirror_a]:underline [&_.ProseMirror_a]:decoration-primary/35 [&_.ProseMirror_a]:underline-offset-4',
+            '[&_.ProseMirror_blockquote]:rounded-[24px] [&_.ProseMirror_blockquote]:border-l-[3px] [&_.ProseMirror_blockquote]:border-primary/30 [&_.ProseMirror_blockquote]:bg-background/42 [&_.ProseMirror_blockquote]:px-5 [&_.ProseMirror_blockquote]:py-4',
+            '[&_.ProseMirror_pre]:rounded-[24px] [&_.ProseMirror_pre]:border [&_.ProseMirror_pre]:border-border/70 [&_.ProseMirror_pre]:bg-[linear-gradient(180deg,rgba(16,16,18,0.98),rgba(10,10,12,0.98))] [&_.ProseMirror_pre]:shadow-[0_20px_48px_rgba(0,0,0,0.14)]',
+            '[&_.ProseMirror_pre_code]:block [&_.ProseMirror_pre_code]:rounded-none [&_.ProseMirror_pre_code]:bg-transparent [&_.ProseMirror_pre_code]:px-5 [&_.ProseMirror_pre_code]:py-4 [&_.ProseMirror_pre_code]:font-mono [&_.ProseMirror_pre_code]:text-[0.92rem] [&_.ProseMirror_pre_code]:leading-7 [&_.ProseMirror_pre_code]:text-zinc-100',
+            '[&_.ProseMirror_code]:rounded-md [&_.ProseMirror_code]:bg-primary/10 [&_.ProseMirror_code]:px-1.5 [&_.ProseMirror_code]:py-1 [&_.ProseMirror_code]:font-mono [&_.ProseMirror_code]:text-[0.92em] [&_.ProseMirror_code]:text-primary',
+            '[&_.ProseMirror_ul]:my-5 [&_.ProseMirror_ul]:space-y-2.5 [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ol]:my-5 [&_.ProseMirror_ol]:space-y-2.5 [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_li]:text-foreground/84',
+            '[&_.ProseMirror_hr]:my-10 [&_.ProseMirror_hr]:border-border/75',
+            '[&_.ProseMirror_img]:rounded-[24px] [&_.ProseMirror_img]:border [&_.ProseMirror_img]:border-border/70 [&_.ProseMirror_img]:bg-background/65 [&_.ProseMirror_img]:shadow-[0_24px_64px_rgba(0,0,0,0.12)]',
+            proseClassName
+          )}
         />
       </div>
     </div>
   )
 }
 
-function EditorToolbar({ editor }: { editor: Editor }) {
+function EditorToolbar({ editor, preset }: { editor: Editor; preset: 'full' | 'lite' }) {
   const imgInputRef = useRef<HTMLInputElement>(null)
   const [imgUploading, setImgUploading] = useState(false)
   const [linkPanelOpen, setLinkPanelOpen] = useState(false)
@@ -156,7 +151,7 @@ function EditorToolbar({ editor }: { editor: Editor }) {
     setLinkPanelOpen(false)
   }
 
-  const groups: ToolItem[][] = [
+  const sharedGroups: ToolItem[][] = [
     [
       {
         icon: <MaterialSymbol icon="undo" size={18} />,
@@ -188,12 +183,6 @@ function EditorToolbar({ editor }: { editor: Editor }) {
         action: (instance) => instance.chain().focus().toggleHeading({ level: 3 }).run(),
         isActive: (instance) => instance.isActive('heading', { level: 3 }),
       },
-      {
-        icon: <MaterialSymbol icon="format_h4" size={18} />,
-        title: '四级标题',
-        action: (instance) => instance.chain().focus().toggleHeading({ level: 4 }).run(),
-        isActive: (instance) => instance.isActive('heading', { level: 4 }),
-      },
     ],
     [
       {
@@ -207,12 +196,6 @@ function EditorToolbar({ editor }: { editor: Editor }) {
         title: '斜体',
         action: (instance) => instance.chain().focus().toggleItalic().run(),
         isActive: (instance) => instance.isActive('italic'),
-      },
-      {
-        icon: <MaterialSymbol icon="format_strikethrough" size={18} />,
-        title: '删除线',
-        action: (instance) => instance.chain().focus().toggleStrike().run(),
-        isActive: (instance) => instance.isActive('strike'),
       },
       {
         icon: <MaterialSymbol icon="code" size={18} />,
@@ -257,34 +240,66 @@ function EditorToolbar({ editor }: { editor: Editor }) {
         action: (instance) => instance.chain().focus().setHorizontalRule().run(),
       },
     ],
-    [
-      {
-        icon: <MaterialSymbol icon="html" size={18} />,
-        title: '原始 HTML',
-        action: (instance) => instance.chain().focus().insertContent({ type: 'rawHtml' }).run(),
-      },
-      {
-        icon: <MaterialSymbol icon="schema" size={18} />,
-        title: '引脚图',
-        action: (instance) => instance.chain().focus().insertContent({ type: 'pinoutDiagram' }).run(),
-      },
-      {
-        icon: <MaterialSymbol icon="terminal" size={18} />,
-        title: 'SSH 终端',
-        action: (instance) => instance.chain().focus().insertContent({ type: 'sshTerminal' }).run(),
-      },
-    ],
   ]
 
+  const fullOnlyGroup: ToolItem[] = [
+    {
+      icon: <MaterialSymbol icon="format_h4" size={18} />,
+      title: '四级标题',
+      action: (instance) => instance.chain().focus().toggleHeading({ level: 4 }).run(),
+      isActive: (instance) => instance.isActive('heading', { level: 4 }),
+    },
+    {
+      icon: <MaterialSymbol icon="format_strikethrough" size={18} />,
+      title: '删除线',
+      action: (instance) => instance.chain().focus().toggleStrike().run(),
+      isActive: (instance) => instance.isActive('strike'),
+    },
+  ]
+
+  const customBlocks: ToolItem[] = [
+    {
+      icon: <MaterialSymbol icon="html" size={18} />,
+      title: '原始 HTML',
+      action: (instance) => instance.chain().focus().insertContent({ type: 'rawHtml' }).run(),
+    },
+    {
+      icon: <MaterialSymbol icon="schema" size={18} />,
+      title: '引脚图',
+      action: (instance) => instance.chain().focus().insertContent({ type: 'pinoutDiagram' }).run(),
+    },
+    {
+      icon: <MaterialSymbol icon="terminal" size={18} />,
+      title: 'SSH 终端',
+      action: (instance) => instance.chain().focus().insertContent({ type: 'sshTerminal' }).run(),
+    },
+  ]
+
+  const groups = sharedGroups.map((group, index) => {
+    if (preset === 'full' && index === 1) {
+      return [...group, ...fullOnlyGroup.slice(0, 1)]
+    }
+    if (preset === 'full' && index === 2) {
+      return [...group, ...fullOnlyGroup.slice(1)]
+    }
+    return group
+  })
+
+  if (preset === 'full') {
+    groups.push(customBlocks)
+  }
+
   return (
-    <div className="sticky top-0 z-20 border-b border-border/70 bg-background/88 backdrop-blur-2xl">
+    <div className="sticky top-0 z-20 border-b border-border/70 bg-background/90 backdrop-blur-2xl">
       <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-4">
         <div>
           <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-muted-foreground">
-            Writing Surface
+            {preset === 'lite' ? 'Moment Composer' : 'Writing Surface'}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            工具栏补齐了常用排版和插入能力，但依旧尽量轻，不让正文写作变成在堆按钮。
+            {preset === 'lite'
+              ? '适合写一条更完整的瞬间记录，够用但不过度打扰。'
+              : '工具栏补齐了常用排版和插入能力，但依旧尽量轻，不让正文写作变成在堆按钮。'}
           </p>
         </div>
 

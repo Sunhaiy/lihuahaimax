@@ -5,6 +5,7 @@
  */
 
 import { query } from '@/lib/db'
+import { extractPlainTextFromRichContent } from '@/lib/utils/extractHeadings'
 import type {
   CreateMomentCommentInput,
   CreateMomentInput,
@@ -100,13 +101,18 @@ export async function findMomentById(id: number): Promise<MomentRow | null> {
 // ============================================================
 
 export async function insertMoment(input: CreateMomentInput): Promise<MomentRow> {
+  const richSummary =
+    input.contentJson ? extractPlainTextFromRichContent(input.contentJson).slice(0, 280) : ''
+  const content = input.content?.trim() || richSummary || null
+
   const result = await query<MomentRow>(
-    `INSERT INTO moments (type, content, images, meta, mood, weather, location, is_public)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO moments (type, content, content_json, images, meta, mood, weather, location, is_public)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING *`,
     [
       input.type ?? 'text',
-      input.content ?? null,
+      content,
+      input.contentJson ? JSON.stringify(input.contentJson) : null,
       input.images ?? [],
       input.meta ? JSON.stringify(input.meta) : null,
       input.mood ?? null,
@@ -127,8 +133,21 @@ export async function updateMoment(id: number, input: UpdateMomentInput): Promis
   const values: unknown[] = []
   let idx = 1
 
+  const nextContent =
+    input.contentJson !== undefined
+      ? extractPlainTextFromRichContent(input.contentJson ?? null).slice(0, 280) || null
+      : undefined
+
   if (input.type !== undefined) { setClauses.push(`type = $${idx++}`); values.push(input.type) }
   if (input.content !== undefined) { setClauses.push(`content = $${idx++}`); values.push(input.content) }
+  if (input.contentJson !== undefined) {
+    setClauses.push(`content_json = $${idx++}`)
+    values.push(input.contentJson ? JSON.stringify(input.contentJson) : null)
+    if (input.content === undefined) {
+      setClauses.push(`content = $${idx++}`)
+      values.push(nextContent)
+    }
+  }
   if (input.images !== undefined) { setClauses.push(`images = $${idx++}`); values.push(input.images) }
   if (input.meta !== undefined) { setClauses.push(`meta = $${idx++}`); values.push(JSON.stringify(input.meta)) }
   if (input.mood !== undefined) { setClauses.push(`mood = $${idx++}`); values.push(input.mood) }

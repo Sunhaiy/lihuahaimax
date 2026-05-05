@@ -2,16 +2,41 @@
 
 import useSWR from 'swr'
 import useSWRMutation from 'swr/mutation'
-import { updateGalleryItem, deleteGalleryItem, uploadGalleryImage } from './api'
-import type { UpdateGalleryItemInput } from './types'
+import {
+  createGalleryAlbum,
+  deleteGalleryItem,
+  fetchGalleryAlbums,
+  updateGalleryItem,
+  uploadGalleryImage,
+} from './api'
+import type { CreateGalleryAlbumInput, UpdateGalleryItemInput } from './types'
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json())
+const fetcher = (url: string) => fetch(url).then((response) => response.json())
 
-export function useGalleryItems(params: { page?: number; pageSize?: number; category?: string; tag?: string } = {}) {
+export function useGalleryItems(params: {
+  page?: number
+  pageSize?: number
+  category?: string
+  tag?: string
+  albumId?: number
+} = {}) {
   const qs = new URLSearchParams(
-    Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])
+    Object.entries(params)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => [key, String(value)])
   )
+
   return useSWR(`/api/gallery?${qs}`, fetcher)
+}
+
+export function useGalleryAlbums() {
+  return useSWR('/api/gallery/albums', fetchGalleryAlbums)
+}
+
+export function useCreateGalleryAlbum() {
+  return useSWRMutation('/api/gallery/albums', (_url: string, { arg }: { arg: CreateGalleryAlbumInput }) =>
+    createGalleryAlbum(arg)
+  )
 }
 
 export function useUploadImage() {
@@ -23,15 +48,11 @@ export function useUploadImage() {
 }
 
 export function useUpdateGalleryItem(id: number) {
-  return useSWRMutation(
-    `/api/gallery/${id}`,
-    (_url: string, { arg }: { arg: UpdateGalleryItemInput }) =>
-      updateGalleryItem(id, arg)
+  return useSWRMutation(`/api/gallery/${id}`, (_url: string, { arg }: { arg: UpdateGalleryItemInput }) =>
+    updateGalleryItem(id, arg)
   )
 }
 
 export function useDeleteGalleryItem() {
-  return useSWRMutation('/api/gallery', (_url: string, { arg }: { arg: number }) =>
-    deleteGalleryItem(arg)
-  )
+  return useSWRMutation('/api/gallery', (_url: string, { arg }: { arg: number }) => deleteGalleryItem(arg))
 }
