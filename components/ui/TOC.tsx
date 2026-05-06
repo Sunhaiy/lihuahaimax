@@ -69,7 +69,7 @@ export function TOC({
   return (
     <div className="rounded-[20px] border border-border/70 bg-card/84 p-4">
       <div className="mb-4">
-        <div className="flex items-center justify-between text-[12px] text-muted-foreground">
+        <div className="flex items-center justify-between text-[12px] tracking-normal text-muted-foreground">
           <span>阅读进度</span>
           <span>{Math.round(progress)}%</span>
         </div>
@@ -79,17 +79,19 @@ export function TOC({
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] tracking-normal text-muted-foreground">
           {readTime ? <span>约 {readTime} 分钟</span> : null}
           {formattedDate ? <span>{formattedDate}</span> : null}
         </div>
       </div>
 
       <div className="border-t border-border/60 pt-4">
-        <p className="mb-3 text-sm font-medium text-foreground">目录</p>
+        <p className="mb-3 text-sm font-medium tracking-normal text-foreground">目录</p>
 
         {headings.length === 0 ? (
-          <p className="text-xs leading-6 text-muted-foreground">这篇文章没有可展示的标题目录。</p>
+          <p className="text-xs leading-6 tracking-normal text-muted-foreground">
+            这篇文章没有可展示的标题目录。
+          </p>
         ) : (
           <ul className="space-y-1">
             {headings.map(({ id, level, text }) => {
@@ -108,8 +110,10 @@ export function TOC({
                       window.scrollTo({ top, behavior: 'smooth' })
                       setActiveId(id)
                     }}
-                    className={`block rounded-lg px-2 py-1.5 text-[12px] leading-5 transition-colors ${
-                      isActive ? 'bg-primary/8 text-primary' : 'text-muted-foreground hover:bg-background/55 hover:text-foreground'
+                    className={`block rounded-lg px-2 py-1.5 text-[12px] leading-5 tracking-normal transition-colors ${
+                      isActive
+                        ? 'bg-primary/8 text-primary'
+                        : 'text-muted-foreground hover:bg-background/55 hover:text-foreground'
                     }`}
                     title={text}
                   >

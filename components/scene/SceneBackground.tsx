@@ -33,7 +33,7 @@ export function SceneBackground({
     page === 'moments' ? Math.max(scene.weather.intensity, 0.58) : scene.weather.intensity
 
   return (
-    <div className={`scene-page-${page} relative isolate overflow-x-hidden bg-background ${className}`.trim()}>
+    <div className={`scene-page-${page} relative isolate bg-background ${className}`.trim()}>
       {hasImage ? (
         <div
           aria-hidden

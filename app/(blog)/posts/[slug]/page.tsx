@@ -17,7 +17,7 @@ import {
   incrementViewCount,
 } from '@/lib/db/dao/postDao'
 import { getSiteProfile } from '@/lib/site'
-import { extractHeadings, estimateReadTime } from '@/lib/utils/extractHeadings'
+import { estimateReadTime, extractHeadings } from '@/lib/utils/extractHeadings'
 import { CommentSection } from './CommentSection'
 import { PostContent } from './PostContent'
 
@@ -172,7 +172,7 @@ export default async function PostPage({
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-3 py-10 sm:px-5">
+      <div className="mx-auto max-w-7xl overflow-visible px-3 py-10 sm:px-5">
         <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
           <article id="post-reading-surface" className="min-w-0">
             <PostContent content={post.content as object} headings={headings} />
@@ -197,7 +197,7 @@ export default async function PostPage({
                 <p className="mb-0.5 text-sm font-semibold text-foreground">
                   {siteProfile.ownerName}
                 </p>
-                <p className="mb-2 text-[11px] tracking-[0.04em] text-primary">
+                <p className="mb-2 text-[11px] tracking-[0.02em] text-primary">
                   {siteProfile.roleLine}
                 </p>
                 <p className="text-xs leading-relaxed text-muted-foreground">{siteProfile.bio}</p>
@@ -251,8 +251,8 @@ export default async function PostPage({
             <CommentSection postId={post.id} />
           </article>
 
-          <aside className="hidden lg:block lg:self-start">
-            <div className="sticky top-24">
+          <aside className="relative hidden self-start lg:block">
+            <div className="sticky top-24 w-[240px] max-h-[calc(100vh-7rem)] self-start overflow-y-auto pr-1">
               <TOC
                 headings={headings}
                 readTime={readTime}
