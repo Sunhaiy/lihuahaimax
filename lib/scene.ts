@@ -1,5 +1,6 @@
+import { revalidateTag, unstable_cache } from 'next/cache'
 import { SETTINGS_KEYS } from '@/lib/constants/settings'
-import { getSetting, setSetting } from '@/lib/db/dao/settingsDao'
+import { getSettings, setSetting } from '@/lib/db/dao/settingsDao'
 import { normalizeHexColor } from '@/lib/scene-color'
 import type {
   BackgroundSceneSettings,
@@ -38,7 +39,7 @@ function isWeatherPreset(value: unknown): value is WeatherPreset {
 }
 
 function isEnabledPage(value: unknown): value is SceneEnabledPage {
-  return value === 'all' || value === 'home' || value === 'moments' || value === 'works-detail'
+  return value === 'all' || value === 'home' || value === 'moments' || value === 'works'
 }
 
 export function normalizeBackgroundSceneSettings(
@@ -63,7 +64,9 @@ export function normalizeBackgroundSceneSettings(
       : DEFAULT_BACKGROUND_SCENE.image.url
 
   const enabledPages = Array.isArray(weather.enabledPages)
-    ? weather.enabledPages.filter(isEnabledPage)
+    ? weather.enabledPages
+        .map((page) => (page === 'works-detail' ? 'works' : page))
+        .filter(isEnabledPage)
     : DEFAULT_BACKGROUND_SCENE.weather.enabledPages
 
   return {
@@ -120,16 +123,26 @@ export function normalizeBackgroundSceneSettings(
   }
 }
 
-export async function getBackgroundSceneSettings(): Promise<BackgroundSceneSettings> {
-  const [scene, legacyHero] = await Promise.all([
-    getSetting(SETTINGS_KEYS.BACKGROUND_SCENE),
-    getSetting<{ url?: string | null }>(SETTINGS_KEYS.HERO_BG),
+const getBackgroundSceneSettingsCached = unstable_cache(async (): Promise<BackgroundSceneSettings> => {
+  const settings = await getSettings<unknown>([
+    SETTINGS_KEYS.BACKGROUND_SCENE,
+    SETTINGS_KEYS.HERO_BG,
   ])
+
+  const scene = settings[SETTINGS_KEYS.BACKGROUND_SCENE]
+  const legacyHero = settings[SETTINGS_KEYS.HERO_BG] as { url?: string | null } | null
 
   return normalizeBackgroundSceneSettings(
     scene,
     typeof legacyHero?.url === 'string' ? legacyHero.url : null
   )
+}, ['background-scene'], {
+  revalidate: 300,
+  tags: ['background-scene', 'settings'],
+})
+
+export async function getBackgroundSceneSettings(): Promise<BackgroundSceneSettings> {
+  return getBackgroundSceneSettingsCached()
 }
 
 export async function persistBackgroundSceneSettings(scene: BackgroundSceneSettings) {
@@ -145,6 +158,9 @@ export async function persistBackgroundSceneSettings(scene: BackgroundSceneSetti
       'Legacy hero background mirror'
     ),
   ])
+
+  revalidateTag('background-scene')
+  revalidateTag('settings')
 
   return scene
 }

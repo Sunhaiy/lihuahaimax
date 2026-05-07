@@ -26,19 +26,14 @@ const CATEGORY_ICONS: Record<string, string> = {
   项目实战: 'construction',
   生活随笔: 'edit_note',
   读书笔记: 'menu_book',
-  工具推荐: 'build',
-  嵌入式: 'memory',
-  物联网: 'wifi',
-  前端: 'web',
-  后端: 'dns',
-  开源: 'account_tree',
+  站点维护: 'folder',
   未分类: 'folder',
 }
 
 const COLLECTION_ITEMS = [
   { href: '/anime', label: '动漫', icon: 'movie', desc: '追番记录' },
   { href: '/games', label: '游戏', icon: 'sports_esports', desc: '游玩足迹' },
-  { href: '/gallery', label: '光影', icon: 'photo_camera', desc: '图片相册' },
+  { href: '/gallery', label: '相册', icon: 'photo_camera', desc: '光影收藏' },
 ]
 
 const POST_SUB_PAGES = [
@@ -49,7 +44,7 @@ const POST_SUB_PAGES = [
 ]
 
 const PANEL_CLS =
-  'rounded-[24px] border border-white/10 bg-[rgba(38,34,36,0.62)] backdrop-blur-xl backdrop-brightness-75 backdrop-saturate-150'
+  'rounded-[24px] border border-border/80 bg-background/95 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:bg-card/92 dark:shadow-[0_20px_60px_rgba(0,0,0,0.42)]'
 
 interface MenuPos {
   centerX: number
@@ -83,7 +78,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
   }
 
   function closePostMenuLater() {
-    postTimer.current = setTimeout(() => setPostMenuOpen(false), 220)
+    postTimer.current = setTimeout(() => setPostMenuOpen(false), 180)
   }
 
   function openCollectionMenu() {
@@ -96,12 +91,15 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
   }
 
   function closeCollectionMenuLater() {
-    collectionTimer.current = setTimeout(() => setCollectionMenuOpen(false), 220)
+    collectionTimer.current = setTimeout(() => setCollectionMenuOpen(false), 180)
   }
+
+  const navLinkClass =
+    'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground'
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl backdrop-saturate-150">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/82 backdrop-blur-xl backdrop-saturate-150">
         <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
           <Link
             href="/"
@@ -114,10 +112,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
           </Link>
 
           <div className="hidden items-center gap-1 sm:flex">
-            <Link
-              href="/"
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
-            >
+            <Link href="/" className={navLinkClass}>
               <MaterialSymbol icon="home" size={16} />
               首页
             </Link>
@@ -141,20 +136,14 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
               </Link>
             </div>
 
-            <Link
-              href="/moments"
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
-            >
+            <Link href="/moments" className={navLinkClass}>
               <MaterialSymbol icon="bolt" size={16} fill />
               瞬间
             </Link>
 
-            <Link
-              href="/works"
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
-            >
+            <Link href="/works" className={navLinkClass}>
               <MaterialSymbol icon="deployed_code" size={16} />
-              作品
+              项目
             </Link>
 
             <div
@@ -176,18 +165,12 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
               </button>
             </div>
 
-            <Link
-              href="/links"
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
-            >
+            <Link href="/links" className={navLinkClass}>
               <MaterialSymbol icon="link" size={16} />
               友情链接
             </Link>
 
-            <Link
-              href="/about"
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
-            >
+            <Link href="/about" className={navLinkClass}>
               <MaterialSymbol icon="person" size={16} />
               关于
             </Link>
@@ -220,8 +203,8 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
             onMouseEnter={openPostMenu}
             onMouseLeave={closePostMenuLater}
           >
-            <div className={`menu-popover ${PANEL_CLS} min-w-[300px] p-3.5`}>
-              <div className="mb-1 grid grid-cols-4 gap-0.5">
+            <div className={`menu-popover ${PANEL_CLS} min-w-[320px] p-3.5`}>
+              <div className="mb-1 grid grid-cols-4 gap-1">
                 {POST_SUB_PAGES.map((item) => (
                   <Link
                     key={item.href}
@@ -245,7 +228,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
                   <p className="mb-2 px-1 text-[10px] font-medium tracking-[0.16em] text-muted-foreground select-none">
                     文章分类
                   </p>
-                  <div className="grid grid-cols-2 gap-0.5">
+                  <div className="grid grid-cols-2 gap-1">
                     {categories.map(({ category, count }) => (
                       <Link
                         key={category}
@@ -290,7 +273,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
               <p className="mb-2 px-1 text-[10px] font-medium tracking-[0.16em] text-muted-foreground select-none">
                 收藏夹
               </p>
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-1">
                 {COLLECTION_ITEMS.map((item) => (
                   <Link
                     key={item.href}
@@ -302,9 +285,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
                       <MaterialSymbol icon={item.icon} size={16} />
                     </span>
                     <span>
-                      <span className="block text-xs font-medium text-foreground">
-                        {item.label}
-                      </span>
+                      <span className="block text-xs font-medium text-foreground">{item.label}</span>
                       <span className="block text-[10px] text-muted-foreground">{item.desc}</span>
                     </span>
                   </Link>

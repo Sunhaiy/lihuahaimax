@@ -1,680 +1,194 @@
 'use client'
 
-import JsBarcode from 'jsbarcode'
-import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { useGsapScope } from '@/hooks/useGsapScope'
 import type { WorkListItem } from '@/types/work'
 
 interface Props {
   works: WorkListItem[]
-  siteUrl: string
 }
 
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-})
-
-const timeFormatter = new Intl.DateTimeFormat('en-US', {
-  hour: 'numeric',
-  minute: '2-digit',
-  hour12: true,
-})
-
-export function WorksCarousel({ works, siteUrl }: Props) {
+export function WorksCarousel({ works }: Props) {
   const [active, setActive] = useState(0)
-  const [transitionKey, setTransitionKey] = useState(0)
-  const directionRef = useRef<1 | -1>(1)
-  const initialRenderRef = useRef(true)
-  const gestureLockRef = useRef(0)
-  const activeWork = works[active]
-  const ticketDate = useMemo(() => formatTicketDate(activeWork), [activeWork])
-  const ticketTime = useMemo(() => formatTicketTime(activeWork), [activeWork])
-  const ticketSummary = activeWork.subtitle || activeWork.summary || activeWork.description || ''
-  const barcodeValue = useMemo(
-    () => buildWorkUrl(siteUrl, activeWork.slug),
-    [activeWork.slug, siteUrl]
-  )
+  const activeWork = works[active] ?? works[0]
+
+  const primaryHref = activeWork?.primary_url || activeWork?.url || ''
+  const githubHref = activeWork?.github_url || activeWork?.secondary_url || ''
+
+  const summary = useMemo(() => {
+    if (!activeWork) return ''
+    return activeWork.summary || activeWork.subtitle || activeWork.description || ''
+  }, [activeWork])
 
   const { scopeRef } = useGsapScope<HTMLDivElement>((scope, { gsap, prefersReducedMotion }) => {
-    const stage = scope.querySelector('[data-ticket-shell]')
-    const content = scope.querySelector('[data-ticket-content]')
-    const controls = scope.querySelector('[data-ticket-controls]')
-    const meta = scope.querySelector('[data-ticket-meta]')
-    const postmark = scope.querySelector('[data-ticket-postmark]')
-    const direction = directionRef.current
+    const stage = scope.querySelector('[data-works-stage]')
+    const media = scope.querySelector('[data-works-media]')
+    const copy = scope.querySelector('[data-works-copy]')
+    const actions = scope.querySelector('[data-works-actions]')
 
-    if (!stage || !content || !controls || !meta) return
+    if (!stage || !media || !copy || !actions) return
 
     if (prefersReducedMotion) {
-      gsap.set([stage, controls, meta], { clearProps: 'all', autoAlpha: 1 })
-      gsap.set(postmark, { autoAlpha: 0, clearProps: 'transform' })
-      gsap.set(content.querySelectorAll('[data-ticket-line]'), { clearProps: 'all', autoAlpha: 1 })
-      initialRenderRef.current = false
+      gsap.set([stage, media, copy, actions], { clearProps: 'all', autoAlpha: 1 })
       return
     }
-
-    const isInitial = initialRenderRef.current
-    initialRenderRef.current = false
 
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+    tl.fromTo(stage, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.2 })
+    tl.fromTo(media, { autoAlpha: 0, y: 24, scale: 0.98 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.58 })
+    tl.fromTo(copy, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 0.42 }, '-=0.28')
+    tl.fromTo(actions, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.34 }, '-=0.2')
+  }, [active])
 
-    if (isInitial) {
-      tl.fromTo(
-        stage,
-        { autoAlpha: 0, y: 24, scale: 0.985 },
-        { autoAlpha: 1, y: 0, scale: 1, duration: 0.68 }
-      )
-
-      tl.fromTo(
-        content.querySelectorAll('[data-ticket-line]'),
-        { autoAlpha: 0, y: 16 },
-        { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.05 },
-        '-=0.42'
-      )
-
-      tl.fromTo(controls, { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.42 }, '-=0.3')
-      tl.fromTo(meta, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.42 }, '-=0.28')
-      return
-    }
-
-    gsap.set(stage, {
-      transformOrigin: direction > 0 ? '78% 100%' : '22% 100%',
-      transformPerspective: 1200,
-    })
-    gsap.set(postmark, {
-      autoAlpha: 0,
-      xPercent: direction > 0 ? -34 : 34,
-      yPercent: -16,
-      rotate: direction > 0 ? -15 : 15,
-      scale: 0.94,
-    })
-
-    tl.fromTo(
-      stage,
-      {
-        autoAlpha: 0,
-        x: direction * 72,
-        y: 20,
-        rotate: direction * 7.4,
-        rotationY: direction * -16,
-        scale: 0.948,
-        filter: 'blur(1.6px)',
-      },
-      {
-        autoAlpha: 1,
-        x: 0,
-        y: 0,
-        rotate: 0,
-        rotationY: 0,
-        scale: 1,
-        filter: 'blur(0px)',
-        duration: 0.8,
-        ease: 'expo.out',
-      }
-    )
-
-    tl.fromTo(
-      content.querySelectorAll('[data-ticket-line]'),
-      { autoAlpha: 0, x: direction * 26, y: 10, rotate: direction * 0.7 },
-      { autoAlpha: 1, x: 0, y: 0, rotate: 0, duration: 0.42, stagger: 0.036 },
-      '-=0.6'
-    )
-
-    tl.fromTo(
-      scope.querySelector('[data-ticket-barcode-wrap]'),
-      { autoAlpha: 0, scaleX: 0.68, y: 10 },
-      { autoAlpha: 1, scaleX: 1, y: 0, duration: 0.38, ease: 'power2.out' },
-      '-=0.36'
-    )
-
-    if (postmark) {
-      tl.to(
-        postmark,
-        {
-          autoAlpha: 0.84,
-          xPercent: 0,
-          yPercent: 0,
-          rotate: direction > 0 ? -11 : 11,
-          scale: 1,
-          duration: 0.22,
-          ease: 'power2.out',
-        },
-        '-=0.62'
-      )
-
-      tl.to(
-        postmark,
-        {
-          autoAlpha: 0,
-          xPercent: direction > 0 ? 24 : -24,
-          yPercent: 12,
-          duration: 0.28,
-          ease: 'power2.in',
-        },
-        '>-0.02'
-      )
-    }
-
-    tl.fromTo(
-      controls,
-      { autoAlpha: 0, y: 10 },
-      { autoAlpha: 1, y: 0, duration: 0.34 },
-      '-=0.28'
-    )
-
-    tl.fromTo(
-      meta,
-      { autoAlpha: 0, y: 12 },
-      { autoAlpha: 1, y: 0, duration: 0.36 },
-      '-=0.24'
-    )
-  }, [active, transitionKey])
-
-  useEffect(() => {
-    if (works.length <= 1) return
-
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowLeft') {
-        step(-1)
-      }
-      if (event.key === 'ArrowRight') {
-        step(1)
-      }
-    }
-
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [works.length])
-
-  useEffect(() => {
-    if (works.length <= 1) return
-
-    const node = scopeRef.current
-    if (!node) return
-
-    let touchStartX = 0
-    let touchStartY = 0
-    let hasTouch = false
-
-    const isGestureLocked = () => Date.now() - gestureLockRef.current < 640
-
-    const onWheel = (event: WheelEvent) => {
-      const dominantDelta =
-        Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX
-
-      if (Math.abs(dominantDelta) < 18) return
-
-      event.preventDefault()
-
-      if (isGestureLocked()) return
-      gestureLockRef.current = Date.now()
-      step(dominantDelta > 0 ? 1 : -1)
-    }
-
-    const onTouchStart = (event: TouchEvent) => {
-      const touch = event.touches[0]
-      if (!touch) return
-
-      touchStartX = touch.clientX
-      touchStartY = touch.clientY
-      hasTouch = true
-    }
-
-    const onTouchMove = (event: TouchEvent) => {
-      if (!hasTouch) return
-
-      const touch = event.touches[0]
-      if (!touch) return
-
-      const deltaX = touch.clientX - touchStartX
-      const deltaY = touch.clientY - touchStartY
-
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        event.preventDefault()
-      }
-    }
-
-    const onTouchEnd = (event: TouchEvent) => {
-      if (!hasTouch) return
-      hasTouch = false
-
-      const touch = event.changedTouches[0]
-      if (!touch) return
-
-      const deltaX = touch.clientX - touchStartX
-      const deltaY = touch.clientY - touchStartY
-
-      if (Math.abs(deltaX) < 46 || Math.abs(deltaX) < Math.abs(deltaY) * 1.15) return
-      if (isGestureLocked()) return
-
-      gestureLockRef.current = Date.now()
-      step(deltaX < 0 ? 1 : -1)
-    }
-
-    node.addEventListener('wheel', onWheel, { passive: false })
-    node.addEventListener('touchstart', onTouchStart, { passive: true })
-    node.addEventListener('touchmove', onTouchMove, { passive: false })
-    node.addEventListener('touchend', onTouchEnd, { passive: true })
-
-    return () => {
-      node.removeEventListener('wheel', onWheel)
-      node.removeEventListener('touchstart', onTouchStart)
-      node.removeEventListener('touchmove', onTouchMove)
-      node.removeEventListener('touchend', onTouchEnd)
-    }
-  }, [scopeRef, works.length])
-
-  function navigateTo(targetIndex: number, direction: 1 | -1) {
-    directionRef.current = direction
-    setActive((targetIndex + works.length) % works.length)
-    setTransitionKey((current) => current + 1)
-  }
-
-  function step(direction: 1 | -1) {
-    directionRef.current = direction
-    setActive((current) => (current + direction + works.length) % works.length)
-    setTransitionKey((current) => current + 1)
-  }
+  if (!activeWork) return null
 
   return (
     <section
       ref={scopeRef}
-      className="relative isolate flex h-[calc(100vh-5rem)] w-full items-center justify-center overflow-hidden px-4 py-12 sm:px-6 lg:px-10"
-      style={{
-        backgroundColor: 'var(--works-stage)',
-        color: 'var(--works-stage-copy)',
-        touchAction: 'none',
-        overscrollBehavior: 'none',
-      }}
+      className="works-theme relative isolate flex min-h-[calc(100vh-4rem)] items-center overflow-hidden px-4 py-12 sm:px-6 lg:px-10"
+      style={{ backgroundColor: 'var(--works-stage)', color: 'var(--works-stage-copy)' }}
       data-works-stage
     >
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(circle at 50% 18%, var(--works-glow-primary) 0%, var(--works-glow-secondary) 24%, transparent 58%)',
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(90deg, var(--works-edge-glow) 0%, transparent 14%, transparent 86%, var(--works-edge-glow) 100%)',
-        }}
-      />
-      <div
-        className="pointer-events-none absolute left-1/2 top-16 h-72 w-72 -translate-x-1/2 rounded-full blur-[110px]"
-        style={{ backgroundColor: 'var(--works-stage-halo)' }}
-      />
-      <div
-        className="pointer-events-none absolute left-1/2 top-[28%] h-[28rem] w-[28rem] -translate-x-1/2 rounded-full blur-[130px]"
-        style={{ backgroundColor: 'var(--works-stage-bloom)' }}
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-56"
-        style={{
-          background:
-            'linear-gradient(180deg, transparent 0%, var(--works-stage-shadow-fade) 100%)',
+            'radial-gradient(circle at 50% 12%, var(--works-glow-primary) 0%, var(--works-glow-secondary) 24%, transparent 56%)',
         }}
       />
 
-      <div className="relative mx-auto flex w-full flex-col items-center">
-        <div className="relative w-full max-w-[19.4rem] sm:max-w-[20rem]" data-ticket-shell>
+      <div className="relative mx-auto grid w-full max-w-7xl items-start gap-10 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="min-w-0">
           <div
-            className="pointer-events-none absolute inset-x-7 top-4 h-full rounded-[2rem] blur-[20px]"
-            style={{ backgroundColor: 'var(--works-ticket-shadow-soft)' }}
-          />
-          <div
-            className="pointer-events-none absolute inset-x-5 top-[0.85rem] h-full rounded-[1.95rem] opacity-70"
-            style={{ backgroundColor: 'var(--works-ticket-shadow-mid)' }}
-          />
-          <div
-            className="pointer-events-none absolute inset-x-3 top-2 h-full rounded-[1.9rem] opacity-78"
-            style={{ backgroundColor: 'var(--works-ticket-shadow-hard)' }}
-          />
-
-          <article
-            className="relative overflow-hidden rounded-[1.85rem] border p-[0.92rem] transition-transform duration-300 hover:-translate-y-0.5"
-            style={{
-              backgroundColor: 'var(--works-ticket-bg)',
-              color: 'var(--works-ticket-copy)',
-              borderColor: 'var(--works-ticket-border)',
-              boxShadow:
-                '0 28px 90px var(--works-ticket-shadow), 0 6px 22px var(--works-ticket-shadow-soft)',
-            }}
+            className="rounded-[32px] border border-border/70 bg-background/24 px-5 py-5 backdrop-blur-xl sm:px-7 sm:py-6"
+            data-works-copy
           >
-            <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-              <div
-                className="absolute left-[9%] top-[42%] h-[6.2rem] w-[82%] rounded-[1.15rem] border-[2px] opacity-0"
-                style={{ borderColor: 'var(--works-postmark-ring)' }}
-                data-ticket-postmark
-              >
-                <div
-                  className="absolute inset-[0.46rem] rounded-[0.92rem] border"
-                  style={{ borderColor: 'var(--works-postmark-ring-soft)' }}
-                />
-                <div
-                  className="absolute left-[8%] right-[10%] top-[36%] h-px"
-                  style={{ backgroundColor: 'var(--works-postmark-line)' }}
-                />
-                <div
-                  className="absolute left-[11%] right-[8%] top-[50%] h-px"
-                  style={{ backgroundColor: 'var(--works-postmark-line)' }}
-                />
-                <div
-                  className="absolute left-[9%] right-[14%] top-[64%] h-px"
-                  style={{ backgroundColor: 'var(--works-postmark-line)' }}
-                />
-                <p
-                  className="absolute inset-x-0 top-[0.72rem] text-center text-[0.5rem] font-mono uppercase tracking-[0.34em]"
-                  style={{ color: 'var(--works-postmark-copy)' }}
-                >
-                  SUXIN POST
-                </p>
-                <p
-                  className="absolute inset-x-0 bottom-[0.72rem] text-center text-[0.44rem] font-mono uppercase tracking-[0.28em]"
-                  style={{ color: 'var(--works-postmark-copy)' }}
-                >
-                  {activeWork.slug}
-                </p>
+            <p className="text-[11px] font-mono uppercase tracking-[0.34em] text-primary">
+              // Project archive
+            </p>
+            <h1 className="mt-4 text-4xl font-semibold tracking-[-0.08em] sm:text-6xl">
+              {activeWork.title}
+            </h1>
+            {activeWork.subtitle ? (
+              <p className="mt-3 text-lg text-muted-foreground sm:text-2xl">{activeWork.subtitle}</p>
+            ) : null}
+            {activeWork.tags.length > 0 ? (
+              <div className="mt-5 flex flex-wrap gap-2">
+                {activeWork.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex rounded-full border border-border/70 bg-background/45 px-3 py-1 text-sm text-muted-foreground"
+                  >
+                    #{tag}
+                  </span>
+                ))}
               </div>
+            ) : null}
+          </div>
+
+          <div
+            className="mt-8 overflow-hidden rounded-[36px] border border-border/70 bg-background/16 shadow-[0_32px_90px_rgba(0,0,0,0.14)]"
+            data-works-media
+          >
+            <div className="aspect-[16/10] w-full overflow-hidden bg-background/20">
+              {activeWork.cover_url ? (
+                <img src={activeWork.cover_url} alt={activeWork.title} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/16 via-background to-muted">
+                  <span className="text-7xl font-black tracking-[-0.08em] text-primary/28">
+                    {activeWork.title.charAt(0)}
+                  </span>
+                </div>
+              )}
             </div>
 
-            <Link
-              href={`/works/${activeWork.slug}`}
-              className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 dark:focus-visible:ring-black/20"
-              aria-label={`Open ${activeWork.title}`}
-            >
-              <div
-                key={activeWork.id}
-                className="block"
-                data-ticket-content
-              >
-                <div
-                  className="relative overflow-hidden rounded-[1.08rem] border"
-                  style={{
-                    backgroundColor: 'var(--works-image-frame)',
-                    borderColor: 'var(--works-image-border)',
-                    boxShadow: 'inset 0 0 0 1px var(--works-image-outline)',
-                  }}
-                  data-ticket-line
-                >
-                  <div className="aspect-[1.43/1]">
-                    {activeWork.cover_url ? (
-                      <img
-                        src={activeWork.cover_url}
-                        alt={activeWork.title}
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.025]"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_30%_20%,rgba(146,122,255,0.7),transparent_32%),radial-gradient(circle_at_70%_30%,rgba(35,215,255,0.65),transparent_34%),radial-gradient(circle_at_50%_75%,rgba(255,92,163,0.55),transparent_30%),linear-gradient(135deg,#050505,#2e2e2e)]">
-                        <span className="text-7xl font-black tracking-[-0.08em] text-white/16">
-                          {activeWork.title.charAt(0)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div
-                    className="pointer-events-none absolute inset-0"
-                    style={{
-                      background:
-                        'linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.22))',
-                    }}
-                  />
-                </div>
-
-                <div className="px-[0.35rem] pb-1 pt-[1.15rem]">
-                  <p
-                    className="text-[0.78rem] font-medium tracking-[-0.01em]"
-                    style={{ color: 'var(--works-ticket-subtle)' }}
-                    data-ticket-line
-                  >
-                    Name
-                  </p>
-                  <h2
-                    className="mt-1.5 text-[1.18rem] font-semibold leading-[1.08] tracking-[-0.055em] sm:text-[1.32rem]"
-                    data-ticket-line
-                  >
-                    {activeWork.title}
-                  </h2>
-
-                  <div className="mt-[1.4rem] grid grid-cols-2 gap-4">
-                    <div data-ticket-line>
-                      <p
-                        className="text-[0.78rem] font-medium tracking-[-0.01em]"
-                        style={{ color: 'var(--works-ticket-muted)' }}
-                      >
-                        Date
-                      </p>
-                      <p className="mt-[0.32rem] text-[0.9rem] font-medium tracking-[-0.025em]">
-                        {ticketDate}
-                      </p>
-                    </div>
-                    <div data-ticket-line>
-                      <p
-                        className="text-[0.78rem] font-medium tracking-[-0.01em]"
-                        style={{ color: 'var(--works-ticket-muted)' }}
-                      >
-                        Time
-                      </p>
-                      <p className="mt-[0.32rem] text-[0.9rem] font-medium tracking-[-0.025em]">
-                        {ticketTime}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="relative mt-[1.35rem]" data-ticket-line>
-                  <span
-                    className="absolute -left-[1.55rem] top-1/2 h-[1.1rem] w-[1.1rem] -translate-y-1/2 rounded-full shadow-[inset_-1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[inset_-1px_0_0_rgba(255,255,255,0.08)]"
-                    style={{ backgroundColor: 'var(--works-cutout)' }}
-                  />
-                  <span
-                    className="absolute -right-[1.55rem] top-1/2 h-[1.1rem] w-[1.1rem] -translate-y-1/2 rounded-full shadow-[inset_1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[inset_1px_0_0_rgba(255,255,255,0.08)]"
-                    style={{ backgroundColor: 'var(--works-cutout)' }}
-                  />
-                  <div
-                    className="h-px w-full bg-repeat-x bg-center"
-                    style={{
-                      backgroundImage:
-                        'radial-gradient(circle, var(--works-perf) 1px, transparent 1.2px)',
-                      backgroundSize: '10px 1px',
-                    }}
-                  />
-                </div>
-
-                <div className="px-[1rem] pb-[1rem] pt-[1.55rem]" data-ticket-line>
-                  <div
-                    className="relative rounded-[4px] border px-[0.38rem] py-[0.34rem]"
-                    style={{
-                      borderColor: 'var(--works-barcode-border)',
-                      backgroundColor: 'var(--works-barcode-shell)',
-                      boxShadow:
-                        'inset 0 1px 0 var(--works-barcode-shell-shine), 0 10px 18px var(--works-barcode-drop)',
-                    }}
-                    data-ticket-barcode-wrap
-                  >
-                    <TicketBarcode value={barcodeValue} title={activeWork.title} />
-                  </div>
-                </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 px-5 py-4 text-sm text-muted-foreground sm:px-6">
+              <div className="flex flex-wrap items-center gap-4">
+                <span>年份：{activeWork.year ?? '—'}</span>
+                <span>标识：{activeWork.slug}</span>
               </div>
-            </Link>
-          </article>
-        </div>
-
-        <div className="mt-9 flex items-center gap-3" data-ticket-controls>
-          <button
-            type="button"
-            onClick={() => step(-1)}
-            aria-label="Previous project"
-            className="flex h-[3.1rem] w-[3.1rem] items-center justify-center rounded-full border transition-transform duration-200 hover:-translate-x-0.5"
-            style={{
-              background: 'var(--works-control-bg)',
-              color: 'var(--works-control-copy)',
-              borderColor: 'var(--works-control-border)',
-              boxShadow: '0 10px 24px var(--works-control-shadow)',
-            }}
-          >
-            <MaterialSymbol icon="chevron_left" size={19} />
-          </button>
-
-          <div
-            className="relative overflow-hidden rounded-full border px-[0.72rem] py-[0.6rem]"
-            style={{
-              borderColor: 'var(--works-rail-border)',
-              background: 'var(--works-rail-bg)',
-              boxShadow: 'inset 0 1px 0 var(--works-rail-shine), 0 10px 22px var(--works-control-shadow)',
-            }}
-            data-ticket-rail
-          >
-            <div
-              className="pointer-events-none absolute inset-x-[0.75rem] top-[0.38rem] h-[4px]"
-              style={{
-                backgroundImage:
-                  'radial-gradient(circle, var(--works-rail-perf) 1px, transparent 1.35px)',
-                backgroundSize: '12px 4px',
-              }}
-            />
-            <div
-              className="pointer-events-none absolute inset-x-[0.75rem] bottom-[0.38rem] h-[4px]"
-              style={{
-                backgroundImage:
-                  'radial-gradient(circle, var(--works-rail-perf) 1px, transparent 1.35px)',
-                backgroundSize: '12px 4px',
-              }}
-            />
-
-            <div className="relative flex items-center gap-[0.34rem]">
-              {works.map((work, index) => (
-                <button
-                  key={work.id}
-                  type="button"
-                  onClick={() => {
-                    if (index === active) return
-                    navigateTo(index, index > active ? 1 : -1)
-                  }}
-                  aria-label={`Go to ${work.title}`}
-                  className="relative flex h-[1.76rem] min-w-[1.82rem] items-center justify-center rounded-full px-[0.42rem] font-mono text-[0.62rem] uppercase tracking-[0.2em] transition-all duration-300"
-                  style={{
-                    backgroundColor:
-                      index === active ? 'var(--works-rail-active-bg)' : 'transparent',
-                    color:
-                      index === active
-                        ? 'var(--works-rail-active-copy)'
-                        : 'var(--works-rail-copy)',
-                    boxShadow:
-                      index === active ? '0 8px 16px var(--works-rail-active-shadow)' : 'none',
-                  }}
-                  data-ticket-rail-item
-                >
-                  <span
-                    className="absolute inset-x-[24%] bottom-[0.33rem] h-px"
-                    style={{
-                      backgroundColor:
-                        index === active
-                          ? 'var(--works-rail-active-line)'
-                          : 'var(--works-rail-line)',
-                    }}
-                  />
-                  {String(index + 1).padStart(2, '0')}
-                </button>
-              ))}
+              <span>更新于：{new Date(activeWork.updated_at).toLocaleDateString('zh-CN')}</span>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => step(1)}
-            aria-label="Next project"
-            className="flex h-[3.1rem] w-[3.1rem] items-center justify-center rounded-full border transition-transform duration-200 hover:translate-x-0.5"
-            style={{
-              background: 'var(--works-control-bg)',
-              color: 'var(--works-control-copy)',
-              borderColor: 'var(--works-control-border)',
-              boxShadow: '0 10px 24px var(--works-control-shadow)',
-            }}
-          >
-            <MaterialSymbol icon="chevron_right" size={19} />
-          </button>
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            {works.map((work, index) => {
+              const isActive = index === active
+              return (
+                <button
+                  key={work.id}
+                  type="button"
+                  onClick={() => setActive(index)}
+                  className={`rounded-[24px] border px-4 py-4 text-left transition-all ${
+                    isActive
+                      ? 'border-primary/30 bg-primary/8 shadow-[0_12px_36px_rgba(16,185,129,0.08)]'
+                      : 'border-border/70 bg-background/35 hover:border-primary/18 hover:bg-background/55'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-semibold text-foreground">{work.title}</p>
+                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                        {work.summary || work.subtitle || '这条项目还没有补充摘要。'}
+                      </p>
+                    </div>
+                    {isActive ? <MaterialSymbol icon="check_circle" size={18} className="text-primary" /> : null}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
         </div>
 
-        <div className="mt-5 text-center" data-ticket-meta>
-          <p
-            className="text-[0.72rem] font-mono uppercase tracking-[0.32em]"
-            style={{ color: 'var(--works-stage-meta)' }}
-          >
-            {String(active + 1).padStart(2, '0')} / {String(works.length).padStart(2, '0')}
-          </p>
-          {ticketSummary ? (
-            <p
-              className="mx-auto mt-3 max-w-xl text-sm leading-7"
-              style={{ color: 'var(--works-stage-muted)' }}
-            >
-              {ticketSummary}
+        <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start" data-works-actions>
+          <div className="rounded-[30px] border border-border/70 bg-background/38 p-6 backdrop-blur-xl">
+            <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+              Project summary
             </p>
-          ) : null}
-        </div>
+            <p className="mt-4 text-sm leading-7 text-foreground/82">
+              {summary || '这条项目还没有补充更多介绍。'}
+            </p>
+          </div>
+
+          <div className="rounded-[30px] border border-border/70 bg-background/38 p-6 backdrop-blur-xl">
+            <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+              Quick actions
+            </p>
+            <div className="mt-4 space-y-3">
+              <a
+                href={primaryHref || undefined}
+                target={primaryHref ? '_blank' : undefined}
+                rel="noreferrer"
+                className={`flex min-h-[3.5rem] items-center justify-between rounded-[20px] border px-4 text-sm font-semibold transition-all ${
+                  primaryHref
+                    ? 'border-primary/28 bg-primary text-primary-foreground hover:opacity-92'
+                    : 'cursor-not-allowed border-border/70 bg-background/52 text-muted-foreground'
+                }`}
+                aria-disabled={!primaryHref}
+              >
+                <span>{activeWork.primary_label || '打开官网'}</span>
+                <MaterialSymbol icon="open_in_new" size={18} />
+              </a>
+
+              <a
+                href={githubHref || undefined}
+                target={githubHref ? '_blank' : undefined}
+                rel="noreferrer"
+                className={`flex min-h-[3.5rem] items-center justify-between rounded-[20px] border px-4 text-sm font-semibold transition-all ${
+                  githubHref
+                    ? 'border-border bg-card text-foreground hover:border-primary/24 hover:text-primary'
+                    : 'cursor-not-allowed border-border/70 bg-background/52 text-muted-foreground'
+                }`}
+                aria-disabled={!githubHref}
+              >
+                <span>{activeWork.secondary_label || '打开 GitHub'}</span>
+                <MaterialSymbol icon="code" size={18} />
+              </a>
+            </div>
+          </div>
+        </aside>
       </div>
     </section>
-  )
-}
-
-function formatTicketDate(work: WorkListItem) {
-  const timestamp = resolveTicketTimestamp(work)
-  return dateFormatter.format(timestamp)
-}
-
-function formatTicketTime(work: WorkListItem) {
-  const timestamp = resolveTicketTimestamp(work)
-  return timeFormatter.format(timestamp).toLowerCase()
-}
-
-function resolveTicketTimestamp(work: WorkListItem) {
-  const candidates = [work.updated_at, work.created_at]
-
-  for (const value of candidates) {
-    const timestamp = new Date(value)
-    if (!Number.isNaN(timestamp.getTime())) return timestamp
-  }
-
-  return new Date()
-}
-
-function buildWorkUrl(siteUrl: string, slug: string) {
-  const base = siteUrl?.trim() || 'http://127.0.0.1:3000'
-  return `${base.replace(/\/$/, '')}/works/${slug}`
-}
-
-function TicketBarcode({ value, title }: { value: string; title: string }) {
-  const svgRef = useRef<SVGSVGElement | null>(null)
-
-  useEffect(() => {
-    if (!svgRef.current) return
-
-    JsBarcode(svgRef.current, value, {
-      format: 'CODE128',
-      displayValue: false,
-      margin: 0,
-      height: 34,
-      width: 1.38,
-      background: 'transparent',
-      lineColor: '#141414',
-    })
-  }, [value])
-
-  return (
-    <div className="overflow-hidden rounded-[2px] bg-[#fbf8f2] px-[0.42rem] py-[0.36rem]">
-      <svg
-        ref={svgRef}
-        className="block h-[2.08rem] w-full"
-        preserveAspectRatio="none"
-        role="img"
-        aria-label={`${title} barcode`}
-      />
-    </div>
   )
 }

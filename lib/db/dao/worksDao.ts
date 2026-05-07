@@ -1,9 +1,4 @@
-/**
- * lib/db/dao/worksDao.ts
- *
- * 作品 / 项目数据访问层。
- */
-
+import { revalidateTag, unstable_cache } from 'next/cache'
 import { query } from '@/lib/db'
 import { slugify } from '@/lib/slugify'
 import type {
@@ -13,6 +8,9 @@ import type {
   WorkListItem,
   WorkMilestone,
 } from '@/types/work'
+
+const WORKS_TAG = 'works'
+let worksSnapshotPromise: Promise<WorkDetail[]> | null = null
 
 interface WorkDbRow {
   id: number
@@ -53,6 +51,7 @@ function toIsoString(value: Date | string) {
 
 function normalizeContributors(value: WorkContributor[] | null | undefined): WorkContributor[] {
   if (!Array.isArray(value)) return []
+
   return value
     .filter((item) => item && typeof item === 'object')
     .map((item) => ({
@@ -65,6 +64,7 @@ function normalizeContributors(value: WorkContributor[] | null | undefined): Wor
 
 function normalizeMilestones(value: WorkMilestone[] | null | undefined): WorkMilestone[] {
   if (!Array.isArray(value)) return []
+
   return value
     .filter((item) => item && typeof item === 'object')
     .map((item) => ({
@@ -165,7 +165,7 @@ function buildInsertPayload(input: WorkInput) {
     url: input.url ?? null,
     github_url: input.github_url ?? null,
     primary_url: primaryUrl,
-    primary_label: input.primary_label ?? (primaryUrl ? '查看详情' : null),
+    primary_label: input.primary_label ?? (primaryUrl ? '打开项目' : null),
     secondary_url: secondaryUrl,
     secondary_label: input.secondary_label ?? (secondaryUrl ? '源码 / 外链' : null),
     year: input.year ?? null,
@@ -177,18 +177,13 @@ function buildInsertPayload(input: WorkInput) {
   }
 }
 
-export async function findWorks(options?: { includeUnpublished?: boolean }): Promise<WorkListItem[]> {
-  const includeUnpublished = options?.includeUnpublished ?? false
-  const result = await query<WorkDbRow>(
-    `SELECT * FROM works
-     ${includeUnpublished ? '' : 'WHERE is_published = TRUE'}
-     ORDER BY sort_order ASC, created_at DESC`
-  )
-
-  return result.rows.map((row) => toWorkListItem(mapWorkRow(row)))
+function serializeWorkOptions(options?: { includeUnpublished?: boolean }) {
+  return JSON.stringify({
+    includeUnpublished: options?.includeUnpublished ?? false,
+  })
 }
 
-export async function findWorkDetails(options?: { includeUnpublished?: boolean }): Promise<WorkDetail[]> {
+async function findWorkDetailsUncached(options?: { includeUnpublished?: boolean }): Promise<WorkDetail[]> {
   const includeUnpublished = options?.includeUnpublished ?? false
   const result = await query<WorkDbRow>(
     `SELECT * FROM works
@@ -199,27 +194,78 @@ export async function findWorkDetails(options?: { includeUnpublished?: boolean }
   return result.rows.map(mapWorkRow)
 }
 
+const findWorkDetailsCached = unstable_cache(
+  async (serializedOptions: string): Promise<WorkDetail[]> => {
+    return findWorkDetailsUncached(JSON.parse(serializedOptions) as { includeUnpublished?: boolean })
+  },
+  ['works-details'],
+  {
+    revalidate: 300,
+    tags: [WORKS_TAG],
+  }
+)
+
+function resetWorksSnapshot() {
+  worksSnapshotPromise = null
+}
+
+export async function findWorkDetails(options?: { includeUnpublished?: boolean }): Promise<WorkDetail[]> {
+  const includeUnpublished = options?.includeUnpublished ?? false
+
+  if (!includeUnpublished) {
+    worksSnapshotPromise ??= findWorkDetailsCached(serializeWorkOptions({ includeUnpublished: false }))
+    return worksSnapshotPromise
+  }
+
+  return findWorkDetailsCached(serializeWorkOptions(options))
+}
+
+export async function findWorks(options?: { includeUnpublished?: boolean }): Promise<WorkListItem[]> {
+  const details = await findWorkDetails(options)
+  return details.map(toWorkListItem)
+}
+
 export async function findWorkById(id: number): Promise<WorkDetail | null> {
-  const result = await query<WorkDbRow>(
-    `SELECT * FROM works WHERE id = $1`,
-    [id]
-  )
+  const snapshot = await findWorkDetails()
+  const fromSnapshot = snapshot.find((item) => item.id === id)
+  if (fromSnapshot) return fromSnapshot
+
+  const result = await query<WorkDbRow>('SELECT * FROM works WHERE id = $1', [id])
   return result.rows[0] ? mapWorkRow(result.rows[0]) : null
 }
+
+const findWorkBySlugCached = unstable_cache(
+  async (slug: string, includeUnpublished: boolean): Promise<WorkDetail | null> => {
+    const result = await query<WorkDbRow>(
+      `SELECT * FROM works
+       WHERE slug = $1
+         ${includeUnpublished ? '' : 'AND is_published = TRUE'}
+       LIMIT 1`,
+      [slug]
+    )
+
+    return result.rows[0] ? mapWorkRow(result.rows[0]) : null
+  },
+  ['work-by-slug'],
+  {
+    revalidate: 300,
+    tags: [WORKS_TAG],
+  }
+)
 
 export async function findWorkBySlug(
   slug: string,
   options?: { includeUnpublished?: boolean }
 ): Promise<WorkDetail | null> {
   const includeUnpublished = options?.includeUnpublished ?? false
-  const result = await query<WorkDbRow>(
-    `SELECT * FROM works
-     WHERE slug = $1
-       ${includeUnpublished ? '' : 'AND is_published = TRUE'}
-     LIMIT 1`,
-    [slug]
-  )
-  return result.rows[0] ? mapWorkRow(result.rows[0]) : null
+
+  if (!includeUnpublished) {
+    const snapshot = await findWorkDetails()
+    const fromSnapshot = snapshot.find((item) => item.slug === slug)
+    if (fromSnapshot) return fromSnapshot
+  }
+
+  return findWorkBySlugCached(slug, includeUnpublished)
 }
 
 export async function insertWork(input: WorkInput): Promise<WorkDetail> {
@@ -268,6 +314,9 @@ export async function insertWork(input: WorkInput): Promise<WorkDetail> {
       JSON.stringify(payload.gallery),
     ]
   )
+
+  revalidateTag(WORKS_TAG)
+  resetWorksSnapshot()
   return mapWorkRow(result.rows[0])
 }
 
@@ -328,13 +377,14 @@ export async function updateWork(id: number, input: Partial<WorkInput>): Promise
     values
   )
 
+  revalidateTag(WORKS_TAG)
+  resetWorksSnapshot()
   return result.rows[0] ? mapWorkRow(result.rows[0]) : null
 }
 
 export async function deleteWork(id: number): Promise<boolean> {
-  const result = await query(
-    `DELETE FROM works WHERE id = $1`,
-    [id]
-  )
+  const result = await query('DELETE FROM works WHERE id = $1', [id])
+  revalidateTag(WORKS_TAG)
+  resetWorksSnapshot()
   return (result.rowCount ?? 0) > 0
 }

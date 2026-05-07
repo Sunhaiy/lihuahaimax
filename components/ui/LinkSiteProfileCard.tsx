@@ -6,7 +6,6 @@ import type { SiteProfile } from '@/types/site'
 
 type LinkSiteProfileCardProps = {
   siteProfile: SiteProfile
-  rssUrl: string
   stats: Array<{ label: string; value: string }>
 }
 
@@ -20,30 +19,28 @@ type InfoItem = {
   fullWidth?: boolean
 }
 
-export function LinkSiteProfileCard({
-  siteProfile,
-  rssUrl,
-  stats,
-}: LinkSiteProfileCardProps) {
+export function LinkSiteProfileCard({ siteProfile, stats }: LinkSiteProfileCardProps) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const timerRef = useRef<number | null>(null)
+  const siteUrl = siteProfile.siteUrl || 'https://lihuahai.dev'
+  const siteUrlBase = siteUrl.replace(/\/$/, '')
 
   const infoItems: InfoItem[] = [
     {
       key: 'site-url',
       icon: 'home',
       label: '站点地址',
-      value: siteProfile.siteUrl,
-      copyValue: siteProfile.siteUrl,
-      href: siteProfile.siteUrl,
+      value: siteUrl,
+      copyValue: siteUrl,
+      href: siteUrl,
     },
     {
-      key: 'rss-url',
+      key: 'rss',
       icon: 'rss_feed',
       label: 'RSS 订阅',
-      value: siteProfile.rssUrl,
-      copyValue: rssUrl,
-      href: rssUrl,
+      value: '/rss.xml',
+      copyValue: `${siteUrlBase}/rss.xml`,
+      href: `${siteUrlBase}/rss.xml`,
     },
     {
       key: 'email',
@@ -99,14 +96,14 @@ export function LinkSiteProfileCard({
   }
 
   return (
-    <section className="relative self-start overflow-hidden rounded-[30px] border border-white/10 bg-[rgba(20,20,22,0.58)] px-5 py-6 backdrop-blur-2xl sm:px-6 sm:py-7">
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_58%)]" />
+    <section className="relative self-start overflow-hidden rounded-[30px] border border-border/70 bg-card/88 px-5 py-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] backdrop-blur-2xl sm:px-6 sm:py-7">
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_58%)] dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_58%)]" />
 
       <div className="relative">
-        <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-white/42">简介</p>
+        <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-muted-foreground">简介</p>
 
         <div className="mt-4 flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-white/10 bg-white/[0.04]">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-border/70 bg-background/70">
             {siteProfile.avatarUrl ? (
               <img
                 src={siteProfile.avatarUrl}
@@ -114,15 +111,15 @@ export function LinkSiteProfileCard({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <span className="text-lg font-semibold text-white/78">{siteProfile.ownerInitial}</span>
+              <span className="text-lg font-semibold text-primary">{siteProfile.ownerInitial}</span>
             )}
           </div>
 
           <div className="min-w-0">
-            <h1 className="text-3xl font-semibold tracking-[-0.05em] text-white">
+            <h2 className="text-3xl font-semibold tracking-[-0.05em] text-foreground">
               {siteProfile.siteName}
-            </h1>
-            <p className="mt-2 text-sm font-mono uppercase tracking-[0.2em] text-white/42">
+            </h2>
+            <p className="mt-2 text-sm font-mono uppercase tracking-[0.2em] text-muted-foreground">
               {siteProfile.siteNameEn}
             </p>
           </div>
@@ -132,15 +129,15 @@ export function LinkSiteProfileCard({
           {stats.map((stat) => (
             <span
               key={stat.label}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/18 px-3 py-1.5 text-[11px] font-mono text-white/64 backdrop-blur-md"
+              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-3 py-1.5 text-[11px] font-mono text-muted-foreground backdrop-blur-md"
             >
               <span>{stat.label}</span>
-              <span className="text-white/88">{stat.value}</span>
+              <span className="text-foreground">{stat.value}</span>
             </span>
           ))}
         </div>
 
-        <div className="mt-6 rounded-[22px] border border-white/10 bg-white/[0.03] p-3 sm:p-4">
+        <div className="mt-6 rounded-[22px] border border-border/70 bg-background/55 p-3 sm:p-4">
           <div className="grid gap-2 sm:grid-cols-2">
             {infoItems.map((item) => {
               const copied = copiedKey === item.key
@@ -148,13 +145,13 @@ export function LinkSiteProfileCard({
               return (
                 <div
                   key={item.key}
-                  className={`rounded-[16px] border border-white/8 bg-black/10 px-3 py-3 ${
+                  className={`rounded-[16px] border border-border/70 bg-card/68 px-3 py-3 ${
                     item.fullWidth ? 'sm:col-span-2' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-2 text-[11px] font-mono uppercase tracking-[0.18em] text-white/40">
-                      <MaterialSymbol icon={item.icon} size={14} className="shrink-0 text-white/40" />
+                    <div className="flex min-w-0 items-center gap-2 text-[11px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
+                      <MaterialSymbol icon={item.icon} size={14} className="shrink-0 text-muted-foreground" />
                       <span className="truncate">{item.label}</span>
                     </div>
 
@@ -164,7 +161,7 @@ export function LinkSiteProfileCard({
                           href={item.href}
                           target={item.href.startsWith('mailto:') ? undefined : '_blank'}
                           rel="noreferrer"
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-black/18 text-white/62 transition-colors hover:border-white/16 hover:text-white"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/70 bg-background/70 text-muted-foreground transition-colors hover:border-primary/24 hover:text-primary"
                           aria-label={`打开${item.label}`}
                           title={`打开${item.label}`}
                         >
@@ -178,8 +175,8 @@ export function LinkSiteProfileCard({
                         disabled={!item.copyValue}
                         className={`inline-flex h-7 items-center gap-1 rounded-full border px-2 text-[10px] transition-colors ${
                           copied
-                            ? 'border-emerald-400/30 bg-emerald-400/12 text-emerald-200'
-                            : 'border-white/10 bg-black/18 text-white/62 hover:border-white/16 hover:text-white disabled:cursor-not-allowed disabled:opacity-40'
+                            ? 'border-primary/28 bg-primary/10 text-primary'
+                            : 'border-border/70 bg-background/70 text-muted-foreground hover:border-primary/24 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40'
                         }`}
                         title={copied ? '已复制到剪贴板' : `复制${item.label}`}
                       >
@@ -189,11 +186,11 @@ export function LinkSiteProfileCard({
                     </div>
                   </div>
 
-                  <p className="mt-2 truncate text-sm text-white/82" title={item.value}>
+                  <p className="mt-2 truncate text-sm text-foreground/82" title={item.value}>
                     {item.value}
                   </p>
 
-                  {copied ? <p className="mt-1 text-[11px] text-emerald-200/90">已复制到剪贴板</p> : null}
+                  {copied ? <p className="mt-1 text-[11px] text-primary">已复制到剪贴板</p> : null}
                 </div>
               )
             })}

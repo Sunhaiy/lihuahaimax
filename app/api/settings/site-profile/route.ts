@@ -22,6 +22,8 @@ export async function PATCH(req: NextRequest) {
       ...parsed.data,
       avatarUrl: parsed.data.avatarUrl || null,
       defaultPostCoverUrl: parsed.data.defaultPostCoverUrl || null,
+      gamesHeroImageUrl: parsed.data.gamesHeroImageUrl || null,
+      themeColor: parsed.data.themeColor || '#10b981',
     })
   )
 

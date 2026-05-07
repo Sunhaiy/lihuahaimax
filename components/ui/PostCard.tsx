@@ -1,16 +1,12 @@
-/**
- * components/ui/PostCard.tsx
- *
- * 文章卡片 — 等高网格布局，封面图 + 默认占位 + shimmer 悬停效果。
- * 在首页和文章列表页复用同一套视觉。
- */
-
 import Link from 'next/link'
 import { resolveMediaUrl } from '@/lib/media'
 import type { PostRow } from '@/types/post'
 
 interface PostCardProps {
-  post: Pick<PostRow, 'id' | 'slug' | 'title' | 'excerpt' | 'cover_url' | 'category' | 'tags' | 'published_at'>
+  post: Pick<
+    PostRow,
+    'id' | 'slug' | 'title' | 'excerpt' | 'cover_url' | 'category' | 'tags' | 'published_at'
+  >
   fallbackCoverUrl?: string | null
 }
 
@@ -18,82 +14,86 @@ export function PostCard({ post, fallbackCoverUrl }: PostCardProps) {
   const coverUrl = resolveMediaUrl(post.cover_url, fallbackCoverUrl)
 
   return (
-    <Link href={`/posts/${post.slug}`} className="block group h-full">
-      <div className={`relative h-full overflow-hidden rounded-[22px] border border-border/80 bg-card/92 backdrop-blur-sm
-                      flex flex-col h-full
-                      transition-all duration-300
-                      hover:-translate-y-0.5 hover:border-border/90`}>
-
-        {/* ── 封面区 ── */}
+    <Link href={`/posts/${post.slug}`} className="group block h-full">
+      <div
+        className={`relative flex h-full flex-col overflow-hidden rounded-[22px] border border-border/80 bg-card/92 backdrop-blur-sm
+                      transition-all duration-300 hover:-translate-y-0.5 hover:border-border/90`}
+      >
         <div className="relative aspect-[16/9] flex-shrink-0 overflow-hidden">
           {coverUrl ? (
             <img
               src={coverUrl}
               alt={post.title}
-              className="w-full h-full object-cover
-                         group-hover:scale-105 transition-transform duration-500"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            /* 默认封面：多层渐变 + 分类首字 + 网格纹理 */
-            <div className="w-full h-full relative
-                            bg-gradient-to-br from-primary/12 via-card to-muted
-                            flex items-center justify-center">
-              <span className="text-7xl font-bold leading-none select-none
-                               text-transparent bg-clip-text
-                               bg-gradient-to-br from-primary/40 to-primary/10">
+            <div
+              className="relative flex h-full w-full items-center justify-center
+                            bg-gradient-to-br from-primary/12 via-card to-muted"
+            >
+              <span
+                className="select-none bg-gradient-to-br from-primary/40 to-primary/10 bg-clip-text
+                               text-7xl font-bold leading-none text-transparent"
+              >
                 {post.category?.charAt(0) ?? '文'}
               </span>
-              <div className="absolute inset-0 opacity-[0.03]"
-                   style={{ backgroundImage: 'repeating-linear-gradient(0deg,currentColor 0,currentColor 1px,transparent 1px,transparent 32px),repeating-linear-gradient(90deg,currentColor 0,currentColor 1px,transparent 1px,transparent 32px)' }} />
+              <div
+                className="absolute inset-0 opacity-[0.03]"
+                style={{
+                  backgroundImage:
+                    'repeating-linear-gradient(0deg,currentColor 0,currentColor 1px,transparent 1px,transparent 32px),repeating-linear-gradient(90deg,currentColor 0,currentColor 1px,transparent 1px,transparent 32px)',
+                }}
+              />
             </div>
           )}
 
-          {/* 底部渐变遮罩 */}
-          <div className="absolute inset-x-0 bottom-0 h-12
-                          bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/40 to-transparent" />
 
-          {/* 分类 badge */}
-          {post.category && (
-            <span className="absolute top-2.5 left-2.5 z-10
-                             text-[10px] font-medium px-2 py-0.5 rounded-full
-                             bg-black/55 backdrop-blur-sm
-                             text-white/85 border border-white/10 leading-tight">
+          {post.category ? (
+            <span
+              className="absolute left-2.5 top-2.5 z-10 rounded-full border border-zinc-200/95 bg-white/96
+                             px-2 py-0.5 text-[10px] font-medium leading-tight text-zinc-900 shadow-[0_8px_18px_rgba(15,23,42,0.08)]
+                             backdrop-blur-sm dark:border-white/10 dark:bg-black/55 dark:text-white/85"
+            >
               {post.category}
             </span>
-          )}
+          ) : null}
         </div>
 
-        {/* ── 内容区 ── */}
         <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5">
-          <h3 className="font-semibold text-foreground group-hover:text-primary
-                         transition-colors duration-200 line-clamp-2 leading-snug mb-1.5">
+          <h3
+            className="mb-1.5 line-clamp-2 font-semibold leading-snug text-foreground
+                         transition-colors duration-200 group-hover:text-primary"
+          >
             {post.title}
           </h3>
-          {post.excerpt && (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+          {post.excerpt ? (
+            <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
               {post.excerpt}
             </p>
-          )}
+          ) : null}
 
-          {/* 标签 + 日期 */}
-          <div className="flex items-center justify-between mt-auto pt-3">
-            <div className="flex gap-1 flex-wrap">
+          <div className="mt-auto flex items-center justify-between pt-3">
+            <div className="flex flex-wrap gap-1">
               {post.tags.slice(0, 2).map((tag) => (
-                <span key={tag}
-                  className="text-[10px] font-medium px-1.5 py-0.5 rounded
-                             bg-muted text-muted-foreground">
+                <span
+                  key={tag}
+                  className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+                >
                   #{tag}
                 </span>
               ))}
             </div>
-            <time className="text-[11px] font-mono text-muted-foreground/50 flex-shrink-0 ml-2">
+            <time className="ml-2 flex-shrink-0 font-mono text-[11px] text-muted-foreground/50">
               {post.published_at
-                ? new Date(post.published_at).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+                ? new Date(post.published_at).toLocaleDateString('zh-CN', {
+                    month: '2-digit',
+                    day: '2-digit',
+                  })
                 : '草稿'}
             </time>
           </div>
         </div>
-
       </div>
     </Link>
   )

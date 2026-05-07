@@ -17,8 +17,6 @@ type GallerySlide = {
   description: string
   imageUrl: string
   thumbUrl: string
-  width: number | null
-  height: number | null
 }
 
 type GalleryCollection = {
@@ -30,7 +28,7 @@ type GalleryCollection = {
 
 export function ImmersiveGallery({ items, albums }: ImmersiveGalleryProps) {
   const slides = useMemo(() => buildSlides(items), [items])
-  const collections = useMemo(() => buildCollections(slides, items, albums), [albums, slides, items])
+  const collections = useMemo(() => buildCollections(slides, items, albums), [albums, items, slides])
   const [activeCollectionId, setActiveCollectionId] = useState(collections[0]?.id ?? '')
   const activeCollection = collections.find((item) => item.id === activeCollectionId) ?? collections[0]
   const activeSlides = activeCollection?.slides ?? []
@@ -103,6 +101,7 @@ export function ImmersiveGallery({ items, albums }: ImmersiveGalleryProps) {
     if (activeCard) tl.fromTo(activeCard, { scale: 0.985 }, { scale: 1, duration: 0.36 }, 0)
     if (description) tl.fromTo(description, { autoAlpha: 0.45, y: 6 }, { autoAlpha: 1, y: 0, duration: 0.3 }, 0.07)
     if (rulerTrack) tl.fromTo(rulerTrack, { autoAlpha: 0.82 }, { autoAlpha: 1, duration: 0.24 }, 0.02)
+
     return () => {
       tl.kill()
     }
@@ -203,9 +202,9 @@ export function ImmersiveGallery({ items, albums }: ImmersiveGalleryProps) {
   }
 
   return (
-    <section className="relative isolate overflow-hidden bg-black text-white md:h-[calc(100vh-4rem)] md:min-h-[780px]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_24%_24%,rgba(255,255,255,0.07),transparent_24%),radial-gradient(circle_at_72%_28%,rgba(97,167,255,0.12),transparent_19%),linear-gradient(180deg,#040404_0%,#010101_100%)]" />
-      <div className="pointer-events-none absolute bottom-[-14rem] left-1/2 h-80 w-[52rem] -translate-x-1/2 rounded-full bg-white/5 blur-[210px]" />
+    <section className="relative isolate overflow-hidden bg-background text-foreground md:h-[calc(100vh-4rem)] md:min-h-[780px]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_24%_24%,hsl(var(--primary)/0.08),transparent_24%),radial-gradient(circle_at_72%_28%,hsl(var(--primary)/0.12),transparent_18%),linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--background)/0.98)_100%)]" />
+      <div className="pointer-events-none absolute bottom-[-14rem] left-1/2 h-80 w-[52rem] -translate-x-1/2 rounded-full bg-primary/10 blur-[210px]" />
 
       <div
         ref={scopeRef}
@@ -213,11 +212,13 @@ export function ImmersiveGallery({ items, albums }: ImmersiveGalleryProps) {
       >
         {slides.length === 0 ? (
           <div className="flex min-h-[60vh] w-full flex-col items-center justify-center text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/[0.04]">
-              <MaterialSymbol icon="photo_library" size={30} className="text-white/60" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border/70 bg-card/72">
+              <MaterialSymbol icon="photo_library" size={30} className="text-primary/80" />
             </div>
             <h1 className="mt-6 text-2xl font-semibold">相册里还没有图片</h1>
-            <p className="mt-3 text-sm text-white/48">先去后台上传几张照片，这里就会变成沉浸式横向画廊。</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              先去后台上传几张照片，这里就会变成横向沉浸画廊。
+            </p>
           </div>
         ) : (
           <div className="grid w-full items-center gap-8 xl:grid-cols-[360px_minmax(0,1fr)] xl:gap-10">
@@ -273,18 +274,16 @@ export function ImmersiveGallery({ items, albums }: ImmersiveGalleryProps) {
                   </div>
                 </div>
 
-                {activeSlide?.description?.trim() ? (
-                  <div className="mt-4 w-full max-w-[760px] text-center" data-gallery-info>
+                <div className="mt-4 w-full max-w-[760px] text-center" data-gallery-info>
+                  {activeSlide?.description?.trim() ? (
                     <p
-                      className="mx-auto max-w-2xl text-sm leading-7 text-white/52"
+                      className="mx-auto max-w-2xl text-sm leading-7 text-muted-foreground"
                       data-gallery-slide-description
                     >
                       {activeSlide.description.trim()}
                     </p>
-                  </div>
-                ) : (
-                  <div className="hidden" data-gallery-info />
-                )}
+                  ) : null}
+                </div>
 
                 <TickRuler total={activeSlides.length} virtualIndex={virtualIndex} onSelect={jumpTo} />
               </div>
@@ -316,50 +315,50 @@ function AlbumCollectionCard({
   return (
     <div className="relative px-4 py-2">
       <div
-        className={`absolute inset-x-9 top-4 h-full rounded-[2rem] border border-white/8 bg-[rgba(14,14,16,0.72)] transition-all duration-500 ${
+        className={`absolute inset-x-9 top-4 h-full rounded-[2rem] border border-border/60 bg-card/60 transition-all duration-500 ${
           active ? 'translate-x-2 rotate-[2deg] opacity-60' : 'translate-x-1 rotate-[3deg] opacity-28'
         }`}
       />
       <div
-        className={`absolute inset-x-8 top-3 h-full rounded-[2rem] border border-white/8 bg-[rgba(18,18,20,0.78)] transition-all duration-500 ${
+        className={`absolute inset-x-8 top-3 h-full rounded-[2rem] border border-border/60 bg-card/70 transition-all duration-500 ${
           active ? '-translate-x-2 -rotate-[3deg] opacity-68' : '-translate-x-1 -rotate-[4deg] opacity-38'
         }`}
       />
       <div
-        className={`relative rounded-[2rem] border px-4 pb-5 pt-4 shadow-[0_26px_60px_rgba(0,0,0,0.34)] transition-all duration-500 ${
+        className={`relative rounded-[2rem] border px-4 pb-5 pt-4 shadow-[0_26px_60px_rgba(0,0,0,0.18)] transition-all duration-500 ${
           active
-            ? 'border-white/16 bg-[linear-gradient(180deg,rgba(28,28,30,0.96),rgba(16,16,18,0.96))] text-white'
-            : 'border-white/10 bg-[linear-gradient(180deg,rgba(22,22,24,0.92),rgba(12,12,14,0.94))] text-white/92 hover:-translate-y-1'
+            ? 'border-primary/20 bg-card text-foreground'
+            : 'border-border/70 bg-card/92 text-foreground/92 hover:-translate-y-1'
         }`}
         style={{ transform: `rotate(${rotation})` }}
       >
-        <div className="mb-3 flex items-center justify-between text-white/58">
+        <div className="mb-3 flex items-center justify-between text-muted-foreground">
           <MaterialSymbol icon="photo_camera" size={20} />
           <p className="text-[0.82rem] font-semibold uppercase tracking-[0.18em]">{subtitle}</p>
           <MaterialSymbol icon="bookmark" size={18} />
         </div>
 
-        <div className="overflow-hidden rounded-[1.4rem] border border-white/10 bg-black/24">
+        <div className="overflow-hidden rounded-[1.4rem] border border-border/70 bg-background/70">
           {imageUrl ? (
             <img
               src={imageUrl}
               alt=""
               className={`aspect-[4/5] w-full object-cover transition-all duration-500 ${
-                active ? 'scale-[1.02]' : 'brightness-[0.92] saturate-[0.92]'
+                active ? 'scale-[1.02]' : 'brightness-[0.95] saturate-[0.94]'
               }`}
             />
           ) : (
-            <div className="aspect-[4/5] w-full bg-white/6" />
+            <div className="aspect-[4/5] w-full bg-muted/60" />
           )}
-          <div className="pointer-events-none absolute inset-x-10 bottom-[6.4rem] h-10 rounded-full bg-black/30 blur-2xl" />
+          <div className="pointer-events-none absolute inset-x-10 bottom-[6.4rem] h-10 rounded-full bg-black/10 blur-2xl dark:bg-black/30" />
         </div>
 
         <div className="mt-4 flex items-end justify-between gap-4">
           <div className="min-w-0">
-            <p className="truncate text-[1.95rem] font-semibold tracking-[-0.06em] text-white">{label}</p>
-            <p className="mt-1 text-sm text-white/50">{count} 张收藏</p>
+            <p className="truncate text-[1.95rem] font-semibold tracking-[-0.06em] text-foreground">{label}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{count} 张收藏</p>
           </div>
-          <div className="flex items-center gap-2 text-white/50">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <MaterialSymbol icon="favorite" size={18} />
             <MaterialSymbol icon="mode_comment" size={18} />
           </div>
@@ -395,7 +394,7 @@ function GalleryCard({
       onClick={onClick}
       aria-label={slide.title}
       data-gallery-card-active={isActive ? 'true' : 'false'}
-      className={`absolute left-1/2 top-1/2 h-[clamp(20rem,38vw,33rem)] w-[clamp(14.5rem,27vw,26rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[2rem] border border-white/8 bg-white/[0.03] shadow-[0_28px_80px_rgba(0,0,0,0.42)] transition-[transform,opacity,filter] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+      className={`absolute left-1/2 top-1/2 h-[clamp(20rem,38vw,33rem)] w-[clamp(14.5rem,27vw,26rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[2rem] border border-border/70 bg-card/86 shadow-[0_28px_80px_rgba(0,0,0,0.22)] transition-[transform,opacity,filter] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
         hidden ? 'pointer-events-none opacity-0' : ''
       }`}
       style={{
@@ -409,11 +408,11 @@ function GalleryCard({
       <div
         className={`absolute inset-0 ${
           isActive
-            ? 'bg-[linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0.16))]'
-            : 'bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.56))]'
+            ? 'bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(15,23,42,0.12))] dark:bg-[linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0.16))]'
+            : 'bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(15,23,42,0.24))] dark:bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.56))]'
         }`}
       />
-      <div className="pointer-events-none absolute inset-x-10 bottom-6 h-12 rounded-full bg-black/25 blur-2xl" />
+      <div className="pointer-events-none absolute inset-x-10 bottom-6 h-12 rounded-full bg-black/10 blur-2xl dark:bg-black/25" />
     </button>
   )
 }
@@ -435,7 +434,7 @@ function TickRuler({
     <div className="mt-5 w-full max-w-[860px]" data-gallery-ruler>
       <div className="relative mx-auto h-[3.1rem] w-full max-w-[40rem] overflow-hidden px-8">
         <div
-          className="pointer-events-none absolute inset-x-0 top-1/2 h-10 -translate-y-1/2 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.07),transparent_36%)] blur-xl"
+          className="pointer-events-none absolute inset-x-0 top-1/2 h-10 -translate-y-1/2 bg-[radial-gradient(circle_at_center,hsl(var(--primary)/0.08),transparent_36%)] blur-xl"
           data-gallery-ruler-glow
         />
 
@@ -455,7 +454,7 @@ function TickRuler({
                 key={tick.key}
                 type="button"
                 onClick={() => onSelect(tick.index)}
-                className="absolute left-1/2 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-full bg-white transition-[transform,opacity,height,width] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                className="absolute left-1/2 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-full bg-foreground transition-[transform,opacity,height,width] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
                 style={{
                   transform: `translate(-50%, -50%) translateX(${translateX}rem)`,
                   opacity,
@@ -484,8 +483,6 @@ function buildSlides(items: GalleryItemRow[]): GallerySlide[] {
     description: item.description?.trim() || '',
     imageUrl: item.url,
     thumbUrl: item.thumbnail_url || item.url,
-    width: item.width,
-    height: item.height,
   }))
 }
 

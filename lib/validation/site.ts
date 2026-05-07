@@ -21,6 +21,11 @@ export const siteProfileSchema = z.object({
   siteNameEn: z.string().trim().max(120).default(''),
   ownerName: z.string().trim().min(1).max(80),
   ownerInitial: z.string().trim().max(8).default(''),
+  themeColor: z
+    .string()
+    .trim()
+    .regex(/^#([0-9a-fA-F]{6})$/, 'Invalid theme color')
+    .default('#10b981'),
   slogan: z.string().trim().max(120).default(''),
   roleLine: z.string().trim().max(120).default(''),
   bio: z.string().trim().max(400).default(''),
@@ -34,6 +39,12 @@ export const siteProfileSchema = z.object({
     .string()
     .trim()
     .refine((value) => !value || isUploadOrAbsoluteUrl(value), 'Invalid default post cover URL')
+    .nullable()
+    .optional(),
+  gamesHeroImageUrl: z
+    .string()
+    .trim()
+    .refine((value) => !value || isUploadOrAbsoluteUrl(value), 'Invalid games hero image URL')
     .nullable()
     .optional(),
   siteUrl: z

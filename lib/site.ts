@@ -1,26 +1,29 @@
-import { cache } from 'react'
+import { revalidateTag, unstable_cache } from 'next/cache'
 import { SETTINGS_KEYS } from '@/lib/constants/settings'
 import { getSettings, setSetting } from '@/lib/db/dao/settingsDao'
 import type { SiteProfile } from '@/types/site'
 
 export const DEFAULT_SITE_PROFILE: SiteProfile = {
-  siteName: '梨花海',
+  siteName: '素心',
   siteNameEn: 'LIHUA HAI',
   ownerName: '素心',
   ownerInitial: '素',
+  themeColor: '#10b981',
   slogan: '期待是醒着的梦',
   roleLine: '程序员',
-  bio: '嵌入式工程师、全栈构建者，也认真记录深夜、项目和碎碎念。',
+  bio: '嵌入式工程师、全栈构建者，也认真记录深夜、项目和碎片念头。',
   avatarUrl: null,
   defaultPostCoverUrl: null,
+  gamesHeroImageUrl: null,
   siteUrl: 'https://lihuahai.dev',
   rssUrl: '/rss.xml',
-  friendLinkIntro: '如果你也在认真写作、长期更新，欢迎把站点信息留在这里。看到合适的站点后，我会尽快回访并补上链接。',
+  friendLinkIntro:
+    '如果你也在认真维护自己的站点，欢迎把信息留在这里。看到合适的站点后，我会尽快回访并补上链接。',
   friendLinkRequirements:
     '1. 站点可以稳定访问\n2. 有持续更新的内容\n3. 优先博客、作品集、个人主页或有明确主题的工具站\n4. 简介尽量简洁，方便我快速了解你的站点',
   githubUrl: 'https://github.com',
   email: 'hello@lihuahai.dev',
-  footerText: '用代码记录生活',
+  footerText: '认知驾驶风险',
 }
 
 function cleanText(value: unknown) {
@@ -40,6 +43,11 @@ function looksAsciiLabel(value: string) {
   return /^[\x00-\x7F]+$/.test(value)
 }
 
+function normalizeThemeColor(value: unknown) {
+  const next = cleanText(value)
+  return /^#([0-9a-fA-F]{6})$/.test(next) ? next : DEFAULT_SITE_PROFILE.themeColor
+}
+
 export function normalizeSiteProfile(input?: Partial<SiteProfile> | null): SiteProfile {
   const source = input ?? {}
   const siteName = cleanText(source.siteName) || DEFAULT_SITE_PROFILE.siteName
@@ -51,11 +59,13 @@ export function normalizeSiteProfile(input?: Partial<SiteProfile> | null): SiteP
     siteNameEn: cleanText(source.siteNameEn) || DEFAULT_SITE_PROFILE.siteNameEn,
     ownerName,
     ownerInitial,
+    themeColor: normalizeThemeColor(source.themeColor),
     slogan: cleanText(source.slogan) || DEFAULT_SITE_PROFILE.slogan,
     roleLine: cleanText(source.roleLine) || DEFAULT_SITE_PROFILE.roleLine,
     bio: cleanText(source.bio) || DEFAULT_SITE_PROFILE.bio,
     avatarUrl: cleanOptionalUrl(source.avatarUrl),
     defaultPostCoverUrl: cleanOptionalUrl(source.defaultPostCoverUrl),
+    gamesHeroImageUrl: cleanOptionalUrl(source.gamesHeroImageUrl),
     siteUrl: cleanText(source.siteUrl) || DEFAULT_SITE_PROFILE.siteUrl,
     rssUrl: cleanText(source.rssUrl) || DEFAULT_SITE_PROFILE.rssUrl,
     friendLinkIntro: cleanText(source.friendLinkIntro) || DEFAULT_SITE_PROFILE.friendLinkIntro,
@@ -67,7 +77,10 @@ export function normalizeSiteProfile(input?: Partial<SiteProfile> | null): SiteP
   }
 }
 
-function fromLegacySettings(legacyName: string, legacyValues: Partial<SiteProfile>): Partial<SiteProfile> {
+function fromLegacySettings(
+  legacyName: string,
+  legacyValues: Partial<SiteProfile>
+): Partial<SiteProfile> {
   const trimmedName = legacyName.trim()
 
   if (!trimmedName) return legacyValues
@@ -88,38 +101,49 @@ function fromLegacySettings(legacyName: string, legacyValues: Partial<SiteProfil
   }
 }
 
-export const getSiteProfile = cache(async (): Promise<SiteProfile> => {
-  const settings = await getSettings<Partial<SiteProfile> | string | null>([
-    SETTINGS_KEYS.SITE_PROFILE,
-    SETTINGS_KEYS.SITE_NAME,
-    SETTINGS_KEYS.SITE_SLOGAN,
-    SETTINGS_KEYS.SITE_BIO,
-    SETTINGS_KEYS.SITE_AVATAR,
-    SETTINGS_KEYS.SITE_GITHUB,
-    SETTINGS_KEYS.SITE_EMAIL,
-  ])
+const getSiteProfileCached = unstable_cache(
+  async (): Promise<SiteProfile> => {
+    const settings = await getSettings<Partial<SiteProfile> | string | null>([
+      SETTINGS_KEYS.SITE_PROFILE,
+      SETTINGS_KEYS.SITE_NAME,
+      SETTINGS_KEYS.SITE_SLOGAN,
+      SETTINGS_KEYS.SITE_BIO,
+      SETTINGS_KEYS.SITE_AVATAR,
+      SETTINGS_KEYS.SITE_GITHUB,
+      SETTINGS_KEYS.SITE_EMAIL,
+    ])
 
-  const profileSetting = settings[SETTINGS_KEYS.SITE_PROFILE] as Partial<SiteProfile> | null
-  const siteName = settings[SETTINGS_KEYS.SITE_NAME]
-  const slogan = settings[SETTINGS_KEYS.SITE_SLOGAN]
-  const bio = settings[SETTINGS_KEYS.SITE_BIO]
-  const avatar = settings[SETTINGS_KEYS.SITE_AVATAR]
-  const github = settings[SETTINGS_KEYS.SITE_GITHUB]
-  const email = settings[SETTINGS_KEYS.SITE_EMAIL]
+    const profileSetting = settings[SETTINGS_KEYS.SITE_PROFILE] as Partial<SiteProfile> | null
+    const siteName = settings[SETTINGS_KEYS.SITE_NAME]
+    const slogan = settings[SETTINGS_KEYS.SITE_SLOGAN]
+    const bio = settings[SETTINGS_KEYS.SITE_BIO]
+    const avatar = settings[SETTINGS_KEYS.SITE_AVATAR]
+    const github = settings[SETTINGS_KEYS.SITE_GITHUB]
+    const email = settings[SETTINGS_KEYS.SITE_EMAIL]
 
-  const legacyValues = fromLegacySettings(cleanText(siteName), {
-    slogan: cleanText(slogan),
-    bio: cleanText(bio),
-    avatarUrl: cleanText(avatar ?? ''),
-    githubUrl: cleanText(github),
-    email: cleanText(email),
-  })
+    const legacyValues = fromLegacySettings(cleanText(siteName), {
+      slogan: cleanText(slogan),
+      bio: cleanText(bio),
+      avatarUrl: cleanText(avatar ?? ''),
+      githubUrl: cleanText(github),
+      email: cleanText(email),
+    })
 
-  return normalizeSiteProfile({
-    ...legacyValues,
-    ...(profileSetting ?? {}),
-  })
-})
+    return normalizeSiteProfile({
+      ...legacyValues,
+      ...(profileSetting ?? {}),
+    })
+  },
+  ['site-profile'],
+  {
+    revalidate: 300,
+    tags: ['site-profile', 'settings'],
+  }
+)
+
+export async function getSiteProfile(): Promise<SiteProfile> {
+  return getSiteProfileCached()
+}
 
 export async function persistSiteProfile(profile: SiteProfile) {
   const normalized = normalizeSiteProfile(profile)
@@ -133,6 +157,9 @@ export async function persistSiteProfile(profile: SiteProfile) {
     setSetting(SETTINGS_KEYS.SITE_GITHUB, normalized.githubUrl, 'GitHub profile URL'),
     setSetting(SETTINGS_KEYS.SITE_EMAIL, normalized.email, 'Contact email'),
   ])
+
+  revalidateTag('site-profile')
+  revalidateTag('settings')
 
   return normalized
 }

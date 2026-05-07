@@ -4,6 +4,7 @@
  * 极客瞬间数据访问层。
  */
 
+import { revalidateTag, unstable_cache } from 'next/cache'
 import { query } from '@/lib/db'
 import { extractPlainTextFromRichContent } from '@/lib/utils/extractHeadings'
 import type {
@@ -15,11 +16,13 @@ import type {
   UpdateMomentInput,
 } from '@/types/moment'
 
+const MOMENTS_TAG = 'moments'
+
 // ============================================================
 // 查询
 // ============================================================
 
-export async function findMoments(params: {
+async function findMomentsUncached(params: {
   page?: number
   pageSize?: number
   type?: string
@@ -73,6 +76,51 @@ export async function findMoments(params: {
   }
 }
 
+function serializeMomentQuery(params: {
+  page?: number
+  pageSize?: number
+  type?: string
+  publicOnly?: boolean
+}) {
+  return JSON.stringify({
+    page: params.page ?? 1,
+    pageSize: params.pageSize ?? 20,
+    type: params.type ?? null,
+    publicOnly: params.publicOnly ?? true,
+  })
+}
+
+const findPublicMomentsCached = unstable_cache(
+  async (serializedParams: string): Promise<{ data: MomentRow[]; total: number }> => {
+    return findMomentsUncached(
+      JSON.parse(serializedParams) as {
+        page?: number
+        pageSize?: number
+        type?: string
+        publicOnly?: boolean
+      }
+    )
+  },
+  ['moments-public-list'],
+  {
+    revalidate: 180,
+    tags: [MOMENTS_TAG],
+  }
+)
+
+export async function findMoments(params: {
+  page?: number
+  pageSize?: number
+  type?: string
+  publicOnly?: boolean
+} = {}): Promise<{ data: MomentRow[]; total: number }> {
+  if (params.publicOnly !== false) {
+    return findPublicMomentsCached(serializeMomentQuery(params))
+  }
+
+  return findMomentsUncached(params)
+}
+
 export async function findMomentById(id: number): Promise<MomentRow | null> {
   const result = await query<MomentRow>(
     `SELECT
@@ -121,6 +169,7 @@ export async function insertMoment(input: CreateMomentInput): Promise<MomentRow>
       input.isPublic ?? true,
     ]
   )
+  revalidateTag(MOMENTS_TAG)
   return result.rows[0]
 }
 
@@ -162,6 +211,7 @@ export async function updateMoment(id: number, input: UpdateMomentInput): Promis
     `UPDATE moments SET ${setClauses.join(', ')} WHERE id = $${idx} RETURNING *`,
     values
   )
+  revalidateTag(MOMENTS_TAG)
   return result.rows[0] ?? null
 }
 
@@ -171,6 +221,7 @@ export async function updateMoment(id: number, input: UpdateMomentInput): Promis
 
 export async function deleteMoment(id: number): Promise<boolean> {
   const result = await query(`DELETE FROM moments WHERE id = $1`, [id])
+  revalidateTag(MOMENTS_TAG)
   return (result.rowCount ?? 0) > 0
 }
 
@@ -203,6 +254,7 @@ export async function toggleMomentLike(
       )
     }
 
+    revalidateTag(MOMENTS_TAG)
     return getMomentEngagementSummary(momentId, visitorKey, liked)
   })
 }
@@ -234,6 +286,7 @@ export async function insertMomentComment(
       [momentId, input.authorName, input.content]
     )
 
+    revalidateTag(MOMENTS_TAG)
     return result.rows[0]
   })
 }
@@ -247,6 +300,7 @@ export async function incrementMomentShare(momentId: number): Promise<MomentEnga
       [momentId]
     )
 
+    revalidateTag(MOMENTS_TAG)
     return getMomentEngagementSummary(momentId)
   })
 }

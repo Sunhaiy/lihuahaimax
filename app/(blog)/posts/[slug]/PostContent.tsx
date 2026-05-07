@@ -64,15 +64,19 @@ export function PostContent({ content, headings }: PostContentProps) {
         [&_.ProseMirror_hr]:my-10
         [&_.ProseMirror_hr]:border-border/75
         [&_.ProseMirror_blockquote]:my-8
-        [&_.ProseMirror_blockquote]:rounded-[26px]
-        [&_.ProseMirror_blockquote]:border-l-[3px]
-        [&_.ProseMirror_blockquote]:border-primary/34
-        [&_.ProseMirror_blockquote]:bg-card/72
-        [&_.ProseMirror_blockquote]:px-6
-        [&_.ProseMirror_blockquote]:py-5
+        [&_.ProseMirror_blockquote]:relative
+        [&_.ProseMirror_blockquote]:rounded-none
+        [&_.ProseMirror_blockquote]:border-0
+        [&_.ProseMirror_blockquote]:border-l-0
+        [&_.ProseMirror_blockquote]:shadow-none
+        [&_.ProseMirror_blockquote]:bg-transparent
+        [&_.ProseMirror_blockquote]:px-0
+        [&_.ProseMirror_blockquote]:pb-1
+        [&_.ProseMirror_blockquote]:pt-8
         [&_.ProseMirror_blockquote]:text-[0.98rem]
         [&_.ProseMirror_blockquote]:leading-8
         [&_.ProseMirror_blockquote]:text-foreground/78
+        [&_.ProseMirror_blockquote_p]:my-0
         [&_.ProseMirror_code]:rounded-md
         [&_.ProseMirror_code]:bg-primary/10
         [&_.ProseMirror_code]:px-1.5
@@ -85,17 +89,17 @@ export function PostContent({ content, headings }: PostContentProps) {
         [&_.ProseMirror_pre]:rounded-[28px]
         [&_.ProseMirror_pre]:border
         [&_.ProseMirror_pre]:border-border/70
-        [&_.ProseMirror_pre]:bg-[linear-gradient(180deg,rgba(18,18,20,0.98),rgba(10,10,12,0.98))]
+        [&_.ProseMirror_pre]:bg-transparent
         [&_.ProseMirror_pre]:px-0
         [&_.ProseMirror_pre]:py-0
         [&_.ProseMirror_pre_code]:block
         [&_.ProseMirror_pre_code]:rounded-none
         [&_.ProseMirror_pre_code]:bg-transparent
-        [&_.ProseMirror_pre_code]:px-6
-        [&_.ProseMirror_pre_code]:py-5
+        [&_.ProseMirror_pre_code]:px-0
+        [&_.ProseMirror_pre_code]:py-0
         [&_.ProseMirror_pre_code]:text-[0.92rem]
         [&_.ProseMirror_pre_code]:leading-7
-        [&_.ProseMirror_pre_code]:text-zinc-100
+        [&_.ProseMirror_pre_code]:text-inherit
         [&_.ProseMirror_img]:my-8
         [&_.ProseMirror_img]:overflow-hidden
         [&_.ProseMirror_img]:rounded-[28px]

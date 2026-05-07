@@ -41,16 +41,29 @@ export async function generateMetadata({
   }
 
   const coverUrl = resolveMediaUrl(post.cover_url, siteProfile.defaultPostCoverUrl)
+  const canonicalUrl = `${(siteProfile.siteUrl || 'https://lihuahai.dev').replace(/\/$/, '')}/posts/${post.slug}`
+  const publishedTime = toIsoDateString(post.published_at)
 
   return {
     title: post.seo_title || post.title,
     description: post.seo_description || post.excerpt || undefined,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    keywords: post.tags,
     openGraph: {
       title: post.seo_title || post.title,
       description: post.seo_description || post.excerpt || undefined,
       images: coverUrl ? [coverUrl] : [],
       type: 'article',
-      publishedTime: post.published_at?.toISOString(),
+      ...(publishedTime ? { publishedTime } : {}),
+      url: canonicalUrl,
+    },
+    twitter: {
+      card: coverUrl ? 'summary_large_image' : 'summary',
+      title: post.seo_title || post.title,
+      description: post.seo_description || post.excerpt || undefined,
+      images: coverUrl ? [coverUrl] : [],
     },
   }
 }
@@ -65,7 +78,7 @@ export default async function PostPage({
   const { slug } = await params
   const { preview } = await searchParams
   const post = await findPostBySlug(slug)
-  const session = await auth()
+  const session = preview === '1' ? await auth() : null
   const canPreviewDraft = preview === '1' && Boolean(session)
 
   if (!post || (post.status !== 'published' && !canPreviewDraft)) {
@@ -76,9 +89,11 @@ export default async function PostPage({
     incrementViewCount(post.id).catch(() => {})
   }
 
+  const publishedAtDate = toDate(post.published_at)
+
   const [adjacent, siteProfile] = await Promise.all([
-    post.published_at
-      ? findAdjacentPosts(post.published_at, post.id)
+    publishedAtDate
+      ? findAdjacentPosts(publishedAtDate, post.id)
       : Promise.resolve({ prev: null, next: null }),
     getSiteProfile(),
   ])
@@ -86,14 +101,17 @@ export default async function PostPage({
   const headings = extractHeadings(post.content as object)
   const readTime = estimateReadTime(post.content as object)
   const coverUrl = resolveMediaUrl(post.cover_url, siteProfile.defaultPostCoverUrl)
-  const hasCover = Boolean(coverUrl)
+  const canonicalUrl = `${(siteProfile.siteUrl || 'https://lihuahai.dev').replace(/\/$/, '')}/posts/${post.slug}`
+  const licenseName = 'CC BY-NC-SA 4.0'
+  const publishedAtIso = toIsoDateString(post.published_at)
+  const publishedAtLabel = formatZhDate(post.published_at)
 
   return (
     <>
       <section className="relative overflow-hidden" style={{ minHeight: '420px' }}>
-        {hasCover ? (
+        {coverUrl ? (
           <img
-            src={coverUrl!}
+            src={coverUrl}
             alt={post.cover_alt || post.title}
             className="absolute inset-0 h-full w-full object-cover"
           />
@@ -126,7 +144,7 @@ export default async function PostPage({
                 <Link
                   key={tag}
                   href={`/posts?tags=${encodeURIComponent(tag)}`}
-                  className="rounded-full border border-white/16 bg-white/10 px-3 py-1 text-xs text-white/82 backdrop-blur-sm transition-colors hover:bg-white/18"
+                  className="rounded-full border border-white/70 bg-white/92 px-3 py-1 text-xs text-zinc-900 shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-sm transition-colors hover:bg-white dark:border-white/20 dark:bg-black/45 dark:text-white dark:hover:bg-black/58"
                 >
                   {tag}
                 </Link>
@@ -139,26 +157,20 @@ export default async function PostPage({
           </h1>
 
           {post.excerpt ? (
-            <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/58 sm:text-base">
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/74 sm:text-base">
               {post.excerpt}
             </p>
           ) : null}
         </div>
 
         <div className="absolute inset-x-0 bottom-0 flex justify-center px-6 pb-6">
-          <div className="divide-x flex items-center gap-0 overflow-hidden rounded-xl border border-white/10 bg-black/35 text-xs text-white/70 backdrop-blur-md divide-white/10">
+          <div className="divide-x flex items-center gap-0 overflow-hidden rounded-xl border border-white/12 bg-black/52 text-xs text-white/78 shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-md divide-white/10">
             <div className="px-4 py-2.5 font-medium text-white/90">{siteProfile.ownerName}</div>
 
-            {post.published_at ? (
+            {publishedAtIso ? (
               <div className="flex items-center gap-1.5 px-4 py-2.5">
                 <RiTimeLine size={12} className="shrink-0" />
-                <time dateTime={post.published_at.toISOString()}>
-                  {new Date(post.published_at).toLocaleDateString('zh-CN', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                  })}
-                </time>
+                <time dateTime={publishedAtIso}>{publishedAtLabel}</time>
               </div>
             ) : null}
 
@@ -248,15 +260,55 @@ export default async function PostPage({
               </div>
             ) : null}
 
-            <CommentSection postId={post.id} />
+            <section className="mt-6 overflow-hidden rounded-[30px] border border-border/70 bg-card/82 shadow-[0_20px_60px_rgba(0,0,0,0.08)] backdrop-blur-xl">
+              <div className="relative px-5 py-5 sm:px-6">
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute right-3 top-1 text-[6.5rem] font-semibold leading-none text-foreground/6 sm:right-5 sm:text-[8rem]"
+                >
+                  CC
+                </div>
+                <div className="relative">
+                  <p className="text-sm font-semibold text-foreground">{post.title}</p>
+                  <a
+                    href={canonicalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 block break-all text-sm text-primary hover:text-primary/80"
+                  >
+                    {canonicalUrl}
+                  </a>
+                  <div className="mt-5 grid gap-4 text-sm text-muted-foreground sm:grid-cols-3">
+                    <div>
+                      <p className="mb-1 text-xs text-muted-foreground/80">作者</p>
+                      <p className="font-medium text-foreground">{siteProfile.ownerName}</p>
+                    </div>
+                    <div>
+                      <p className="mb-1 text-xs text-muted-foreground/80">发布于</p>
+                      <p className="font-medium text-foreground">{publishedAtLabel || '未发布'}</p>
+                    </div>
+                    <div>
+                      <p className="mb-1 text-xs text-muted-foreground/80">许可协议</p>
+                      <p className="font-medium text-primary">{licenseName}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <CommentSection
+              postId={post.id}
+              viewerIsAuthor={Boolean(session)}
+              ownerName={siteProfile.ownerName}
+            />
           </article>
 
-          <aside className="relative hidden self-start lg:block">
-            <div className="sticky top-24 w-[240px] max-h-[calc(100vh-7rem)] self-start overflow-y-auto pr-1">
+          <aside className="sticky top-24 hidden self-start lg:block">
+            <div className="z-20 w-[240px] max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
               <TOC
                 headings={headings}
                 readTime={readTime}
-                publishedAt={post.published_at?.toISOString() ?? null}
+                publishedAt={publishedAtIso}
                 articleSelector="#post-reading-surface"
               />
             </div>
@@ -265,4 +317,25 @@ export default async function PostPage({
       </div>
     </>
   )
+}
+
+function toDate(value: Date | string | null | undefined) {
+  if (!value) return null
+  const date = value instanceof Date ? value : new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function toIsoDateString(value: Date | string | null | undefined) {
+  return toDate(value)?.toISOString() ?? null
+}
+
+function formatZhDate(value: Date | string | null | undefined) {
+  const date = toDate(value)
+  if (!date) return null
+
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
 }

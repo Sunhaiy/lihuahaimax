@@ -1,20 +1,22 @@
-/**
- * lib/db/dao/acgDao.ts
- *
- * 数字陈列室（动漫 & 游戏）数据访问层。
- */
-
+import { revalidateTag, unstable_cache } from 'next/cache'
 import { query } from '@/lib/db'
 import type {
-  AnimeRow, CreateAnimeInput, UpdateAnimeInput,
-  GameRow, CreateGameInput, UpdateGameInput,
+  AnimeRow,
+  CreateAnimeInput,
+  UpdateAnimeInput,
+  GameRow,
+  CreateGameInput,
+  UpdateGameInput,
 } from '@/types/acg'
 
-// ============================================================
-// 动漫 (Anime)
-// ============================================================
+const ANIMES_TAG = 'animes'
+const GAMES_TAG = 'games'
 
-export async function findAnimes(params: {
+function serializeListParams<T extends Record<string, unknown>>(params: T) {
+  return JSON.stringify(params)
+}
+
+async function findAnimesUncached(params: {
   status?: string
   page?: number
   pageSize?: number
@@ -33,11 +35,33 @@ export async function findAnimes(params: {
     ),
     query<{ count: string }>(`SELECT COUNT(*) as count FROM animes ${where}`, values),
   ])
+
   return { data: dataResult.rows, total: Number(countResult.rows[0].count) }
 }
 
+const findAnimesCached = unstable_cache(
+  async (serializedParams: string): Promise<{ data: AnimeRow[]; total: number }> => {
+    return findAnimesUncached(
+      JSON.parse(serializedParams) as { status?: string; page?: number; pageSize?: number }
+    )
+  },
+  ['animes-list'],
+  {
+    revalidate: 300,
+    tags: [ANIMES_TAG],
+  }
+)
+
+export async function findAnimes(params: {
+  status?: string
+  page?: number
+  pageSize?: number
+} = {}): Promise<{ data: AnimeRow[]; total: number }> {
+  return findAnimesCached(serializeListParams(params))
+}
+
 export async function findAnimeById(id: number): Promise<AnimeRow | null> {
-  const result = await query<AnimeRow>(`SELECT * FROM animes WHERE id = $1`, [id])
+  const result = await query<AnimeRow>('SELECT * FROM animes WHERE id = $1', [id])
   return result.rows[0] ?? null
 }
 
@@ -62,44 +86,55 @@ export async function insertAnime(input: CreateAnimeInput): Promise<AnimeRow> {
       input.malId ?? null,
     ]
   )
+
+  revalidateTag(ANIMES_TAG)
   return result.rows[0]
 }
 
 export async function updateAnime(id: number, input: UpdateAnimeInput): Promise<AnimeRow | null> {
   const map: [keyof UpdateAnimeInput, string][] = [
-    ['title', 'title'], ['titleCn', 'title_cn'], ['coverUrl', 'cover_url'],
-    ['type', 'type'], ['episodesTotal', 'episodes_total'], ['episodesWatched', 'episodes_watched'],
-    ['status', 'status'], ['rating', 'rating'], ['shortReview', 'short_review'],
-    ['startSeason', 'start_season'], ['malId', 'mal_id'],
+    ['title', 'title'],
+    ['titleCn', 'title_cn'],
+    ['coverUrl', 'cover_url'],
+    ['type', 'type'],
+    ['episodesTotal', 'episodes_total'],
+    ['episodesWatched', 'episodes_watched'],
+    ['status', 'status'],
+    ['rating', 'rating'],
+    ['shortReview', 'short_review'],
+    ['startSeason', 'start_season'],
+    ['malId', 'mal_id'],
   ]
   const setClauses: string[] = []
   const values: unknown[] = []
   let idx = 1
+
   for (const [key, col] of map) {
     if (input[key] !== undefined) {
       setClauses.push(`${col} = $${idx++}`)
       values.push(input[key])
     }
   }
+
   if (setClauses.length === 0) return findAnimeById(id)
+
   values.push(id)
   const result = await query<AnimeRow>(
     `UPDATE animes SET ${setClauses.join(', ')} WHERE id = $${idx} RETURNING *`,
     values
   )
+
+  revalidateTag(ANIMES_TAG)
   return result.rows[0] ?? null
 }
 
 export async function deleteAnime(id: number): Promise<boolean> {
-  const result = await query(`DELETE FROM animes WHERE id = $1`, [id])
+  const result = await query('DELETE FROM animes WHERE id = $1', [id])
+  revalidateTag(ANIMES_TAG)
   return (result.rowCount ?? 0) > 0
 }
 
-// ============================================================
-// 游戏 (Game)
-// ============================================================
-
-export async function findGames(params: {
+async function findGamesUncached(params: {
   status?: string
   platform?: string
   page?: number
@@ -110,8 +145,14 @@ export async function findGames(params: {
   const values: unknown[] = []
   let idx = 1
 
-  if (status) { conditions.push(`status = $${idx++}`); values.push(status) }
-  if (platform) { conditions.push(`platform = $${idx++}`); values.push(platform) }
+  if (status) {
+    conditions.push(`status = $${idx++}`)
+    values.push(status)
+  }
+  if (platform) {
+    conditions.push(`platform = $${idx++}`)
+    values.push(platform)
+  }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
   const offset = (page - 1) * pageSize
@@ -123,11 +164,39 @@ export async function findGames(params: {
     ),
     query<{ count: string }>(`SELECT COUNT(*) as count FROM games ${where}`, values),
   ])
+
   return { data: dataResult.rows, total: Number(countResult.rows[0].count) }
 }
 
+const findGamesCached = unstable_cache(
+  async (serializedParams: string): Promise<{ data: GameRow[]; total: number }> => {
+    return findGamesUncached(
+      JSON.parse(serializedParams) as {
+        status?: string
+        platform?: string
+        page?: number
+        pageSize?: number
+      }
+    )
+  },
+  ['games-list'],
+  {
+    revalidate: 300,
+    tags: [GAMES_TAG],
+  }
+)
+
+export async function findGames(params: {
+  status?: string
+  platform?: string
+  page?: number
+  pageSize?: number
+} = {}): Promise<{ data: GameRow[]; total: number }> {
+  return findGamesCached(serializeListParams(params))
+}
+
 export async function findGameById(id: number): Promise<GameRow | null> {
-  const result = await query<GameRow>(`SELECT * FROM games WHERE id = $1`, [id])
+  const result = await query<GameRow>('SELECT * FROM games WHERE id = $1', [id])
   return result.rows[0] ?? null
 }
 
@@ -150,34 +219,48 @@ export async function insertGame(input: CreateGameInput): Promise<GameRow> {
       input.completedAt ?? null,
     ]
   )
+
+  revalidateTag(GAMES_TAG)
   return result.rows[0]
 }
 
 export async function updateGame(id: number, input: UpdateGameInput): Promise<GameRow | null> {
   const map: [keyof UpdateGameInput, string][] = [
-    ['title', 'title'], ['coverUrl', 'cover_url'], ['cartridgeImageUrl', 'cartridge_image_url'],
-    ['platform', 'platform'], ['status', 'status'], ['playHours', 'play_hours'],
-    ['rating', 'rating'], ['shortReview', 'short_review'], ['completedAt', 'completed_at'],
+    ['title', 'title'],
+    ['coverUrl', 'cover_url'],
+    ['cartridgeImageUrl', 'cartridge_image_url'],
+    ['platform', 'platform'],
+    ['status', 'status'],
+    ['playHours', 'play_hours'],
+    ['rating', 'rating'],
+    ['shortReview', 'short_review'],
+    ['completedAt', 'completed_at'],
   ]
   const setClauses: string[] = []
   const values: unknown[] = []
   let idx = 1
+
   for (const [key, col] of map) {
     if (input[key] !== undefined) {
       setClauses.push(`${col} = $${idx++}`)
       values.push(input[key])
     }
   }
+
   if (setClauses.length === 0) return findGameById(id)
+
   values.push(id)
   const result = await query<GameRow>(
     `UPDATE games SET ${setClauses.join(', ')} WHERE id = $${idx} RETURNING *`,
     values
   )
+
+  revalidateTag(GAMES_TAG)
   return result.rows[0] ?? null
 }
 
 export async function deleteGame(id: number): Promise<boolean> {
-  const result = await query(`DELETE FROM games WHERE id = $1`, [id])
+  const result = await query('DELETE FROM games WHERE id = $1', [id])
+  revalidateTag(GAMES_TAG)
   return (result.rowCount ?? 0) > 0
 }

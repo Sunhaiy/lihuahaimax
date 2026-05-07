@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { RichTextRenderer } from '@/components/ui/RichTextRenderer'
 import { extractPlainTextFromRichContent } from '@/lib/utils/extractHeadings'
@@ -112,7 +112,7 @@ function formatDistance(distance: number): string {
 function formatMomentSource(moment: MomentFeedItem): string {
   if (moment.location) return moment.location
   if (moment.weather) return moment.weather
-  return `${formatMomentType(moment.type)}动态`
+  return formatMomentType(moment.type)
 }
 
 function getMomentSummary(moment: MomentFeedItem): string {
@@ -153,9 +153,9 @@ function getMomentSummary(moment: MomentFeedItem): string {
   }
 
   if (moment.images.length > 0) return '照片已经收好，等你下次翻到这里。'
-  if (moment.type === 'link') return '把想分享的东西先挂在了这里。'
+  if (moment.type === 'link') return '把想分享的内容先挂在这里。'
   if (moment.content) return moment.content
-  return '这一刻已经被存进了回声里。'
+  return '这一刻已经被安静地收进回声里。'
 }
 
 function getMomentMetrics(moment: MomentFeedItem) {
@@ -386,24 +386,24 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
   return (
     <article
       id={`moment-${moment.id}`}
-      className="group relative scroll-mt-24 overflow-hidden rounded-[24px] border border-hero-border/16 bg-zinc-950/58 px-4 py-4 backdrop-blur-2xl transition-all duration-300 hover:border-primary/24 hover:bg-zinc-950/64 sm:px-5 sm:py-5"
+      className="group relative scroll-mt-24 overflow-hidden rounded-[24px] border border-border/80 bg-card/92 px-4 py-4 shadow-[0_18px_50px_rgba(15,23,42,0.05)] backdrop-blur-2xl transition-all duration-300 hover:border-primary/24 hover:bg-card sm:px-5 sm:py-5 dark:shadow-[0_18px_50px_rgba(0,0,0,0.22)]"
     >
-      <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-white/18 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
       <header className="flex items-start gap-3">
-        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white/12 bg-hero-panel/60">
+        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-border/80 bg-background/70">
           {siteProfile.avatarUrl ? (
             <img src={siteProfile.avatarUrl} alt={siteProfile.ownerName} className="h-full w-full object-cover" />
           ) : (
-            <span className="flex h-full w-full items-center justify-center text-base font-semibold text-white">
+            <span className="flex h-full w-full items-center justify-center text-base font-semibold text-foreground">
               {siteProfile.ownerInitial}
             </span>
           )}
         </div>
 
         <div className="min-w-0 flex-1 pt-0.5">
-          <p className="truncate text-[1.05rem] font-bold leading-none tracking-[-0.03em] text-white/90">
-            {siteProfile.ownerName}.
+          <p className="truncate text-[1.05rem] font-bold leading-none tracking-[-0.03em] text-foreground">
+            {siteProfile.ownerName}
           </p>
 
           {moment.content_json ? (
@@ -411,8 +411,8 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
               <RichTextRenderer
                 content={moment.content_json}
                 proseClassName="
-                  prose prose-invert max-w-none
-                  [&_.ProseMirror]:text-white/88
+                  prose prose-neutral max-w-none dark:prose-invert
+                  [&_.ProseMirror]:text-foreground
                   [&_.ProseMirror]:leading-8
                   [&_.ProseMirror_h2]:mt-7
                   [&_.ProseMirror_h2]:mb-3
@@ -425,6 +425,7 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
                   [&_.ProseMirror_p]:my-4
                   [&_.ProseMirror_p]:text-[1rem]
                   [&_.ProseMirror_p]:leading-8
+                  [&_.ProseMirror_p]:text-foreground/84
                   [&_.ProseMirror_a]:text-primary
                   [&_.ProseMirror_a]:underline
                   [&_.ProseMirror_a]:underline-offset-4
@@ -434,40 +435,17 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
                   [&_.ProseMirror_ol]:my-4
                   [&_.ProseMirror_ol]:space-y-2
                   [&_.ProseMirror_ol]:pl-5
-                  [&_.ProseMirror_li]:text-white/82
-                  [&_.ProseMirror_blockquote]:my-6
-                  [&_.ProseMirror_blockquote]:rounded-[22px]
-                  [&_.ProseMirror_blockquote]:border-l-[3px]
-                  [&_.ProseMirror_blockquote]:border-primary/34
-                  [&_.ProseMirror_blockquote]:bg-white/[0.04]
-                  [&_.ProseMirror_blockquote]:px-5
-                  [&_.ProseMirror_blockquote]:py-4
-                  [&_.ProseMirror_code]:rounded-md
-                  [&_.ProseMirror_code]:bg-primary/10
-                  [&_.ProseMirror_code]:px-1.5
-                  [&_.ProseMirror_code]:py-1
-                  [&_.ProseMirror_code]:text-primary
-                  [&_.ProseMirror_pre]:my-6
-                  [&_.ProseMirror_pre]:overflow-x-auto
-                  [&_.ProseMirror_pre]:rounded-[24px]
-                  [&_.ProseMirror_pre]:border
-                  [&_.ProseMirror_pre]:border-white/8
-                  [&_.ProseMirror_pre]:bg-black/38
-                  [&_.ProseMirror_pre_code]:block
-                  [&_.ProseMirror_pre_code]:bg-transparent
-                  [&_.ProseMirror_pre_code]:px-5
-                  [&_.ProseMirror_pre_code]:py-4
-                  [&_.ProseMirror_pre_code]:text-zinc-100
+                  [&_.ProseMirror_li]:text-foreground/82
                   [&_.ProseMirror_img]:my-6
                   [&_.ProseMirror_img]:rounded-[22px]
                   [&_.ProseMirror_img]:border
-                  [&_.ProseMirror_img]:border-white/10
+                  [&_.ProseMirror_img]:border-border/70
                 "
               />
             </div>
           ) : moment.content ? (
             <div className="mt-3 max-w-[40rem]">
-              <p className={`whitespace-pre-line text-white/88 ${contentClass}`}>{moment.content}</p>
+              <p className={`whitespace-pre-line text-foreground/88 ${contentClass}`}>{moment.content}</p>
             </div>
           ) : null}
 
@@ -476,12 +454,12 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
               {metrics.map((metric) => (
                 <div
                   key={metric.label}
-                  className="rounded-[16px] border border-white/8 bg-white/[0.055] px-3.5 py-2.5"
+                  className="rounded-[16px] border border-border/70 bg-background/55 px-3.5 py-2.5"
                 >
-                  <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-white/42">
+                  <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
                     {metric.label}
                   </p>
-                  <p className="mt-1 text-[13px] font-bold text-white/82">{metric.value}</p>
+                  <p className="mt-1 text-[13px] font-bold text-foreground">{metric.value}</p>
                 </div>
               ))}
             </div>
@@ -492,13 +470,13 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
               href={linkMeta.url}
               target="_blank"
               rel="noreferrer"
-              className="mt-4 block max-w-[40rem] rounded-[16px] border border-white/10 bg-white/[0.055] px-3.5 py-3 transition-colors hover:border-primary/28 hover:bg-white/[0.075]"
+              className="mt-4 block max-w-[40rem] rounded-[16px] border border-border/70 bg-background/55 px-3.5 py-3 transition-colors hover:border-primary/28 hover:bg-background/70"
             >
-              <p className="line-clamp-2 text-[13px] font-bold text-white/88">
+              <p className="line-clamp-2 text-[13px] font-bold text-foreground">
                 {linkMeta.title ?? linkMeta.url}
               </p>
               {linkMeta.description ? (
-                <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-white/50">{linkMeta.description}</p>
+                <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-muted-foreground">{linkMeta.description}</p>
               ) : null}
               {linkMeta.url ? (
                 <p className="mt-2 truncate font-mono text-[10px] text-primary/80">{linkMeta.url}</p>
@@ -508,7 +486,7 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
 
           <MomentImages images={moment.images} />
 
-          <div className="mt-4 flex items-center justify-between gap-3 text-white/46">
+          <div className="mt-4 flex items-center justify-between gap-3 text-muted-foreground">
             <div className="flex min-w-0 items-center gap-2 text-[0.9rem] font-semibold">
               <time className="flex-shrink-0">
                 {createdAt.toLocaleTimeString('zh-CN', {
@@ -516,7 +494,7 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
                   minute: '2-digit',
                 })}
               </time>
-              <span className="text-white/28">·</span>
+              <span className="text-muted-foreground/40">·</span>
               <span className="inline-flex min-w-0 items-center gap-1.5 truncate">
                 <MaterialSymbol icon={getSourceIcon(moment)} size={15} />
                 <span className="truncate">{formatMomentSource(moment)}</span>
@@ -542,11 +520,13 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
             </div>
           </div>
 
-          {shareStatus ? <p className="mt-2 text-right text-[11px] font-medium text-white/42">{shareStatus}</p> : null}
+          {shareStatus ? (
+            <p className="mt-2 text-right text-[11px] font-medium text-muted-foreground">{shareStatus}</p>
+          ) : null}
 
-          <div className="mt-4 rounded-[14px] bg-white/[0.065] px-4 py-2.5">
-            <div className="flex items-center gap-2 text-[0.95rem] font-bold leading-6 text-white/86">
-              <MaterialSymbol icon="favorite" size={20} className="flex-shrink-0 text-white/86" />
+          <div className="mt-4 rounded-[14px] bg-background/58 px-4 py-2.5">
+            <div className="flex items-center gap-2 text-[0.95rem] font-bold leading-6 text-foreground">
+              <MaterialSymbol icon="favorite" size={20} className="flex-shrink-0 text-primary" />
               <span>{getLikeStripText(siteProfile, engagement, summary)}</span>
             </div>
           </div>
@@ -564,7 +544,7 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
             />
           ) : null}
 
-          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-white/24">
+          <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
             {timeAgo(createdAt)} · {formatMomentType(moment.type)}
           </p>
         </div>
@@ -578,7 +558,7 @@ function MomentImages({ images }: { images: string[] }) {
 
   if (images.length === 1) {
     return (
-      <div className="mt-4 overflow-hidden rounded-[12px] border border-white/10 bg-black/24">
+      <div className="mt-4 overflow-hidden rounded-[12px] border border-border/70 bg-background/55">
         <img
           src={images[0]}
           alt=""
@@ -593,7 +573,7 @@ function MomentImages({ images }: { images: string[] }) {
       {images.slice(0, 4).map((url, index) => (
         <div
           key={index}
-          className="relative aspect-square overflow-hidden rounded-[12px] border border-white/10 bg-black/24"
+          className="relative aspect-square overflow-hidden rounded-[12px] border border-border/70 bg-background/55"
         >
           <img
             src={url}
@@ -601,8 +581,8 @@ function MomentImages({ images }: { images: string[] }) {
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.025]"
           />
           {index === 3 && images.length > 4 ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/58">
-              <span className="text-lg font-black text-white">+{images.length - 4}</span>
+            <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+              <span className="text-lg font-black text-foreground">+{images.length - 4}</span>
             </div>
           ) : null}
         </div>
@@ -630,8 +610,8 @@ function ActionButton({
     <button
       type="button"
       aria-label={label}
-      className={`inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded-full border border-transparent px-1.5 text-white/78 transition hover:border-white/10 hover:bg-white/[0.03] hover:text-white disabled:cursor-wait disabled:opacity-60 ${
-        active ? 'text-ember' : ''
+      className={`inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded-full border border-transparent px-1.5 transition hover:border-border hover:bg-background/65 disabled:cursor-wait disabled:opacity-60 ${
+        active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
       }`}
       disabled={disabled}
       onClick={onClick}
@@ -664,45 +644,45 @@ function CommentPanel({
   onTextChange: (value: string) => void
 }) {
   return (
-    <div className="mt-4 rounded-[18px] border border-white/10 bg-black/20 p-3">
+    <div className="mt-4 rounded-[18px] border border-border/70 bg-background/60 p-3">
       <form className="grid gap-2" onSubmit={onSubmit}>
         <input
           value={commentName}
           onChange={(event) => onNameChange(event.target.value)}
           placeholder="昵称"
           maxLength={32}
-          className="rounded-[12px] border border-white/10 bg-white/[0.055] px-3 py-2 text-sm font-semibold text-white outline-none transition placeholder:text-white/30 focus:border-primary/38"
+          className="rounded-[12px] border border-border/70 bg-card px-3 py-2 text-sm font-semibold text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary/38"
         />
         <textarea
           value={commentText}
           onChange={(event) => onTextChange(event.target.value)}
-          placeholder="留一句评论..."
+          placeholder="留一句评论…"
           maxLength={500}
           rows={3}
-          className="resize-none rounded-[12px] border border-white/10 bg-white/[0.055] px-3 py-2 text-sm leading-6 text-white outline-none transition placeholder:text-white/30 focus:border-primary/38"
+          className="resize-none rounded-[12px] border border-border/70 bg-card px-3 py-2 text-sm leading-6 text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary/38"
         />
         <div className="flex justify-end">
           <button
             type="submit"
             disabled={isSubmitting || !commentName.trim() || !commentText.trim()}
-            className="rounded-full border border-primary/24 bg-primary/15 px-4 py-2 text-xs font-bold text-white transition hover:bg-primary/22 disabled:cursor-not-allowed disabled:opacity-45"
+            className="rounded-full border border-primary/24 bg-primary/14 px-4 py-2 text-xs font-bold text-foreground transition hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-45"
           >
-            {isSubmitting ? '发布中...' : '发布评论'}
+            {isSubmitting ? '发布中…' : '发布评论'}
           </button>
         </div>
       </form>
 
       <div className="mt-4 space-y-3">
         {!commentsLoaded ? (
-          <p className="text-sm text-white/42">评论加载中...</p>
+          <p className="text-sm text-muted-foreground">评论加载中…</p>
         ) : comments.length === 0 ? (
-          <p className="text-sm text-white/42">还没有评论，先坐第一排。</p>
+          <p className="text-sm text-muted-foreground">还没有评论，先坐第一排。</p>
         ) : (
           comments.map((comment) => (
-            <div key={comment.id} className="rounded-[14px] bg-white/[0.045] px-3 py-2">
+            <div key={comment.id} className="rounded-[14px] bg-card px-3 py-2">
               <div className="flex items-center justify-between gap-3">
-                <p className="truncate text-sm font-bold text-white/84">{comment.author_name}</p>
-                <time className="flex-shrink-0 text-[10px] text-white/32">
+                <p className="truncate text-sm font-bold text-foreground">{comment.author_name}</p>
+                <time className="flex-shrink-0 text-[10px] text-muted-foreground">
                   {new Date(comment.created_at).toLocaleString('zh-CN', {
                     month: '2-digit',
                     day: '2-digit',
@@ -711,7 +691,7 @@ function CommentPanel({
                   })}
                 </time>
               </div>
-              <p className="mt-1 whitespace-pre-line text-sm leading-6 text-white/62">{comment.content}</p>
+              <p className="mt-1 whitespace-pre-line text-sm leading-6 text-foreground/72">{comment.content}</p>
             </div>
           ))
         )}

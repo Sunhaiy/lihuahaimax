@@ -6,7 +6,7 @@ import { MomentFeedCard } from './MomentFeedCard'
 
 export const metadata: Metadata = {
   title: '瞬间',
-  description: '把失眠后的清晨、突如其来的雷雨、照片与零碎念头都收在这里。',
+  description: '把照片、碎念、天气和路过的小事收在这里。',
 }
 
 export const revalidate = 30
@@ -29,30 +29,11 @@ export default async function MomentsPage() {
 
   return (
     <div className="mx-auto max-w-[760px] px-4 pb-16 pt-9 sm:px-5 sm:pt-12">
-      <section className="mb-8 px-1">
-        <p className="scene-copy-subtle text-[11px] font-mono uppercase tracking-[0.28em]">
-          Moments Archive
-        </p>
-        <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="scene-copy text-[2.5rem] font-black tracking-[-0.075em] sm:text-[4rem]">
-              瞬间
-            </h1>
-            <p className="scene-copy-muted mt-3 max-w-xl text-[14px] leading-7">
-              {siteProfile.ownerName} 的照片、碎碎念、天气和路过的小事，都按社交动态的节奏收在这里。
-            </p>
-          </div>
-          <p className="scene-chip w-fit px-3 py-1 text-[11px] font-semibold">
-            {moments.length} 条记录
-          </p>
-        </div>
-      </section>
-
       {moments.length === 0 ? (
         <div className="scene-panel rounded-[28px] px-8 py-24 text-center">
           <p className="scene-copy text-lg font-semibold">暂时还没有新的瞬间。</p>
           <p className="scene-copy-muted mt-3 text-sm leading-7">
-            等下一场雨落下来，这里会先亮起第一张卡片。
+            等下一阵风或者下一场雨过来，这里会先亮起第一张卡片。
           </p>
         </div>
       ) : (

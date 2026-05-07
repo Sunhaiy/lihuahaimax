@@ -15,17 +15,19 @@ import type { MomentRow } from '@/types/moment'
 
 export const metadata: Metadata = {
   title: '首页',
-  description: '记录文章、瞬间、ACG、项目与生活轨迹。',
+  description: '记录文章、瞬间、项目与日常轨迹的个人主页。',
 }
 
 export const revalidate = 60
 
 function getMomentPreview(moment: MomentRow): { text: string; mono: boolean } | null {
   if (moment.content) return { text: moment.content, mono: false }
+
   if (moment.content_json) {
     const text = extractPlainTextFromRichContent(moment.content_json)
     if (text) return { text, mono: false }
   }
+
   if (!moment.meta) return null
 
   if (moment.type === 'sleep') {
@@ -35,10 +37,9 @@ function getMomentPreview(moment: MomentRow): { text: string; mono: boolean } | 
       deepSleepMinutes?: number
       score?: number | null
     }
-
     const parts: string[] = []
-    if (meta.sleepStart && meta.sleepEnd) parts.push(`入睡 ${meta.sleepStart}  起床 ${meta.sleepEnd}`)
-    if (meta.deepSleepMinutes != null) parts.push(`深睡 ${meta.deepSleepMinutes}min`)
+    if (meta.sleepStart && meta.sleepEnd) parts.push(`入睡 ${meta.sleepStart} / 起床 ${meta.sleepEnd}`)
+    if (meta.deepSleepMinutes != null) parts.push(`深睡 ${meta.deepSleepMinutes} min`)
     if (meta.score != null) parts.push(`评分 ${meta.score}`)
     return parts.length > 0 ? { text: parts.join('\n'), mono: true } : null
   }
@@ -99,23 +100,26 @@ export default async function HomePage({
             }}
           />
         ) : null}
+
         <div
           aria-hidden
           className="absolute inset-0"
           style={{
             background: hasSceneImage
-              ? 'linear-gradient(180deg, hsl(var(--background) / 0.22) 0%, hsl(var(--background) / 0.28) 28%, hsl(var(--background) / 0.88) 100%)'
-              : 'linear-gradient(180deg, hsl(var(--background) / 0.12) 0%, hsl(var(--background) / 0.2) 46%, hsl(var(--background) / 0.96) 100%)',
+              ? 'linear-gradient(180deg, hsl(var(--background) / 0.16) 0%, hsl(var(--background) / 0.32) 26%, hsl(var(--background) / 0.88) 100%)'
+              : 'linear-gradient(180deg, hsl(var(--background) / 0.1) 0%, hsl(var(--background) / 0.2) 40%, hsl(var(--background) / 0.96) 100%)',
           }}
         />
+
         <div
           aria-hidden
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(circle at top, hsl(var(--primary) / 0.14), transparent 36%), linear-gradient(180deg, transparent 0%, hsl(var(--background) / 0.1) 48%, hsl(var(--background) / 0.2) 100%)',
+              'radial-gradient(circle at top, hsl(var(--primary) / 0.16), transparent 36%), linear-gradient(180deg, transparent 0%, hsl(var(--background) / 0.08) 48%, hsl(var(--background) / 0.16) 100%)',
           }}
         />
+
         <div
           aria-hidden
           className="absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full blur-[140px]"
@@ -137,7 +141,7 @@ export default async function HomePage({
               <span>{siteProfile.siteNameEn}</span>
               <span className="text-hero-subtle/40">/</span>
               <span>{siteProfile.roleLine}</span>
-              <span className="text-white/24">/</span>
+              <span className="text-hero-subtle/40">/</span>
               <span>{siteProfile.slogan}</span>
             </div>
             <p className="scene-copy-muted mx-auto mt-8 max-w-xl text-base leading-8">
@@ -147,17 +151,17 @@ export default async function HomePage({
 
           {momentsResult.data.length > 0 ? (
             <div className="mt-auto pt-16">
-              <div className="mx-auto max-w-5xl rounded-[32px] border border-white/8 bg-[rgba(24,24,26,0.72)] p-5 backdrop-blur-2xl sm:p-6">
+              <div className="mx-auto max-w-5xl rounded-[32px] border border-border/75 bg-card/78 p-5 shadow-[0_24px_64px_rgba(15,23,42,0.08)] backdrop-blur-2xl sm:p-6">
                 <div className="mb-5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2.5">
-                    <span className="scene-icon-badge h-8 w-8 rounded-2xl">
+                    <span className="scene-icon-badge h-8 w-8 rounded-2xl border border-border/70 bg-background/72 text-primary">
                       <MaterialSymbol icon="chat_bubble" size={16} />
                     </span>
-                    <span className="text-sm font-medium text-white/88">瞬间</span>
+                    <span className="text-sm font-medium text-foreground">瞬间</span>
                   </div>
                   <Link
                     href="/moments"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-white/48 transition-colors hover:bg-white/[0.05] hover:text-white/82"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-background/60 text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
                     aria-label="查看全部瞬间"
                   >
                     <MaterialSymbol icon="arrow_forward" size={16} />
@@ -172,13 +176,13 @@ export default async function HomePage({
                       <Link
                         key={moment.id}
                         href="/moments"
-                        className="group relative flex min-h-[172px] w-[18rem] flex-shrink-0 flex-col justify-between overflow-hidden rounded-[24px] border border-white/[0.07] bg-[rgba(20,20,22,0.56)] p-4 backdrop-blur-xl transition-all duration-300 hover:border-white/[0.1] hover:bg-[rgba(24,24,26,0.62)] sm:w-[19rem]"
+                        className="group relative flex min-h-[172px] w-[18rem] flex-shrink-0 flex-col justify-between overflow-hidden rounded-[24px] border border-border/70 bg-background/72 p-4 shadow-[0_16px_34px_rgba(15,23,42,0.05)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/24 hover:bg-background/86 sm:w-[19rem]"
                       >
                         <div className="scene-terminal-grid absolute inset-0 opacity-[0.03]" />
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-white/[0.01] opacity-70" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-primary/[0.01] opacity-70" />
                         <div className="relative z-10">
                           {moment.images.length > 0 ? (
-                            <div className="mb-3 aspect-[16/9] overflow-hidden rounded-[18px] border border-white/8 bg-black/10">
+                            <div className="mb-3 aspect-[16/9] overflow-hidden rounded-[18px] border border-border/70 bg-muted/40">
                               <img
                                 src={moment.images[0]}
                                 alt=""
@@ -189,18 +193,18 @@ export default async function HomePage({
 
                           {preview ? (
                             <p
-                              className={`scene-copy-muted line-clamp-4 whitespace-pre-line text-[13px] leading-6 ${
+                              className={`line-clamp-4 whitespace-pre-line text-[13px] leading-6 text-foreground/78 ${
                                 preview.mono ? 'font-mono' : ''
                               }`}
                             >
                               {preview.text}
                             </p>
                           ) : (
-                            <p className="text-xs leading-6 text-white/40">这一刻还没留下文字。</p>
+                            <p className="text-xs leading-6 text-muted-foreground">这一刻还没有留下文字。</p>
                           )}
                         </div>
 
-                        <div className="scene-copy-subtle relative z-10 mt-5 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.12em]">
+                        <div className="relative z-10 mt-5 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
                           <span className="inline-flex items-center gap-1.5">
                             <MaterialSymbol icon="schedule" size={13} />
                             {new Date(moment.created_at).toLocaleString('zh-CN', {
@@ -210,7 +214,7 @@ export default async function HomePage({
                               minute: '2-digit',
                             })}
                           </span>
-                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/8 bg-white/[0.03] text-white/34 transition-colors group-hover:bg-white/[0.06] group-hover:text-white/72">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-border/70 bg-card/70 text-muted-foreground transition-colors group-hover:border-primary/24 group-hover:text-primary">
                             <MaterialSymbol icon="arrow_outward" size={13} />
                           </span>
                         </div>
@@ -224,7 +228,7 @@ export default async function HomePage({
         </div>
       </section>
 
-      <section className="relative z-10 rounded-t-[2rem] border-t border-hero-border/16 bg-background/96 backdrop-blur-2xl">
+      <section className="relative z-10 rounded-t-[2rem] border-t border-border/70 bg-background/96 backdrop-blur-2xl">
         <div className="mx-auto max-w-6xl px-4">
           <div className="grid grid-cols-1 items-start gap-8 pb-20 pt-14 lg:grid-cols-[1fr_280px]">
             <div className="min-w-0" id="latest-posts">
@@ -232,9 +236,7 @@ export default async function HomePage({
 
               <div className="mt-8">
                 <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-xl font-semibold tracking-[-0.03em] text-foreground">
-                    最新文章
-                  </h2>
+                  <h2 className="text-xl font-semibold tracking-[-0.03em] text-foreground">最新文章</h2>
                   <Link
                     href="/posts"
                     className="inline-flex items-center gap-1.5 text-sm text-primary transition-colors hover:text-primary/75"
@@ -245,7 +247,7 @@ export default async function HomePage({
                 </div>
 
                 {postsResult.data.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-muted-foreground">暂无文章。</p>
+                  <p className="py-8 text-center text-sm text-muted-foreground">暂时还没有文章。</p>
                 ) : (
                   <>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -260,22 +262,21 @@ export default async function HomePage({
 
                     {postsResult.total > 6 ? (
                       <div className="mt-8 flex justify-center gap-2">
-                        {Array.from(
-                          { length: Math.ceil(postsResult.total / 6) },
-                          (_, index) => index + 1
-                        ).map((current) => (
-                          <Link
-                            key={current}
-                            href={`/?page=${current}#latest-posts`}
-                            className={`flex h-9 w-9 items-center justify-center rounded-lg border text-sm transition-colors ${
-                              current === page
-                                ? 'border-foreground bg-foreground text-background'
-                                : 'border-border text-muted-foreground hover:border-primary/40 hover:text-primary'
-                            }`}
-                          >
-                            {current}
-                          </Link>
-                        ))}
+                        {Array.from({ length: Math.ceil(postsResult.total / 6) }, (_, index) => index + 1).map(
+                          (current) => (
+                            <Link
+                              key={current}
+                              href={`/?page=${current}#latest-posts`}
+                              className={`flex h-9 w-9 items-center justify-center rounded-lg border text-sm transition-colors ${
+                                current === page
+                                  ? 'border-foreground bg-foreground text-background'
+                                  : 'border-border text-muted-foreground hover:border-primary/40 hover:text-primary'
+                              }`}
+                            >
+                              {current}
+                            </Link>
+                          )
+                        )}
                       </div>
                     ) : null}
                   </>
@@ -305,9 +306,7 @@ export default async function HomePage({
 
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-foreground">{siteProfile.ownerName}</p>
-                    <p className="mt-1 text-[11px] tracking-[0.06em] text-primary">
-                      {siteProfile.roleLine}
-                    </p>
+                    <p className="mt-1 text-[11px] tracking-[0.06em] text-primary">{siteProfile.roleLine}</p>
                   </div>
                 </div>
 
@@ -316,11 +315,15 @@ export default async function HomePage({
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <div className="rounded-[18px] border border-border/70 bg-background/45 px-4 py-3 text-center">
                     <p className="text-2xl font-semibold leading-none text-ember">{postsResult.total}</p>
-                    <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">Posts</p>
+                    <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
+                      Posts
+                    </p>
                   </div>
                   <div className="rounded-[18px] border border-border/70 bg-background/45 px-4 py-3 text-center">
                     <p className="text-2xl font-semibold leading-none text-ember">{momentsResult.total}</p>
-                    <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">Moments</p>
+                    <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
+                      Moments
+                    </p>
                   </div>
                 </div>
               </div>
@@ -347,7 +350,7 @@ export default async function HomePage({
                 <div className="rounded-[24px] border border-border/80 bg-card/90 p-4">
                   <p className="text-[11px] font-mono tracking-[0.12em] text-muted-foreground">最新瞬间</p>
                   <p className="mt-3 line-clamp-4 text-sm leading-7 text-foreground/84">
-                    {latestMomentPreview?.text || '这一刻还没留下文字，但它已经被收进 moments 里了。'}
+                    {latestMomentPreview?.text || '这一刻还没有留下文字，但已经被收进 moments 里了。'}
                   </p>
                   <div className="mt-4 flex items-center justify-between text-[11px] text-muted-foreground">
                     <span>{new Date(latestMoment.created_at).toLocaleString('zh-CN')}</span>

@@ -9,7 +9,10 @@ import { getSiteProfile } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: '文章',
-  description: '按分类、标签与关键词浏览全部文章。',
+  description: '按分类、标签和关键词浏览全部公开文章。',
+  alternates: {
+    canonical: '/posts',
+  },
 }
 
 export const revalidate = 60
@@ -26,19 +29,25 @@ export default async function PostsPage({
   const isFiltered = Boolean(currentCategory || currentTags.length || keyword)
   const currentPage = Math.max(1, Number(page ?? 1) || 1)
 
+  const filteredPromise = findPosts({
+    status: 'published',
+    page: currentPage,
+    pageSize: 9,
+    tags: currentTags.length > 0 ? currentTags : undefined,
+    category: currentCategory || undefined,
+    keyword: keyword ?? undefined,
+  })
+
+  const featuredPromise = isFiltered
+    ? findPosts({ status: 'published', pageSize: 9 })
+    : filteredPromise
+
   const [featuredResult, allTagsResult, categoriesResult, filteredResult, siteProfile] =
     await Promise.all([
-      findPosts({ status: 'published', pageSize: 9 }),
+      featuredPromise,
       findAllTags(),
       findCategories(),
-      findPosts({
-        status: 'published',
-        page: currentPage,
-        pageSize: 9,
-        tags: currentTags.length > 0 ? currentTags : undefined,
-        category: currentCategory || undefined,
-        keyword: keyword ?? undefined,
-      }),
+      filteredPromise,
       getSiteProfile(),
     ])
 
@@ -60,36 +69,14 @@ export default async function PostsPage({
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12 sm:px-8">
-      <header className="mb-10">
-        <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-muted-foreground">
-          Writing Archive
-        </p>
-        <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl font-semibold tracking-[-0.05em] text-foreground">文章</h1>
-            <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              所有公开文章都会在这里归档。可以按分类、标签和关键词快速筛选，也可以直接从推荐位继续读下去。
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-border/70 bg-card/80 px-3 py-1 text-[11px] font-mono text-muted-foreground">
-              全部 {featuredResult.total} 篇
-            </span>
-            {isFiltered ? (
-              <span className="rounded-full border border-primary/24 bg-primary/10 px-3 py-1 text-[11px] font-mono text-primary">
-                当前筛选 {filteredResult.total} 篇
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </header>
-
       {!isFiltered ? (
         <section className="mb-10 rounded-[28px] border border-border/75 bg-card/72 p-5 backdrop-blur-xl sm:p-6">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-foreground">推荐阅读</p>
-              <p className="mt-1 text-sm text-muted-foreground">优先展示推荐文章与有封面的内容。</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                优先展示推荐文章与带封面的内容。
+              </p>
             </div>
             <span className="rounded-full border border-border/70 bg-background/45 px-3 py-1 text-[11px] font-mono text-muted-foreground">
               Featured
@@ -158,7 +145,7 @@ export default async function PostsPage({
                     )}
 
                     {post.category ? (
-                      <span className="absolute left-3 top-3 rounded-full border border-white/10 bg-black/45 px-2.5 py-1 text-[11px] text-white/82 backdrop-blur-md">
+                      <span className="absolute left-3 top-3 rounded-full border border-zinc-200/95 bg-white/96 px-2.5 py-1 text-[11px] text-zinc-900 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-white/10 dark:bg-black/45 dark:text-white/82">
                         {post.category}
                       </span>
                     ) : null}
@@ -194,19 +181,21 @@ export default async function PostsPage({
 
       {filteredResult.totalPages > 1 ? (
         <div className="mt-12 flex justify-center gap-2">
-          {Array.from({ length: filteredResult.totalPages }, (_, index) => index + 1).map((nextPage) => (
-            <Link
-              key={nextPage}
-              href={paginationHref(nextPage)}
-              className={`flex h-9 w-9 items-center justify-center rounded-xl border text-sm transition-colors ${
-                nextPage === filteredResult.page
-                  ? 'border-primary/24 bg-primary text-primary-foreground'
-                  : 'border-border/70 bg-card/72 text-muted-foreground hover:border-primary/24 hover:text-primary'
-              }`}
-            >
-              {nextPage}
-            </Link>
-          ))}
+          {Array.from({ length: filteredResult.totalPages }, (_, index) => index + 1).map(
+            (nextPage) => (
+              <Link
+                key={nextPage}
+                href={paginationHref(nextPage)}
+                className={`flex h-9 w-9 items-center justify-center rounded-xl border text-sm transition-colors ${
+                  nextPage === filteredResult.page
+                    ? 'border-primary/24 bg-primary text-primary-foreground'
+                    : 'border-border/70 bg-card/72 text-muted-foreground hover:border-primary/24 hover:text-primary'
+                }`}
+              >
+                {nextPage}
+              </Link>
+            )
+          )}
         </div>
       ) : null}
     </div>

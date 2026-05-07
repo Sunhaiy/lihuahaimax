@@ -5,9 +5,6 @@ import { Link } from '@tiptap/extension-link'
 import { Placeholder } from '@tiptap/extension-placeholder'
 import StarterKit from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
-import { PinoutDiagramExtension } from './extensions/PinoutDiagramExtension'
-import { RawHtmlExtension } from './extensions/RawHtmlExtension'
-import { SshTerminalExtension } from './extensions/SshTerminalExtension'
 
 const lowlight = createLowlight(common)
 
@@ -19,7 +16,7 @@ export function getEditorExtensions(options: { placeholder?: string } = {}): Ext
 
     CodeBlockLowlight.configure({
       lowlight,
-      defaultLanguage: 'plaintext',
+      defaultLanguage: 'typescript',
       HTMLAttributes: {
         class: 'code-block',
       },
@@ -41,11 +38,7 @@ export function getEditorExtensions(options: { placeholder?: string } = {}): Ext
     }),
 
     Placeholder.configure({
-      placeholder: options.placeholder ?? '开始写作…',
+      placeholder: options.placeholder ?? '开始写作吧…',
     }),
-
-    RawHtmlExtension,
-    PinoutDiagramExtension,
-    SshTerminalExtension,
   ]
 }

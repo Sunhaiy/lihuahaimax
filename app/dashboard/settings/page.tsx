@@ -39,7 +39,7 @@ const ENABLED_PAGES: Array<{ key: SceneEnabledPage; label: string; description: 
     description: '为 moments 保留独立场景数据，后续可以继续单独强化气氛。',
   },
   {
-    key: 'works-detail',
+    key: 'works',
     label: '作品详情',
     description: '先存住详细页的预设，等下一轮再决定是否真正接到前台。',
   },
@@ -153,6 +153,7 @@ export default function SettingsPage() {
   const [uploadingScene, setUploadingScene] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [uploadingDefaultCover, setUploadingDefaultCover] = useState(false)
+  const [uploadingGamesHero, setUploadingGamesHero] = useState(false)
   const [clearingScene, setClearingScene] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -160,6 +161,7 @@ export default function SettingsPage() {
   const sceneFileRef = useRef<HTMLInputElement>(null)
   const avatarFileRef = useRef<HTMLInputElement>(null)
   const defaultCoverFileRef = useRef<HTMLInputElement>(null)
+  const gamesHeroFileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (sceneRequest.data) setSceneForm(sceneRequest.data)
@@ -274,6 +276,25 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleGamesHeroUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingGamesHero(true)
+    resetNotice()
+
+    try {
+      const result = await uploadImage(file)
+      updateProfile('gamesHeroImageUrl', result.url)
+      setSuccess('游戏页 Hero 已上传，记得保存站点资料。')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '上传游戏页 Hero 失败')
+    } finally {
+      setUploadingGamesHero(false)
+      if (gamesHeroFileRef.current) gamesHeroFileRef.current.value = ''
+    }
+  }
+
   async function handleClearSceneImage() {
     setClearingScene(true)
     resetNotice()
@@ -362,6 +383,14 @@ export default function SettingsPage() {
                   className={ADMIN_INPUT_CLASS}
                 />
               </AdminField>
+              <AdminField label="全局主题色">
+                <input
+                  type="color"
+                  value={profileForm.themeColor}
+                  onChange={(event) => updateProfile('themeColor', event.target.value)}
+                  className="h-11 w-full rounded-[18px] border border-border/70 bg-background/55 px-2"
+                />
+              </AdminField>
               <AdminField label="英文副标">
                 <input
                   value={profileForm.siteNameEn}
@@ -433,10 +462,10 @@ export default function SettingsPage() {
 
           <AdminSection
             title="头像与默认文章封面"
-            description="编辑器封面留空时，会自动使用这里的默认文章封面。两者都支持直接从相册里选择。"
+            description="站点头像、文章默认封面和游戏页 Hero 背景都在这里统一维护，优先复用媒体库资源。"
             aside={<AdminStatusBadge tone="accent">Media Linked</AdminStatusBadge>}
           >
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-4 xl:grid-cols-3">
               <MediaAssetCard
                 eyebrow="Avatar"
                 title="站点头像"
@@ -533,9 +562,58 @@ export default function SettingsPage() {
                   </>
                 }
               />
+
+              <MediaAssetCard
+                eyebrow="Games Hero"
+                title="游戏页 Hero 背景"
+                description="会直接作为游戏页面顶部 Hero 背景图，风格建议和动漫页保持一致。"
+                preview={
+                  profileForm.gamesHeroImageUrl ? (
+                    <img
+                      src={profileForm.gamesHeroImageUrl}
+                      alt="游戏页 Hero 背景"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/16 via-card to-muted text-primary/70">
+                      <MaterialSymbol icon="stadia_controller" size={34} />
+                    </div>
+                  )
+                }
+                controls={
+                  <>
+                    <MediaLibraryPicker
+                      value={profileForm.gamesHeroImageUrl}
+                      onSelect={(url) => updateProfile('gamesHeroImageUrl', url)}
+                      category="artwork"
+                      buttonLabel="从相册选择"
+                      dialogTitle="选择游戏页 Hero 背景"
+                      description="支持直接复用媒体库里的封面、插画或截图，也可以在弹窗里继续上传。"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => gamesHeroFileRef.current?.click()}
+                      loading={uploadingGamesHero}
+                    >
+                      <MaterialSymbol icon="image_arrow_up" size={16} />
+                      上传 Hero 图
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={!profileForm.gamesHeroImageUrl}
+                      onClick={() => updateProfile('gamesHeroImageUrl', null)}
+                    >
+                      <MaterialSymbol icon="delete" size={16} />
+                      清空
+                    </Button>
+                  </>
+                }
+              />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-3">
               <AdminField label="头像地址" hint="可以手动粘贴，也可以直接从相册选择或上传。">
                 <input
                   value={profileForm.avatarUrl ?? ''}
@@ -557,6 +635,19 @@ export default function SettingsPage() {
                   placeholder="https://example.com/default-cover.jpg"
                 />
               </AdminField>
+              <AdminField
+                label="游戏 Hero 地址"
+                hint="留空时会回退到游戏条目里的首张封面；设置后优先使用这里。"
+              >
+                <input
+                  value={profileForm.gamesHeroImageUrl ?? ''}
+                  onChange={(event) =>
+                    updateProfile('gamesHeroImageUrl', event.target.value || null)
+                  }
+                  className={ADMIN_INPUT_CLASS}
+                  placeholder="https://example.com/games-hero.jpg"
+                />
+              </AdminField>
             </div>
           </AdminSection>
         </div>
@@ -574,6 +665,13 @@ export default function SettingsPage() {
           accept="image/*"
           className="hidden"
           onChange={handleDefaultCoverUpload}
+        />
+        <input
+          ref={gamesHeroFileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleGamesHeroUpload}
         />
       </AdminPanel>
 

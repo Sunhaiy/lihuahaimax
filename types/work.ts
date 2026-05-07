@@ -1,5 +1,5 @@
 export type WeatherPreset = 'none' | 'storm'
-export type SceneEnabledPage = 'all' | 'home' | 'moments' | 'works-detail'
+export type SceneEnabledPage = 'all' | 'home' | 'moments' | 'works'
 
 export interface BackgroundSceneSettings {
   image: {

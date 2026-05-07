@@ -115,7 +115,7 @@ export function SceneWeatherLayer({
   if (!enabled || preset !== 'storm') return null
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[2] overflow-hidden">
+    <div className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
       <div className="absolute inset-0">
         {drops.map((drop, index) => (
           <span

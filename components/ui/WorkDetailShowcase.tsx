@@ -2,59 +2,86 @@
 
 import { useMemo, useRef } from 'react'
 import { useGsapScope } from '@/hooks/useGsapScope'
-import type { WorkContributor, WorkDetail, WorkListItem } from '@/types/work'
+import type { WorkContributor, WorkDetail } from '@/types/work'
 
 interface WorkDetailShowcaseProps {
   work: WorkDetail
-  works: WorkListItem[]
   siteUrl: string
 }
 
+interface ProjectViewModel {
+  name: string
+  subtitle: string
+  tags: string[]
+  image: string
+  seal: string | null
+  users: WorkContributor[]
+  progress: string
+  statusText: string
+  version: string
+  price: string
+  originalPrice: string | null
+  joinUrl: string | null
+  joinLabel: string
+  actionUrl: string
+  actionLabel: string
+  milestones: Array<{ date: string; title: string; desc: string; link: string | null }>
+  description: string[]
+  metaLeft: string
+  metaRight: string
+  yearLabel: string
+}
+
 export function WorkDetailShowcase({ work, siteUrl }: WorkDetailShowcaseProps) {
-  const project = useMemo(() => mapWorkToProject(work, siteUrl), [work, siteUrl])
+  const project = useMemo(() => mapWorkToProject(work, siteUrl), [siteUrl, work])
   const scrollContainerRef = useRef<HTMLDivElement | null>(null)
   const dragStateRef = useRef({ isDown: false, startX: 0, scrollLeft: 0 })
 
   const { scopeRef } = useGsapScope<HTMLDivElement>((scope, { gsap, prefersReducedMotion }) => {
     if (prefersReducedMotion) return
 
-    const timeline = gsap.timeline({ defaults: { ease: 'power3.out' } })
-    timeline.fromTo(
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+    tl.fromTo(
       scope.querySelectorAll('.anim-fade-up'),
-      { autoAlpha: 0, y: 22 },
-      { autoAlpha: 1, y: 0, duration: 0.8, stagger: 0.12 }
+      { autoAlpha: 0, y: 20 },
+      { autoAlpha: 1, y: 0, duration: 0.76, stagger: 0.1 }
     )
-    timeline.fromTo(
+    tl.fromTo(
       scope.querySelectorAll('.anim-scale-in'),
-      { autoAlpha: 0, scale: 0.98 },
-      { autoAlpha: 1, scale: 1, duration: 0.9 },
-      0.15
+      { autoAlpha: 0, scale: 0.985 },
+      { autoAlpha: 1, scale: 1, duration: 0.88 },
+      0.08
     )
-    timeline.fromTo(
+    tl.fromTo(
       scope.querySelectorAll('.anim-slide-left'),
-      { autoAlpha: 0, x: 22 },
-      { autoAlpha: 1, x: 0, duration: 0.7, stagger: 0.1 },
-      0.25
+      { autoAlpha: 0, x: 18 },
+      { autoAlpha: 1, x: 0, duration: 0.62, stagger: 0.08 },
+      0.18
     )
-    timeline.fromTo(
+    tl.fromTo(
       scope.querySelectorAll('.anim-grow-h'),
       { scaleX: 0, transformOrigin: 'left center' },
-      { scaleX: 1, duration: 0.65, stagger: 0.08 },
-      0.45
+      { scaleX: 1, duration: 0.54, stagger: 0.06 },
+      0.26
     )
 
     const shine = scope.querySelector('.shine-sweep')
     if (shine) {
-      gsap.set(shine, { xPercent: -150, skewX: -25 })
+      gsap.set(shine, { xPercent: -160, skewX: -22 })
       gsap.to(shine, {
-        xPercent: 260,
-        duration: 6,
+        xPercent: 235,
+        duration: 5.8,
         ease: 'power1.inOut',
         repeat: -1,
-        repeatDelay: 1.4,
+        repeatDelay: 1.2,
       })
     }
   }, [work.id])
+
+  function openLink(url?: string | null) {
+    if (!url) return
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
 
   function startDragging(event: React.MouseEvent<HTMLDivElement>) {
     const container = scrollContainerRef.current
@@ -77,40 +104,53 @@ export function WorkDetailShowcase({ work, siteUrl }: WorkDetailShowcaseProps) {
     if (!container || !dragStateRef.current.isDown) return
     event.preventDefault()
     const x = event.pageX - container.offsetLeft
-    const walk = (x - dragStateRef.current.startX) * 2
+    const walk = (x - dragStateRef.current.startX) * 1.8
     container.scrollLeft = dragStateRef.current.scrollLeft - walk
-  }
-
-  function openLink(url?: string | null) {
-    if (!url) return
-    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   return (
     <div ref={scopeRef} className="project-view-root">
       <div className="content-container">
         <header className="project-header anim-fade-up">
-          <div className="meta-header">// CLASSIFIED_ARCHIVE_V.2026</div>
-          <h1 className="title">
-            {project.name}
-            <span className="subtitle">摘录 / ARCHIVE</span>
-          </h1>
-          {project.tags.length > 0 ? (
-            <div className="tags-row">
-              {project.tags.map((tag) => (
-                <span key={tag} className="tag-pill">
-                  #{tag}
-                </span>
-              ))}
+          <div className="header-shell">
+            <div className="header-copy">
+              <div className="meta-header">// CLASSIFIED_ARCHIVE_V.2026</div>
+              <h1 className="title">{project.name}</h1>
+              <p className="subtitle">{project.subtitle}</p>
+              {project.tags.length > 0 ? (
+                <div className="tags-row">
+                  {project.tags.map((tag) => (
+                    <span key={tag} className="tag-pill">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
-          ) : null}
+
+            <div className="header-aside">
+              <span className="header-kicker">ARCHIVE STATUS</span>
+              <div className="header-aside-value">{project.statusText}</div>
+              <div className="header-facts">
+                <div className="fact">
+                  <span className="fact-label">YEAR</span>
+                  <span className="fact-value">{project.yearLabel}</span>
+                </div>
+                <div className="fact">
+                  <span className="fact-label">VERSION</span>
+                  <span className="fact-value">{project.version}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </header>
 
         <div className="main-layout">
-          <div className="visual-section anim-scale-in">
+          <section className="visual-section anim-scale-in">
             <div className="hero-image-wrapper">
               <div className="frame-corner tl" />
               <div className="frame-corner br" />
+
               <div className="shine-container">
                 <div className="shine-sweep" />
                 {project.image ? (
@@ -121,18 +161,20 @@ export function WorkDetailShowcase({ work, siteUrl }: WorkDetailShowcaseProps) {
                   </div>
                 )}
               </div>
+
               {project.seal ? (
                 <div className="seal-box">
                   <div className="seal">{project.seal}</div>
                 </div>
               ) : null}
             </div>
+
             <div className="visual-meta">
-              <span>COORDS: 42.08 / 15.99</span>
+              <span>{project.metaLeft}</span>
               <span className="divider" />
-              <span>ZOOM: 1.0x</span>
+              <span>{project.metaRight}</span>
             </div>
-          </div>
+          </section>
 
           <aside className="info-sidebar">
             <div className="sidebar-inner">
@@ -151,7 +193,7 @@ export function WorkDetailShowcase({ work, siteUrl }: WorkDetailShowcaseProps) {
                         </div>
                         <div className="u-text">
                           <span className="u-name">{user.name}</span>
-                          <span className="u-role">{user.role || 'MEMBER'}</span>
+                          <span className="u-role">{user.role || 'Member'}</span>
                         </div>
                       </div>
                     ))}
@@ -190,13 +232,22 @@ export function WorkDetailShowcase({ work, siteUrl }: WorkDetailShowcaseProps) {
                   ) : null}
                 </div>
 
-                <button className="join-trigger" onClick={() => openLink(project.joinUrl)}>
-                  APPLY_TO_JOIN
-                </button>
+                <div className="action-card">
+                  <div className="action-copy">
+                    <p className="action-kicker">{project.joinLabel}</p>
+                    <p className="action-desc">{project.actionLabel}</p>
+                  </div>
 
-                <button className="action-trigger" onClick={() => openLink(project.actionUrl)}>
-                  ACCESS_NODE
-                </button>
+                  {project.joinUrl ? (
+                    <button className="join-trigger" onClick={() => openLink(project.joinUrl)}>
+                      {project.joinLabel}
+                    </button>
+                  ) : null}
+
+                  <button className="action-trigger" onClick={() => openLink(project.actionUrl)}>
+                    {project.actionLabel}
+                  </button>
+                </div>
               </div>
             </div>
           </aside>
@@ -205,7 +256,7 @@ export function WorkDetailShowcase({ work, siteUrl }: WorkDetailShowcaseProps) {
         {project.milestones.length > 0 ? (
           <section className="progress-timeline-section anim-fade-up">
             <div className="timeline-header">
-              <span className="header-tag">DEVELOPMENT_TIMELINE</span>
+              <span className="header-tag">DEVELOPMENT TIMELINE</span>
               <div className="header-line" />
             </div>
 
@@ -233,12 +284,14 @@ export function WorkDetailShowcase({ work, siteUrl }: WorkDetailShowcaseProps) {
                         className={`node-title ${step.link ? 'has-link' : ''}`}
                         onClick={() => openLink(step.link)}
                       >
-                        {step.title} {step.link ? <span style={{ fontSize: 10 }}>↗</span> : null}
+                        {step.title}
+                        {step.link ? <span className="inline-arrow">↗</span> : null}
                       </h5>
                       <p className="node-desc">{step.desc}</p>
                     </div>
                   </div>
                 ))}
+
                 <div className="timeline-end">
                   <div className="end-dot" />
                   <span className="end-txt">EOF</span>
@@ -249,19 +302,21 @@ export function WorkDetailShowcase({ work, siteUrl }: WorkDetailShowcaseProps) {
         ) : null}
 
         <section className="product-intro-section anim-fade-up">
-          <div className="intro-header">
-            <span className="header-tag">PRODUCT_SPECIFICATION / 产品详述</span>
+          <div className="timeline-header">
+            <span className="header-tag">PRODUCT SPECIFICATION / 产品详述</span>
             <div className="header-line" />
           </div>
+
           <div className="intro-content">
             {project.description.map((paragraph, index) => (
               <p key={`${paragraph}-${index}`} className="intro-para">
                 {paragraph}
               </p>
             ))}
+
             <p className="intro-para info-tip">
-              该节点已通过核心协议验证，所有数据流向受控且加密。开发者可申请接入
-              API 获取实时遥测数据。
+              该节点已通过核心协议验证，所有数据流向受控且加密。开发者可以申请接入
+              API，获取实时遥测与版本运行信息。
             </p>
           </div>
         </section>
@@ -271,50 +326,83 @@ export function WorkDetailShowcase({ work, siteUrl }: WorkDetailShowcaseProps) {
 
       <style jsx>{`
         .project-view-root {
-          color: #fff;
-          min-height: 100vh;
-          padding: 60px 5% 150px;
-          font-family: 'JetBrains Mono', 'Roboto Mono Variable', 'Fira Code', monospace;
+          --sidebar-width: 336px;
           position: relative;
-          overflow-x: hidden;
+          min-height: 100vh;
+          overflow: clip;
+          padding: 56px 5% 148px;
+          color: hsl(var(--foreground));
+          font-family: var(--font-mono);
           background:
-            radial-gradient(circle at 18% 12%, rgba(242, 185, 75, 0.12), transparent 24%),
-            radial-gradient(circle at 82% 14%, rgba(255, 255, 255, 0.04), transparent 18%),
-            linear-gradient(180deg, #060606 0%, #030303 100%);
+            radial-gradient(circle at 16% 10%, hsl(var(--primary) / 0.08), transparent 24%),
+            radial-gradient(circle at 84% 12%, hsl(var(--primary) / 0.04), transparent 18%),
+            linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
+        }
+
+        .project-view-root::after {
+          content: '';
+          position: absolute;
+          inset: auto 0 0 0;
+          z-index: 3;
+          height: 96px;
+          pointer-events: none;
+          background: linear-gradient(180deg, transparent 0%, hsl(var(--background)) 70%);
         }
 
         .content-container {
+          position: relative;
+          z-index: 4;
           max-width: 1500px;
           margin: 0 auto;
-          z-index: 10;
-          position: relative;
         }
 
         .project-header {
-          margin-bottom: 50px;
+          margin-bottom: 40px;
+        }
+
+        .header-shell,
+        .main-layout {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) var(--sidebar-width);
+          gap: 32px;
+          align-items: start;
+        }
+
+        .header-shell {
+          border: 1px solid hsl(var(--border) / 0.78);
+          border-radius: 32px;
+          background:
+            linear-gradient(180deg, hsl(var(--card) / 0.84), hsl(var(--card) / 0.72)),
+            hsl(var(--card));
+          padding: 30px 32px;
+          box-shadow: 0 24px 70px rgba(0, 0, 0, 0.12);
         }
 
         .meta-header {
+          margin-bottom: 12px;
+          color: hsl(var(--primary) / 0.72);
           font-size: 10px;
-          color: rgba(242, 185, 75, 0.72);
-          letter-spacing: 5px;
-          margin-bottom: 10px;
+          letter-spacing: 0.42em;
         }
 
         .title {
           margin: 0;
-          color: #f5f3ef;
-          font-size: clamp(2.7rem, 5vw, 4.4rem);
-          font-weight: 800;
-          letter-spacing: -0.08em;
-          line-height: 0.95;
+          color: hsl(var(--foreground));
+          font-family: var(--font-inter);
+          font-size: clamp(2.72rem, 5vw, 4.6rem);
+          font-weight: 700;
+          letter-spacing: -0.068em;
+          line-height: 0.94;
         }
 
         .subtitle {
-          margin-left: 15px;
-          color: rgba(197, 178, 138, 0.92);
-          font-family: 'Noto Serif SC', 'Noto Serif SC Variable', serif;
-          font-size: clamp(1.35rem, 2.7vw, 2.2rem);
+          margin: 14px 0 0;
+          max-width: 42rem;
+          color: hsl(var(--muted-foreground));
+          font-family: var(--font-inter);
+          font-size: clamp(1.02rem, 1.8vw, 1.34rem);
+          font-weight: 500;
+          line-height: 1.45;
         }
 
         .tags-row {
@@ -325,182 +413,229 @@ export function WorkDetailShowcase({ work, siteUrl }: WorkDetailShowcaseProps) {
         }
 
         .tag-pill {
+          border: 1px solid hsl(var(--border));
+          border-radius: 999px;
+          background: hsl(var(--card) / 0.8);
           padding: 4px 10px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 20px;
-          background: rgba(255, 255, 255, 0.03);
-          color: rgba(255, 255, 255, 0.7);
+          color: hsl(var(--muted-foreground));
           font-size: 11px;
         }
 
-        .main-layout {
-          display: flex;
-          align-items: flex-start;
-          gap: 50px;
-          margin-bottom: 100px;
+        .header-aside,
+        .sidebar-inner {
+          border: 1px solid hsl(var(--border) / 0.78);
+          border-radius: 28px;
+          background:
+            linear-gradient(180deg, hsl(var(--card) / 0.84), hsl(var(--card) / 0.72)),
+            hsl(var(--card));
+          box-shadow: 0 24px 60px rgba(0, 0, 0, 0.1);
         }
 
-        .visual-section {
-          flex: 4;
+        .header-aside {
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+          padding: 22px;
+        }
+
+        .header-kicker,
+        .fact-label,
+        .side-label,
+        .header-tag,
+        .p-label,
+        .action-kicker {
+          color: hsl(var(--muted-foreground));
+          font-size: 11px;
+          letter-spacing: 0.18em;
+        }
+
+        .header-aside-value {
+          color: hsl(var(--foreground));
+          font-family: var(--font-inter);
+          font-size: 1.72rem;
+          font-weight: 600;
+          line-height: 1.08;
+        }
+
+        .header-facts {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .fact {
+          border: 1px solid hsl(var(--border) / 0.76);
+          border-radius: 18px;
+          padding: 12px 14px;
+          background: hsl(var(--card) / 0.56);
+        }
+
+        .fact-value {
+          display: block;
+          margin-top: 6px;
+          color: hsl(var(--foreground));
+          font-size: 1rem;
+          font-weight: 600;
+          letter-spacing: -0.03em;
         }
 
         .hero-image-wrapper {
-          width: 100%;
-          aspect-ratio: 16 / 9;
           position: relative;
           overflow: hidden;
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          background: #000;
+          border-radius: 34px;
+          border: 1px solid hsl(var(--border) / 0.72);
+          background: hsl(var(--card));
+          aspect-ratio: 16 / 10;
+          box-shadow: 0 28px 80px rgba(0, 0, 0, 0.16);
+        }
+
+        .shine-container,
+        .hero-img,
+        .img-placeholder {
+          width: 100%;
+          height: 100%;
         }
 
         .shine-container {
-          position: absolute;
-          inset: 0;
+          position: relative;
+        }
+
+        .hero-img {
+          display: block;
+          object-fit: cover;
         }
 
         .shine-sweep {
           position: absolute;
-          top: 0;
-          left: -100%;
-          z-index: 5;
-          width: 50%;
-          height: 100%;
-          background: linear-gradient(to right, transparent, rgba(242, 185, 75, 0.14), transparent);
-          transform: skewX(-25deg);
-        }
-
-        .hero-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          opacity: 0.82;
+          inset: 0 auto 0 0;
+          width: 38%;
+          background: linear-gradient(
+            90deg,
+            transparent 0%,
+            hsl(var(--primary) / 0.02) 18%,
+            hsl(var(--primary) / 0.12) 50%,
+            transparent 100%
+          );
+          mix-blend-mode: screen;
+          pointer-events: none;
         }
 
         .img-placeholder {
           display: flex;
           align-items: center;
           justify-content: center;
-          height: 100%;
-          background: #0a0a0a;
+          background: linear-gradient(180deg, hsl(var(--card)), hsl(var(--muted) / 0.45));
         }
 
         .ghost-txt {
-          color: rgba(255, 255, 255, 0.12);
-          font-size: 1.5rem;
-          font-weight: 800;
-          letter-spacing: 5px;
+          color: hsl(var(--muted-foreground) / 0.6);
+          font-size: 1rem;
+          letter-spacing: 0.24em;
         }
 
         .frame-corner {
           position: absolute;
-          z-index: 6;
-          width: 30px;
-          height: 30px;
-          border: 1.5px solid #f2b94b;
+          z-index: 2;
+          width: 42px;
+          height: 42px;
+          border-color: hsl(var(--primary));
+          border-style: solid;
+          opacity: 0.85;
         }
 
         .tl {
-          top: 15px;
-          left: 15px;
-          border-right: 0;
-          border-bottom: 0;
+          top: 20px;
+          left: 20px;
+          border-width: 2px 0 0 2px;
         }
 
         .br {
-          right: 15px;
-          bottom: 15px;
-          border-top: 0;
-          border-left: 0;
+          right: 20px;
+          bottom: 20px;
+          border-width: 0 2px 2px 0;
         }
 
         .seal-box {
           position: absolute;
-          right: 30px;
-          bottom: 30px;
-          z-index: 8;
+          right: 24px;
+          bottom: 24px;
+          z-index: 3;
         }
 
         .seal {
-          padding: 10px 15px;
-          background: #ff4d4d;
-          color: #000;
-          font-family: 'Noto Serif SC', serif;
-          font-size: 14px;
-          font-weight: 900;
+          border-radius: 999px;
+          background: hsl(var(--primary));
+          padding: 10px 18px;
+          color: hsl(var(--primary-foreground));
+          font-size: 0.95rem;
+          font-weight: 700;
         }
 
         .visual-meta {
           display: flex;
           justify-content: flex-end;
           align-items: center;
-          gap: 20px;
-          margin-top: 15px;
-          color: rgba(255, 255, 255, 0.28);
-          font-size: 9px;
-          letter-spacing: 0.22em;
+          gap: 14px;
+          margin-top: 14px;
+          color: hsl(var(--muted-foreground));
+          font-size: 11px;
+          letter-spacing: 0.18em;
         }
 
         .divider {
-          width: 32px;
+          width: 30px;
           height: 1px;
-          background: rgba(255, 255, 255, 0.14);
+          background: hsl(var(--border));
         }
 
         .info-sidebar {
-          min-width: 280px;
-          flex: 1;
-          padding-left: 40px;
-          border-left: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .sidebar-inner {
           position: sticky;
           top: 96px;
         }
 
-        .side-item {
-          margin-bottom: 35px;
+        .sidebar-inner {
+          padding: 24px;
         }
 
-        .side-label {
-          margin-bottom: 15px;
-          color: rgba(242, 185, 75, 0.72);
-          font-size: 0.75rem;
-          letter-spacing: 1px;
+        .side-item + .side-item {
+          margin-top: 28px;
+        }
+
+        .users {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
         }
 
         .user-row {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-bottom: 15px;
         }
 
         .avatar-box {
-          width: 32px;
-          height: 32px;
+          display: flex;
+          width: 44px;
+          height: 44px;
           flex-shrink: 0;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          border-radius: 999px;
+          border: 1px solid hsl(var(--border));
+          background: hsl(var(--primary) / 0.12);
         }
 
         .avatar-img {
           width: 100%;
           height: 100%;
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 50%;
           object-fit: cover;
         }
 
         .abbr {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          height: 100%;
-          border-radius: 50%;
-          background: #fff;
-          color: #000;
-          font-size: 0.7rem;
-          font-weight: 800;
+          color: hsl(var(--foreground));
+          font-size: 0.92rem;
+          font-weight: 700;
         }
 
         .u-text span {
@@ -508,317 +643,347 @@ export function WorkDetailShowcase({ work, siteUrl }: WorkDetailShowcaseProps) {
         }
 
         .u-name {
-          color: #efefef;
-          font-size: 0.9rem;
-          font-weight: 700;
+          color: hsl(var(--foreground));
+          font-size: 1rem;
+          font-weight: 600;
         }
 
         .u-role {
-          color: rgba(255, 255, 255, 0.42);
-          font-size: 0.7rem;
-          letter-spacing: 0.12em;
+          margin-top: 4px;
+          color: hsl(var(--muted-foreground));
+          font-size: 0.86rem;
         }
 
         .no-data {
-          color: rgba(255, 255, 255, 0.28);
-          font-size: 12px;
+          color: hsl(var(--muted-foreground));
+          font-size: 0.92rem;
+        }
+
+        .h-line {
+          height: 1px;
+          margin: 24px 0;
+          background: hsl(var(--border));
         }
 
         .status-box {
           display: flex;
           align-items: baseline;
-          gap: 10px;
+          gap: 12px;
         }
 
-        .status-box .val {
-          color: #eee;
-          font-size: 1.8rem;
-          font-weight: 800;
-        }
-
-        .status-box .txt {
-          color: #f2b94b;
-          font-size: 1.1rem;
+        .val {
+          color: hsl(var(--foreground));
+          font-family: var(--font-inter);
+          font-size: 3rem;
           font-weight: 700;
+          letter-spacing: -0.06em;
+          line-height: 1;
         }
 
-        .h-line {
-          height: 1px;
-          margin-bottom: 35px;
-          background: rgba(255, 255, 255, 0.08);
+        .txt {
+          color: hsl(var(--primary));
+          font-size: 1.05rem;
+          font-weight: 700;
         }
 
         .ver-code {
-          margin-bottom: 20px;
-          color: #eee;
-          font-size: 1.1rem;
+          color: hsl(var(--foreground));
+          font-family: var(--font-inter);
+          font-size: 2rem;
           font-weight: 700;
+          letter-spacing: -0.05em;
         }
 
         .price-info {
           display: flex;
-          gap: 25px;
-          margin-bottom: 30px;
+          gap: 20px;
+          margin-top: 18px;
         }
 
         .price-cell span {
           display: block;
         }
 
-        .p-label {
-          margin-bottom: 5px;
-          color: rgba(255, 255, 255, 0.32);
-          font-size: 8px;
-          letter-spacing: 0.22em;
-        }
-
         .p-val {
-          color: #f2b94b;
-          font-size: 1.5rem;
-          font-weight: 800;
+          margin-top: 8px;
+          color: hsl(var(--primary));
+          font-family: var(--font-inter);
+          font-size: 2rem;
+          font-weight: 700;
+          letter-spacing: -0.05em;
         }
 
         .old .p-val {
-          color: rgba(255, 255, 255, 0.18);
+          color: hsl(var(--muted-foreground));
           text-decoration: line-through;
         }
 
-        .action-trigger,
-        .join-trigger {
+        .action-card {
+          margin-top: 22px;
+          border: 1px solid hsl(var(--border) / 0.9);
+          border-radius: 24px;
+          padding: 20px;
+          background: hsl(var(--card) / 0.7);
+        }
+
+        .action-copy {
+          margin-bottom: 18px;
+        }
+
+        .action-desc {
+          margin: 8px 0 0;
+          color: hsl(var(--foreground));
+          font-size: 1rem;
+          font-weight: 600;
+          line-height: 1.6;
+        }
+
+        .join-trigger,
+        .action-trigger {
           width: 100%;
-          padding: 15px;
-          cursor: pointer;
-          font-size: 0.9rem;
-          font-weight: 800;
-          letter-spacing: 0.16em;
-          transition: 0.3s;
+          border-radius: 18px;
+          padding: 14px 16px;
+          font-size: 0.96rem;
+          font-weight: 700;
+          transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease,
+            color 0.2s ease;
+        }
+
+        .join-trigger {
+          border: 1px solid hsl(var(--border));
+          background: hsl(var(--card));
+          color: hsl(var(--foreground));
         }
 
         .action-trigger {
-          margin-top: 15px;
-          border: 1px solid #f2b94b;
-          background: #f2b94b;
-          color: #000;
+          margin-top: 12px;
+          border: 1px solid hsl(var(--primary));
+          background: hsl(var(--primary));
+          color: hsl(var(--primary-foreground));
         }
 
+        .join-trigger:hover,
         .action-trigger:hover {
-          border-color: #fff;
-          background: #fff;
+          transform: translateY(-1px);
         }
 
-        .join-trigger {
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: rgba(255, 255, 255, 0.9);
-          color: #000;
+        .progress-timeline-section,
+        .product-intro-section {
+          margin-top: 64px;
         }
 
-        .join-trigger:hover {
-          border-color: #fff;
-          background: #fff;
-        }
-
-        .progress-timeline-section {
-          margin-top: 40px;
-        }
-
-        .timeline-header,
-        .intro-header {
+        .timeline-header {
           display: flex;
           align-items: center;
-          gap: 20px;
-          margin-bottom: 40px;
-        }
-
-        .header-tag {
-          color: rgba(242, 185, 75, 0.72);
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: 3px;
+          gap: 18px;
+          margin-bottom: 28px;
         }
 
         .header-line {
           flex: 1;
           height: 1px;
-          background: rgba(255, 255, 255, 0.08);
+          background: hsl(var(--border));
         }
 
         .scroll-x-container {
-          width: 100%;
           overflow-x: auto;
-          padding-bottom: 40px;
+          padding-bottom: 24px;
           cursor: grab;
           scrollbar-width: none;
           user-select: none;
-        }
-
-        .scroll-x-container.grabbing {
-          cursor: grabbing;
         }
 
         .scroll-x-container::-webkit-scrollbar {
           display: none;
         }
 
+        .scroll-x-container.grabbing {
+          cursor: grabbing;
+        }
+
         .timeline-track {
           display: flex;
           min-width: max-content;
-          padding-left: 5px;
+          padding-left: 4px;
         }
 
         .timeline-node {
-          display: flex;
-          flex-direction: column;
           width: 320px;
+          padding-right: 24px;
         }
 
         .node-head {
           display: flex;
           flex-direction: column;
-          margin-bottom: 15px;
+          gap: 6px;
+          margin-bottom: 14px;
         }
 
         .node-index {
-          color: #f2b94b;
-          font-size: 10px;
-          font-weight: 800;
+          color: hsl(var(--primary));
+          font-size: 11px;
+          letter-spacing: 0.22em;
         }
 
         .node-date {
-          color: rgba(255, 255, 255, 0.34);
-          font-size: 12px;
+          color: hsl(var(--muted-foreground));
+          font-size: 0.9rem;
         }
 
         .node-path {
           display: flex;
           align-items: center;
-          position: relative;
           height: 20px;
         }
 
         .node-dot {
-          z-index: 2;
           width: 8px;
           height: 8px;
-          border-radius: 50%;
-          background: #f2b94b;
-          box-shadow: 0 0 10px #f2b94b;
+          border-radius: 999px;
+          background: hsl(var(--primary));
+          box-shadow: 0 0 16px hsl(var(--primary) / 0.32);
         }
 
         .node-line {
           flex: 1;
           height: 1px;
-          background: rgba(255, 255, 255, 0.1);
+          background: hsl(var(--border));
         }
 
         .node-body {
           padding-top: 20px;
-          padding-right: 40px;
         }
 
         .node-title {
-          margin-bottom: 12px;
-          color: #eee;
-          font-size: 1.1rem;
+          margin: 0 0 10px;
+          color: hsl(var(--foreground));
+          font-size: 1.08rem;
           font-weight: 700;
-          transition: 0.2s;
         }
 
         .node-title.has-link {
-          display: inline-block;
           cursor: pointer;
-          border-bottom: 1px dashed rgba(255, 255, 255, 0.36);
         }
 
-        .node-title.has-link:hover {
-          border-color: #f2b94b;
-          color: #f2b94b;
+        .inline-arrow {
+          margin-left: 6px;
+          color: hsl(var(--primary));
+          font-size: 0.82em;
         }
 
-        .node-desc {
-          color: rgba(255, 255, 255, 0.42);
-          font-size: 13px;
-          line-height: 1.6;
+        .node-desc,
+        .intro-para {
+          color: hsl(var(--muted-foreground));
+          font-size: 0.96rem;
+          line-height: 1.9;
         }
 
         .timeline-end {
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 0 40px;
+          justify-content: center;
+          gap: 10px;
+          padding: 0 24px;
         }
 
         .end-dot {
-          width: 4px;
-          height: 4px;
-          margin-bottom: 10px;
-          background: rgba(255, 255, 255, 0.22);
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background: hsl(var(--border));
         }
 
         .end-txt {
-          color: rgba(255, 255, 255, 0.22);
-          font-size: 10px;
-          letter-spacing: 2px;
-        }
-
-        .product-intro-section {
-          margin-top: 60px;
+          color: hsl(var(--muted-foreground));
+          font-size: 11px;
+          letter-spacing: 0.22em;
         }
 
         .intro-content {
-          max-width: 900px;
+          max-width: 920px;
         }
 
-        .intro-para {
-          margin-bottom: 20px;
-          color: rgba(255, 255, 255, 0.62);
-          font-size: 14px;
-          line-height: 2;
-          white-space: pre-wrap;
+        .intro-para + .intro-para {
+          margin-top: 18px;
         }
 
         .info-tip {
-          padding-left: 15px;
-          border-left: 2px solid rgba(255, 255, 255, 0.14);
-          color: rgba(255, 255, 255, 0.34);
-          font-style: italic;
+          border-left: 2px solid hsl(var(--primary) / 0.45);
+          padding-left: 16px;
         }
 
         .bg-watermark {
           position: fixed;
-          bottom: -5%;
           left: -2%;
+          bottom: -3%;
           z-index: 0;
-          color: rgba(255, 255, 255, 0.015);
-          font-size: 18rem;
-          font-weight: 900;
+          color: hsl(var(--foreground) / 0.03);
+          font-family: var(--font-inter);
+          font-size: clamp(8rem, 17vw, 16rem);
+          font-weight: 700;
+          letter-spacing: -0.08em;
           pointer-events: none;
           white-space: nowrap;
         }
 
-        @media (max-width: 1000px) {
+        @media (max-width: 1180px) {
           .project-view-root {
-            padding: 48px 20px 110px;
+            --sidebar-width: 300px;
           }
 
+          .header-shell,
           .main-layout {
-            flex-direction: column;
-            gap: 40px;
+            gap: 24px;
+          }
+        }
+
+        @media (max-width: 980px) {
+          .project-view-root {
+            padding: 44px 20px 120px;
+          }
+
+          .header-shell,
+          .main-layout {
+            grid-template-columns: minmax(0, 1fr);
           }
 
           .info-sidebar {
-            width: 100%;
-            padding-top: 40px;
-            padding-left: 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            border-left: none;
-          }
-
-          .sidebar-inner {
             position: static;
           }
 
-          .bg-watermark {
-            font-size: 7rem;
+          .header-aside,
+          .sidebar-inner {
+            max-width: 100%;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .header-shell,
+          .sidebar-inner {
+            padding: 20px;
+          }
+
+          .title {
+            font-size: 2.5rem;
+          }
+
+          .val {
+            font-size: 2.4rem;
+          }
+
+          .ver-code,
+          .p-val {
+            font-size: 1.7rem;
+          }
+
+          .hero-image-wrapper {
+            border-radius: 26px;
+          }
+
+          .frame-corner {
+            width: 32px;
+            height: 32px;
           }
         }
       `}</style>
@@ -826,57 +991,43 @@ export function WorkDetailShowcase({ work, siteUrl }: WorkDetailShowcaseProps) {
   )
 }
 
-function mapWorkToProject(work: WorkDetail, siteUrl: string) {
-  const descriptionSource = work.content || work.description || work.summary || ''
-  const description = descriptionSource
+function mapWorkToProject(work: WorkDetail, siteUrl: string): ProjectViewModel {
+  const primaryUrl = work.primary_url || work.url || `${siteUrl.replace(/\/$/, '')}/works/${work.slug}`
+  const secondaryUrl = work.secondary_url || work.github_url || work.primary_url || work.url || null
+  const descriptionSource = work.description || work.content || work.summary || ''
+  const paragraphs = descriptionSource
     .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
+    .map((item) => item.trim())
     .filter(Boolean)
 
   return {
     name: work.title,
-    tags: work.tags ?? [],
+    subtitle: work.subtitle || '摘录 / ARCHIVE',
+    tags: Array.isArray(work.tags) ? work.tags : [],
     image: work.hero_image_url || work.cover_url || '',
-    seal: work.seal || null,
-    users: work.contributors.length > 0 ? work.contributors : fallbackContributors(),
-    progress: work.progress_text || '0/0',
+    seal: work.seal,
+    users: Array.isArray(work.contributors) ? work.contributors : [],
+    progress: work.progress_text || '0 / 0',
     statusText: work.status_text || 'UNKNOWN',
     version: work.version_text || 'v1.0.0',
     price: formatPrice(work.price),
     originalPrice: work.original_price ? formatPrice(work.original_price) : null,
-    joinUrl:
-      work.secondary_url ||
-      work.github_url ||
-      work.primary_url ||
-      work.url ||
-      buildCanonicalUrl(siteUrl, work.slug),
-    actionUrl: work.primary_url || work.url || buildCanonicalUrl(siteUrl, work.slug),
-    milestones: work.milestones ?? [],
+    joinUrl: secondaryUrl,
+    joinLabel: work.secondary_label || '源码 / 外链',
+    actionUrl: primaryUrl,
+    actionLabel: work.primary_label || '打开项目',
+    milestones: Array.isArray(work.milestones) ? work.milestones : [],
     description:
-      description.length > 0
-        ? description
-        : ['该项目仍在持续迭代中，详细说明稍后会在此节点继续补充。'],
+      paragraphs.length > 0
+        ? paragraphs
+        : ['该项目仍在持续迭代中，详细说明会在后续版本继续补充。'],
+    metaLeft: `YEAR: ${work.year ?? 'N/A'}`,
+    metaRight: `SLUG: ${work.slug}`,
+    yearLabel: work.year ? String(work.year) : 'N/A',
   }
 }
 
-function fallbackContributors(): WorkContributor[] {
-  return [
-    {
-      name: 'Lihua Hai',
-      role: 'MEMBER',
-      avatar_url: null,
-    },
-  ]
-}
-
-function buildCanonicalUrl(siteUrl: string, slug: string) {
-  const base = siteUrl?.trim() || 'http://localhost:3000'
-  return `${base.replace(/\/$/, '')}/works/${slug}`
-}
-
-function formatPrice(value: string | null) {
-  const trimmed = value?.trim()
-  if (!trimmed) return '¥0'
-  if (/^[¥$]/.test(trimmed)) return trimmed
-  return `¥${trimmed}`
+function formatPrice(value: string | null | undefined) {
+  if (!value) return '¥0'
+  return value.startsWith('¥') ? value : `¥${value}`
 }

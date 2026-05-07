@@ -195,12 +195,24 @@ CREATE TABLE IF NOT EXISTS comments (
   post_id       INTEGER     NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
   author_name   TEXT        NOT NULL,
   author_email  TEXT,
+  parent_id     INTEGER REFERENCES comments(id) ON DELETE CASCADE,
   content       TEXT        NOT NULL,
+  location_label TEXT,
+  browser_label TEXT,
+  os_label      TEXT,
+  is_by_author  BOOLEAN     NOT NULL DEFAULT FALSE,
   is_approved   BOOLEAN     NOT NULL DEFAULT FALSE,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES comments(id) ON DELETE CASCADE;
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS location_label TEXT;
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS browser_label TEXT;
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS os_label TEXT;
+ALTER TABLE comments ADD COLUMN IF NOT EXISTS is_by_author BOOLEAN NOT NULL DEFAULT FALSE;
+
 CREATE INDEX IF NOT EXISTS idx_comments_post    ON comments (post_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_comments_parent  ON comments (parent_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_comments_pending ON comments (is_approved, created_at DESC)
   WHERE is_approved = FALSE;
 

@@ -9,17 +9,25 @@ import type { BackgroundSceneSettings, SceneEnabledPage } from '@/types/work'
 interface SceneShellProps {
   scene: BackgroundSceneSettings
   canEdit: boolean
+  quickActionHref?: string
+  quickActionLabel?: string
   children: React.ReactNode
 }
 
 function resolveScenePage(pathname: string): SceneEnabledPage {
   if (pathname === '/') return 'home'
   if (pathname.startsWith('/moments')) return 'moments'
-  if (/^\/works\/[^/]+/.test(pathname)) return 'works-detail'
+  if (pathname.startsWith('/works')) return 'works'
   return 'all'
 }
 
-export function SceneShell({ scene, canEdit, children }: SceneShellProps) {
+export function SceneShell({
+  scene,
+  canEdit,
+  quickActionHref,
+  quickActionLabel,
+  children,
+}: SceneShellProps) {
   const pathname = usePathname()
   const [savedScene, setSavedScene] = useState(scene)
   const [liveScene, setLiveScene] = useState(scene)
@@ -35,6 +43,8 @@ export function SceneShell({ scene, canEdit, children }: SceneShellProps) {
       <SceneQuickSettings
         scene={savedScene}
         canEdit={canEdit}
+        quickActionHref={quickActionHref}
+        quickActionLabel={quickActionLabel}
         onPreviewChange={setLiveScene}
         onSceneSaved={(nextScene) => {
           setSavedScene(nextScene)

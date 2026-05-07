@@ -14,6 +14,8 @@ interface SceneBackgroundProps {
 }
 
 function isWeatherEnabled(scene: BackgroundSceneSettings, page: SceneEnabledPage) {
+  if (page === 'works') return false
+
   return (
     scene.weather.preset !== 'none' &&
     (scene.weather.enabledPages.includes('all') || scene.weather.enabledPages.includes(page))
@@ -47,7 +49,7 @@ export function SceneBackground({
         />
       ) : null}
 
-      <div aria-hidden className="absolute inset-0">
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <SceneFilterLayer scene={scene} />
       </div>
 

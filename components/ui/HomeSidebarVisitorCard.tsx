@@ -32,17 +32,11 @@ export function HomeSidebarVisitorCard() {
         const response = await fetch('/api/visitor-context', { cache: 'no-store' })
         if (!response.ok) throw new Error('request failed')
         const data = (await response.json()) as VisitorContext
-        if (!cancelled) {
-          setContext(data)
-        }
+        if (!cancelled) setContext(data)
       } catch {
-        if (!cancelled) {
-          setContext(FALLBACK_CONTEXT)
-        }
+        if (!cancelled) setContext(FALLBACK_CONTEXT)
       } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
+        if (!cancelled) setLoading(false)
       }
     }
 

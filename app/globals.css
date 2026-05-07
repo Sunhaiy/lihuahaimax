@@ -612,12 +612,94 @@
 }
 
 @layer components {
+  .post-content .ProseMirror blockquote {
+    position: relative;
+    margin-inline: 0;
+    border: 0 !important;
+    border-left: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding-inline: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  .post-content .ProseMirror blockquote::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 5px;
+    width: 100%;
+    border-radius: 999px;
+    background: hsl(var(--primary));
+    opacity: 1;
+  }
+
+  .post-content .ProseMirror h2,
+  .post-content .ProseMirror h3 {
+    position: relative;
+    padding-bottom: 0.75rem;
+  }
+
+  .post-content .ProseMirror h2::after,
+  .post-content .ProseMirror h3::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 100%;
+    max-width: 8rem;
+    border-radius: 999px;
+    background: hsl(var(--primary));
+    opacity: 0.9;
+  }
+
+  .post-content .ProseMirror blockquote p:first-of-type::before,
+  .post-content .ProseMirror blockquote p:first-of-type::after,
+  .post-content .ProseMirror blockquote p:last-of-type::before,
+  .post-content .ProseMirror blockquote p:last-of-type::after {
+    content: none !important;
+  }
+
   .code-block {
-    @apply my-6 overflow-x-auto p-5 font-mono text-sm leading-relaxed;
-    background: #282c34;
+    @apply my-6 overflow-x-auto font-mono text-sm leading-relaxed;
+    position: relative;
+    background: linear-gradient(180deg, rgba(15, 15, 18, 0.98), rgba(10, 10, 12, 0.98));
     color: #abb2bf;
-    border-radius: 12px;
-    border: 1px solid hsl(var(--border));
+    border-radius: 28px;
+    border: 1px solid hsl(var(--border) / 0.8);
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.18);
+  }
+
+  .code-block code {
+    display: block;
+    min-width: max-content;
+    padding: 1.25rem 1.6rem 1.5rem;
+  }
+
+  .code-block::after {
+    content: '';
+    position: absolute;
+    inset: 0 auto auto 0;
+    height: 4px;
+    width: 100%;
+    border-radius: 999px 999px 0 0;
+    background: hsl(var(--primary));
+  }
+
+  .code-block .hljs {
+    display: block;
+    background: transparent;
+    color: inherit;
+  }
+
+  .code-block .hljs-subst,
+  .code-block .hljs-property,
+  .code-block .hljs-params,
+  .code-block .hljs-title.class_ {
+    color: #abb2bf;
   }
 
   .code-block .hljs-keyword,
@@ -666,6 +748,16 @@
     color: #56b6c2;
   }
 
+  .code-block .hljs-tag,
+  .code-block .hljs-name,
+  .code-block .hljs-attribute,
+  .code-block .hljs-regexp,
+  .code-block .hljs-symbol,
+  .code-block .hljs-bullet,
+  .code-block .hljs-link {
+    color: #56b6c2;
+  }
+
   .code-block .hljs-punctuation {
     color: #abb2bf;
   }
@@ -673,12 +765,12 @@
   .code-block[data-language]::before {
     content: attr(data-language);
     display: block;
-    margin-bottom: 12px;
+    padding: 1rem 1.6rem 0;
     font-size: 10px;
     font-family: var(--font-mono);
     color: #5c6370;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.16em;
   }
 
   .ProseMirror p.is-editor-empty:first-child::before {

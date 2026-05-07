@@ -231,7 +231,8 @@ function EditorToolbar({ editor, preset }: { editor: Editor; preset: 'full' | 'l
       {
         icon: <MaterialSymbol icon="code_blocks" size={18} />,
         title: '代码块',
-        action: (instance) => instance.chain().focus().toggleCodeBlock().run(),
+        action: (instance) =>
+          instance.chain().focus().toggleCodeBlock({ language: 'typescript' }).run(),
         isActive: (instance) => instance.isActive('codeBlock'),
       },
       {
