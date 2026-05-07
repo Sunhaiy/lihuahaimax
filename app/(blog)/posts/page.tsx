@@ -145,7 +145,7 @@ export default async function PostsPage({
                     )}
 
                     {post.category ? (
-                      <span className="absolute left-3 top-3 rounded-full border border-zinc-200/95 bg-white/96 px-2.5 py-1 text-[11px] text-zinc-900 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-white/10 dark:bg-black/45 dark:text-white/82">
+                      <span className="absolute left-3 top-3 rounded-full border border-zinc-200/95 bg-white/98 px-2.5 py-1 text-[11px] font-medium text-zinc-900 shadow-[0_10px_20px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-white/12 dark:bg-black/74 dark:text-white/92">
                         {post.category}
                       </span>
                     ) : null}

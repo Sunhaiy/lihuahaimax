@@ -27,14 +27,8 @@ export function PostCard({ post, fallbackCoverUrl }: PostCardProps) {
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div
-              className="relative flex h-full w-full items-center justify-center
-                            bg-gradient-to-br from-primary/12 via-card to-muted"
-            >
-              <span
-                className="select-none bg-gradient-to-br from-primary/40 to-primary/10 bg-clip-text
-                               text-7xl font-bold leading-none text-transparent"
-              >
+            <div className="relative flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/12 via-card to-muted">
+              <span className="select-none bg-gradient-to-br from-primary/40 to-primary/10 bg-clip-text text-7xl font-bold leading-none text-transparent">
                 {post.category?.charAt(0) ?? '文'}
               </span>
               <div
@@ -50,21 +44,14 @@ export function PostCard({ post, fallbackCoverUrl }: PostCardProps) {
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/40 to-transparent" />
 
           {post.category ? (
-            <span
-              className="absolute left-2.5 top-2.5 z-10 rounded-full border border-zinc-200/95 bg-white/96
-                             px-2 py-0.5 text-[10px] font-medium leading-tight text-zinc-900 shadow-[0_8px_18px_rgba(15,23,42,0.08)]
-                             backdrop-blur-sm dark:border-white/10 dark:bg-black/55 dark:text-white/85"
-            >
+            <span className="absolute left-2.5 top-2.5 z-10 rounded-full border border-zinc-200/95 bg-white/98 px-2 py-0.5 text-[10px] font-medium leading-tight text-zinc-900 shadow-[0_10px_20px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-white/12 dark:bg-black/74 dark:text-white/92">
               {post.category}
             </span>
           ) : null}
         </div>
 
         <div className="flex flex-1 flex-col px-4 pb-4 pt-3.5">
-          <h3
-            className="mb-1.5 line-clamp-2 font-semibold leading-snug text-foreground
-                         transition-colors duration-200 group-hover:text-primary"
-          >
+          <h3 className="mb-1.5 line-clamp-2 font-semibold leading-snug text-foreground transition-colors duration-200 group-hover:text-primary">
             {post.title}
           </h3>
           {post.excerpt ? (
