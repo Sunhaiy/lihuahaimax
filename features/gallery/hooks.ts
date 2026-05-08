@@ -4,6 +4,7 @@ import useSWR from 'swr'
 import useSWRMutation from 'swr/mutation'
 import {
   createGalleryAlbum,
+  deleteGalleryAlbum,
   deleteGalleryItem,
   fetchGalleryAlbums,
   updateGalleryItem,
@@ -36,6 +37,12 @@ export function useGalleryAlbums() {
 export function useCreateGalleryAlbum() {
   return useSWRMutation('/api/gallery/albums', (_url: string, { arg }: { arg: CreateGalleryAlbumInput }) =>
     createGalleryAlbum(arg)
+  )
+}
+
+export function useDeleteGalleryAlbum() {
+  return useSWRMutation('/api/gallery/albums', (_url: string, { arg }: { arg: number }) =>
+    deleteGalleryAlbum(arg)
   )
 }
 

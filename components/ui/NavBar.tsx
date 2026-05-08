@@ -44,7 +44,7 @@ const POST_SUB_PAGES = [
 ]
 
 const PANEL_CLS =
-  'rounded-[24px] border border-border/80 bg-background/95 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:bg-card/92 dark:shadow-[0_20px_60px_rgba(0,0,0,0.42)]'
+  'rounded-[24px] border border-border/55 bg-background/96 shadow-none backdrop-blur-xl dark:border-white/8 dark:bg-card/94'
 
 interface MenuPos {
   centerX: number
@@ -99,7 +99,8 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/82 backdrop-blur-xl backdrop-saturate-150">
+      <header className="fixed inset-x-0 top-0 z-50 bg-background/97 backdrop-blur-xl backdrop-saturate-125 dark:bg-background/95">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border/75 dark:bg-white/8" />
         <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
           <Link
             href="/"

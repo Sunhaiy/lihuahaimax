@@ -22,9 +22,10 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
       aria-label={isDark ? '切换到浅色模式' : '切换到深色模式'}
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       className={`
-        flex h-9 w-9 items-center justify-center rounded-full border border-transparent
-        bg-transparent text-muted-foreground transition-all duration-200
-        hover:border-border hover:bg-muted hover:text-foreground
+        flex h-9 w-9 items-center justify-center rounded-full border border-border/45
+        bg-background/54 text-muted-foreground backdrop-blur-xl transition-all duration-200
+        hover:border-primary/24 hover:bg-background/66 hover:text-foreground
+        dark:border-white/8 dark:bg-background/46 dark:hover:bg-background/58
         ${className}
       `}
     >

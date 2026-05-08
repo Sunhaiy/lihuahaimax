@@ -46,7 +46,7 @@ export function SceneQuickSettings({
           <button
             type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="flex h-12 min-w-[9.5rem] items-center justify-between rounded-full border border-border/80 bg-background/92 px-4 text-sm font-medium text-foreground shadow-[0_16px_38px_rgba(15,23,42,0.12)] backdrop-blur-2xl transition-all hover:border-primary/24 hover:text-primary dark:shadow-[0_16px_38px_rgba(0,0,0,0.32)]"
+            className="flex h-12 min-w-[9.5rem] items-center justify-between rounded-full border border-border/45 bg-background/74 px-4 text-sm font-medium text-foreground shadow-none backdrop-blur-xl transition-all hover:border-primary/24 hover:bg-background/84 hover:text-primary dark:border-white/8 dark:bg-background/62 dark:hover:bg-background/74"
           >
             <span>返回顶部</span>
             <MaterialSymbol icon="arrow_upward" size={18} />
@@ -57,7 +57,7 @@ export function SceneQuickSettings({
               href={quickActionHref!}
               target="_blank"
               rel="noreferrer"
-              className="flex h-12 min-w-[9.5rem] items-center justify-between rounded-full border border-border/80 bg-background/92 px-4 text-sm font-medium text-foreground shadow-[0_16px_38px_rgba(15,23,42,0.12)] backdrop-blur-2xl transition-all hover:border-primary/24 hover:text-primary dark:shadow-[0_16px_38px_rgba(0,0,0,0.32)]"
+              className="flex h-12 min-w-[9.5rem] items-center justify-between rounded-full border border-border/45 bg-background/74 px-4 text-sm font-medium text-foreground shadow-none backdrop-blur-xl transition-all hover:border-primary/24 hover:bg-background/84 hover:text-primary dark:border-white/8 dark:bg-background/62 dark:hover:bg-background/74"
             >
               <span>{quickActionLabel}</span>
               <MaterialSymbol icon="open_in_new" size={18} />
@@ -81,7 +81,7 @@ export function SceneQuickSettings({
         type="button"
         aria-label={open ? '收起快捷按钮' : '展开快捷按钮'}
         onClick={() => setOpen((current) => !current)}
-        className="flex h-14 w-14 items-center justify-center rounded-full border border-border/80 bg-background/92 text-primary shadow-[0_16px_42px_rgba(15,23,42,0.16)] backdrop-blur-2xl transition-transform duration-200 hover:-translate-y-1 dark:shadow-[0_16px_42px_rgba(0,0,0,0.34)]"
+        className="flex h-14 w-14 items-center justify-center rounded-full border border-border/45 bg-background/76 text-primary shadow-none backdrop-blur-xl transition-all duration-200 hover:-translate-y-1 hover:border-primary/24 hover:bg-background/86 dark:border-white/8 dark:bg-background/64 dark:hover:bg-background/76"
       >
         <MaterialSymbol icon={open ? 'close' : 'widgets'} size={22} />
       </button>

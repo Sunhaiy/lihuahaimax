@@ -17,6 +17,7 @@ import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { GalleryImageSkeleton } from '@/components/ui/Skeleton'
 import {
   useCreateGalleryAlbum,
+  useDeleteGalleryAlbum,
   useDeleteGalleryItem,
   useGalleryAlbums,
   useGalleryItems,
@@ -46,6 +47,7 @@ export default function DashboardGalleryPage() {
   const { data: albumData, isLoading: albumsLoading, mutate: mutateAlbums } = useGalleryAlbums()
   const { trigger: upload, isMutating: uploading } = useUploadImage()
   const { trigger: createAlbum, isMutating: creatingAlbum } = useCreateGalleryAlbum()
+  const { trigger: deleteAlbum, isMutating: deletingAlbum } = useDeleteGalleryAlbum()
   const { trigger: deleteItem } = useDeleteGalleryItem()
   const fileRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState('')
@@ -74,7 +76,7 @@ export default function DashboardGalleryPage() {
     }
   }
 
-  async function handleDelete(id: number) {
+  async function handleDeleteItem(id: number) {
     if (!confirm('确定删除这张图片吗？这个操作不可撤销。')) return
 
     setError('')
@@ -106,12 +108,25 @@ export default function DashboardGalleryPage() {
     }
   }
 
+  async function handleDeleteAlbum(id: number, name: string) {
+    if (!confirm(`确定删除相册「${name}」吗？图片会保留在图库里，只会解除归类。`)) return
+
+    setError('')
+
+    try {
+      await deleteAlbum(id)
+      await Promise.all([mutateAlbums(), mutate()])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '删除相册失败')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
         eyebrow="Gallery Library"
         title="相册管理"
-        description="先创建自己的相册分类，再把图片归进对应相册。前台左侧的风格化相册集会直接读取这里的数据。"
+        description="先新建自己的相册分类，再把图片归进对应相册。前台左侧的相册集合会直接读取这里的数据。"
         actions={
           <Button onClick={() => fileRef.current?.click()} loading={uploading}>
             <MaterialSymbol icon="upload" size={18} />
@@ -195,7 +210,7 @@ export default function DashboardGalleryPage() {
           <div className="rounded-[24px] border border-border/70 bg-background/36 p-4">
             <p className="text-sm font-medium text-foreground">现有相册</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              新建后就可以在下方图片卡片里直接选择归属相册。
+              新建后就可以在下方图片卡片里直接选择归属相册，也可以在这里直接删除。
             </p>
 
             <div className="mt-4 space-y-3">
@@ -220,9 +235,20 @@ export default function DashboardGalleryPage() {
                         <p className="truncate text-sm font-medium text-foreground">{album.name}</p>
                         <p className="mt-1 text-xs text-muted-foreground">/{album.slug}</p>
                       </div>
-                      <AdminStatusBadge tone="neutral">
-                        {items.filter((item) => item.album_id === album.id).length} 张
-                      </AdminStatusBadge>
+                      <div className="flex items-center gap-2">
+                        <AdminStatusBadge tone="neutral">
+                          {items.filter((item) => item.album_id === album.id).length} 张
+                        </AdminStatusBadge>
+                        <button
+                          type="button"
+                          onClick={() => void handleDeleteAlbum(album.id, album.name)}
+                          disabled={deletingAlbum}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/8 text-red-300 transition-colors hover:bg-red-500/16 disabled:cursor-not-allowed disabled:opacity-60"
+                          title="删除相册"
+                        >
+                          <MaterialSymbol icon="delete" size={16} />
+                        </button>
+                      </div>
                     </div>
                     {album.description ? (
                       <p className="mt-2 text-xs leading-6 text-muted-foreground">{album.description}</p>
@@ -237,7 +263,7 @@ export default function DashboardGalleryPage() {
 
       <AdminPanel
         title="上传面板"
-        description="先把图片放进图库，后面再逐张归到你的自定义相册里。"
+        description="先把图片放进图库，后面再逐张归到你自己的相册里。"
         icon="image_arrow_up"
       >
         <button
@@ -283,7 +309,7 @@ export default function DashboardGalleryPage() {
                 key={item.id}
                 item={item}
                 albums={albums}
-                onDelete={handleDelete}
+                onDelete={handleDeleteItem}
                 onSaved={() => void mutate()}
               />
             ))}

@@ -58,3 +58,9 @@ export async function insertGalleryAlbum(input: CreateGalleryAlbumInput): Promis
     return result.rows[0]
   })
 }
+
+export async function deleteGalleryAlbum(id: number): Promise<void> {
+  await withTransaction(async (client) => {
+    await client.query(`DELETE FROM gallery_albums WHERE id = $1`, [id])
+  })
+}

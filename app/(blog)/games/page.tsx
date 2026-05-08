@@ -5,7 +5,7 @@ import { getSiteProfile } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: '游戏收藏',
-  description: '记录我玩过、正在玩和准备玩的游戏。',
+  description: '记录我玩过、正在玩和准备开启的游戏。',
   alternates: {
     canonical: '/games',
   },
@@ -14,7 +14,10 @@ export const metadata: Metadata = {
 export const revalidate = 3600
 
 export default async function GamesPage() {
-  const [{ data: games }, siteProfile] = await Promise.all([findGames({ pageSize: 200 }), getSiteProfile()])
+  const [{ data: games }, siteProfile] = await Promise.all([
+    findGames({ pageSize: 200 }),
+    getSiteProfile(),
+  ])
 
   const coverPool = games.filter((game) => game.cover_url)
   const heroBg = siteProfile.gamesHeroImageUrl || coverPool[0]?.cover_url || null
@@ -26,38 +29,42 @@ export default async function GamesPage() {
 
   return (
     <div className="-mt-16">
-      <section className="relative isolate flex h-72 items-end overflow-hidden border-b border-white/6 sm:h-80">
+      <section className="relative isolate flex h-72 items-end overflow-hidden border-b border-border/45 sm:h-80">
         {heroBg ? (
           <img
             src={heroBg}
             alt=""
             aria-hidden
-            className="pointer-events-none absolute inset-0 h-full w-full scale-[1.04] object-cover opacity-52 saturate-[1.08]"
+            className="pointer-events-none absolute inset-0 h-full w-full scale-[1.04] object-cover opacity-58 saturate-[1.08]"
           />
         ) : (
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-950/35 via-background/20 to-background" />
         )}
 
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.12),transparent_32%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/88 via-background/40 to-black/12" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/94 via-background/64 to-black/24" />
 
         <div className="relative mx-auto w-full max-w-6xl px-6 pb-8">
-          <p className="mb-2 text-xs font-mono uppercase tracking-[0.3em] text-ember">GAME ARCHIVE</p>
-          <h1 className="mb-2 text-4xl font-bold text-foreground sm:text-5xl">游戏收藏</h1>
-          <p className="mb-4 text-sm text-muted-foreground">记录我玩过、在玩和准备开的游戏。</p>
+          <div className="max-w-max rounded-[28px] border border-border/45 bg-background/52 px-5 py-4 backdrop-blur-xl dark:bg-background/42">
+            <p className="mb-2 text-xs font-mono uppercase tracking-[0.3em] text-ember">GAME ARCHIVE</p>
+            <h1 className="mb-2 text-4xl font-bold text-foreground drop-shadow-[0_8px_26px_rgba(0,0,0,0.18)] sm:text-5xl">
+              游戏收藏
+            </h1>
+            <p className="mb-4 text-sm text-foreground/72">记录我玩过、正在玩和准备开启的游戏。</p>
 
-          <div className="flex items-center gap-5 text-sm">
-            <span className="font-mono">
-              <span className="text-xl font-bold text-ember">{games.length}</span>
-              <span className="ml-1 text-muted-foreground">部合计</span>
-            </span>
-            <span className="h-4 w-px bg-border" />
-            <span className="text-muted-foreground">
-              <span className="font-medium text-emerald-400">{playing}</span> 在玩
-            </span>
-            <span className="text-muted-foreground">
-              <span className="font-medium text-foreground">{completed}</span> 已通关
-            </span>
+            <div className="flex items-center gap-5 text-sm">
+              <span className="font-mono">
+                <span className="text-xl font-bold text-ember">{games.length}</span>
+                <span className="ml-1 text-muted-foreground">部合计</span>
+              </span>
+              <span className="h-4 w-px bg-border" />
+              <span className="text-muted-foreground">
+                <span className="font-medium text-emerald-400">{playing}</span> 在玩
+              </span>
+              <span className="text-muted-foreground">
+                <span className="font-medium text-foreground">{completed}</span> 已通关
+              </span>
+            </div>
           </div>
         </div>
       </section>

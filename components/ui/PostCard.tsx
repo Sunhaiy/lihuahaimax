@@ -44,7 +44,7 @@ export function PostCard({ post, fallbackCoverUrl }: PostCardProps) {
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/40 to-transparent" />
 
           {post.category ? (
-            <span className="absolute left-2.5 top-2.5 z-10 rounded-full border border-zinc-200/95 bg-white/98 px-2 py-0.5 text-[10px] font-medium leading-tight text-zinc-900 shadow-[0_10px_20px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-white/12 dark:bg-black/74 dark:text-white/92">
+            <span className="absolute left-2.5 top-2.5 z-10 rounded-full border border-zinc-200/75 bg-white/88 px-2.5 py-1 text-[10px] font-semibold leading-none text-zinc-800 shadow-[0_10px_22px_rgba(15,23,42,0.06)] backdrop-blur-md dark:border-white/10 dark:bg-zinc-950/74 dark:text-zinc-50 dark:shadow-[0_12px_24px_rgba(0,0,0,0.22)]">
               {post.category}
             </span>
           ) : null}

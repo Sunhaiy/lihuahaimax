@@ -40,6 +40,11 @@ export async function createGalleryAlbum(input: CreateGalleryAlbumInput): Promis
   return res.json()
 }
 
+export async function deleteGalleryAlbum(id: number): Promise<void> {
+  const res = await fetch(`/api/gallery/albums?id=${id}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error('Failed to delete gallery album')
+}
+
 export async function uploadGalleryImage(
   file: File,
   meta?: {

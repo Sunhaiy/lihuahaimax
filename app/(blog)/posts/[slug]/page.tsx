@@ -134,7 +134,7 @@ export default async function PostPage({
 
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/82 via-black/34 to-black/10"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/92 via-black/64 to-black/26"
         />
 
         <div className="relative flex min-h-[420px] flex-col items-center justify-center px-6 pb-28 pt-16 text-center sm:px-20">
@@ -144,7 +144,7 @@ export default async function PostPage({
                 <Link
                   key={tag}
                   href={`/posts?tags=${encodeURIComponent(tag)}`}
-                  className="rounded-full border border-white/70 bg-white/92 px-3 py-1 text-xs text-zinc-900 shadow-[0_8px_24px_rgba(0,0,0,0.18)] backdrop-blur-sm transition-colors hover:bg-white dark:border-white/20 dark:bg-black/45 dark:text-white dark:hover:bg-black/58"
+                  className="rounded-full border border-white/16 bg-black/42 px-3 py-1 text-xs text-white shadow-[0_10px_26px_rgba(0,0,0,0.22)] backdrop-blur-md transition-colors hover:bg-black/54 dark:border-white/16 dark:bg-black/42 dark:text-white dark:hover:bg-black/58"
                 >
                   {tag}
                 </Link>
@@ -152,12 +152,12 @@ export default async function PostPage({
             </div>
           ) : null}
 
-          <h1 className="max-w-3xl text-3xl font-bold leading-snug tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <h1 className="max-w-3xl text-3xl font-bold leading-snug tracking-tight text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.28)] sm:text-4xl lg:text-5xl">
             {post.title}
           </h1>
 
           {post.excerpt ? (
-            <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/74 sm:text-base">
+            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/90 drop-shadow-[0_6px_20px_rgba(0,0,0,0.28)] sm:text-base">
               {post.excerpt}
             </p>
           ) : null}
