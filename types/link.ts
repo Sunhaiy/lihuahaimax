@@ -2,7 +2,18 @@
 // 友情链接 (Link) 类型定义
 // ============================================================
 
-export type LinkCategory = 'friend' | 'tool' | 'resource' | 'inspire' | 'other'
+export type LinkCategory = string
+
+export interface LinkCategoryRow {
+  slug: string
+  label: string
+  description: string | null
+  icon: string | null
+  sort_order: number
+  is_default: boolean
+  link_count: number
+  created_at: Date
+}
 
 export interface LinkRow {
   id: number

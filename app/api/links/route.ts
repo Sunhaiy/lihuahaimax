@@ -22,7 +22,7 @@ const createSchema = z.object({
   url: z.string().url(),
   description: z.string().optional(),
   avatarUrl: z.string().trim().refine(isUploadOrAbsoluteUrl, 'Invalid avatar URL').optional(),
-  category: z.enum(['friend', 'tool', 'resource', 'inspire', 'other']).optional(),
+  category: z.string().trim().min(1).max(60).regex(/^[a-z0-9][a-z0-9_-]*$/).optional(),
   sortOrder: z.number().int().optional(),
   isActive: z.boolean().optional(),
 })

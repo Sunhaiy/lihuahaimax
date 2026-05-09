@@ -2,9 +2,10 @@ import type { Metadata } from 'next'
 import { LinkSiteProfileCard } from '@/components/ui/LinkSiteProfileCard'
 import { LinkSubmissionDialog } from '@/components/ui/LinkSubmissionDialog'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
+import { findLinkCategories } from '@/lib/db/dao/linkCategoryDao'
 import { findLinks } from '@/lib/db/dao/linkDao'
 import { getSiteProfile } from '@/lib/site'
-import type { LinkCategory, LinkRow } from '@/types/link'
+import type { LinkCategoryRow, LinkRow } from '@/types/link'
 
 export const metadata: Metadata = {
   title: '友情链接',
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600
 
-const CATEGORY_CONFIG: Record<LinkCategory, { label: string; icon: string; description: string }> = {
+const DEFAULT_CATEGORY_CONFIG: Record<string, { label: string; icon: string; description: string }> = {
   friend: {
     label: '友情链接',
     icon: 'group',
@@ -44,8 +45,6 @@ const CATEGORY_CONFIG: Record<LinkCategory, { label: string; icon: string; descr
   },
 }
 
-const CATEGORY_ORDER: LinkCategory[] = ['friend', 'tool', 'resource', 'inspire', 'other']
-
 function getDomain(url: string) {
   try {
     return new URL(url).hostname.replace(/^www\./, '')
@@ -54,11 +53,37 @@ function getDomain(url: string) {
   }
 }
 
-function groupLinks(links: LinkRow[]) {
-  return CATEGORY_ORDER.reduce<Record<LinkCategory, LinkRow[]>>((acc, category) => {
-    acc[category] = links.filter((item) => item.category === category)
-    return acc
-  }, {} as Record<LinkCategory, LinkRow[]>)
+function getCategoryConfig(category?: LinkCategoryRow) {
+  const defaults = DEFAULT_CATEGORY_CONFIG[category?.slug ?? ''] ?? DEFAULT_CATEGORY_CONFIG.friend
+
+  return {
+    label: category?.label || defaults.label,
+    icon: category?.icon || defaults.icon,
+    description: category?.description || defaults.description,
+  }
+}
+
+function groupLinks(links: LinkRow[], categories: LinkCategoryRow[]) {
+  const categoryMap = new Map(categories.map((category) => [category.slug, category]))
+  const buckets = new Map<string, LinkRow[]>()
+
+  for (const category of categories) {
+    buckets.set(category.slug, [])
+  }
+
+  for (const link of links) {
+    const category = link.category || 'friend'
+    if (!buckets.has(category)) buckets.set(category, [])
+    buckets.get(category)?.push(link)
+  }
+
+  return Array.from(buckets.entries())
+    .map(([slug, items]) => ({
+      slug,
+      category: categoryMap.get(slug),
+      items,
+    }))
+    .filter((group) => group.items.length > 0)
 }
 
 function splitRequirements(value: string) {
@@ -69,20 +94,23 @@ function splitRequirements(value: string) {
 }
 
 export default async function LinksPage() {
-  const [links, siteProfile] = await Promise.all([findLinks(true), getSiteProfile()])
-  const grouped = groupLinks(links)
-  const activeCategories = CATEGORY_ORDER.filter((category) => grouped[category]?.length > 0)
+  const [links, siteProfile, categories] = await Promise.all([
+    findLinks(true),
+    getSiteProfile(),
+    findLinkCategories(),
+  ])
+  const activeGroups = groupLinks(links, categories)
   const requirements = splitRequirements(siteProfile.friendLinkRequirements)
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12 sm:px-8">
       <div className="space-y-8">
-        {activeCategories.map((category) => {
-          const items = grouped[category]
-          const config = CATEGORY_CONFIG[category]
+        {activeGroups.map((group) => {
+          const items = group.items
+          const config = getCategoryConfig(group.category)
 
           return (
-            <section key={category} className="space-y-4">
+            <section key={group.slug} className="space-y-4">
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/72 px-3 py-1.5 backdrop-blur-md">
@@ -214,7 +242,7 @@ export default async function LinksPage() {
           siteProfile={siteProfile}
           stats={[
             { label: '总收录', value: `${links.length}` },
-            { label: '分类数', value: `${activeCategories.length}` },
+            { label: '分类数', value: `${activeGroups.length}` },
             { label: '博主', value: siteProfile.ownerName },
           ]}
         />

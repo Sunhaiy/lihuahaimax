@@ -212,8 +212,11 @@ export default function DashboardWorksPage() {
           ) : (
             data.map((item) => {
               const active = selectedId === item.id
-              const hasOfficialLink = Boolean(item.primary_url || item.url)
-              const hasGithubLink = Boolean(item.github_url || item.secondary_url)
+              const primaryUrl = item.primary_url || item.url
+              const secondaryUrl = item.github_url || item.secondary_url
+              const primaryIsGithub = isGithubUrl(primaryUrl)
+              const hasOfficialLink = Boolean(primaryUrl && !primaryIsGithub)
+              const hasGithubLink = Boolean(secondaryUrl || primaryIsGithub)
               return (
                 <button
                   key={item.id}
@@ -439,4 +442,8 @@ export default function DashboardWorksPage() {
       </div>
     </div>
   )
+}
+
+function isGithubUrl(url?: string | null) {
+  return (url ?? '').trim().toLowerCase().includes('github.com')
 }

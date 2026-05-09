@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/Button'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import type {
   LinkCategory,
+  LinkCategoryRow,
   LinkRow,
   LinkSubmissionRow,
   LinkSubmissionStatus,
@@ -38,6 +39,8 @@ type LinkFormState = {
   isActive: boolean
 }
 
+type LinksWorkspaceTab = 'links' | 'profile' | 'submissions'
+
 const EMPTY_FORM: LinkFormState = {
   id: null,
   name: '',
@@ -49,7 +52,20 @@ const EMPTY_FORM: LinkFormState = {
   isActive: true,
 }
 
-const CATEGORY_LABELS: Record<LinkCategory, string> = {
+const DEFAULT_LINK_CATEGORIES: LinkCategoryRow[] = [
+  {
+    slug: 'friend',
+    label: '友情链接',
+    description: null,
+    icon: 'group',
+    sort_order: 0,
+    is_default: true,
+    link_count: 0,
+    created_at: new Date(),
+  },
+]
+
+const CATEGORY_LABELS: Record<string, string> = {
   friend: '友情链接',
   tool: '常用工具',
   resource: '学习资源',
@@ -132,6 +148,27 @@ async function saveSiteProfile(profile: SiteProfile) {
   return response.json() as Promise<SiteProfile>
 }
 
+function normalizeLinkUrl(url?: string | null) {
+  return (url ?? '').trim().replace(/\/+$/, '').toLowerCase()
+}
+
+function getCategoryLabel(slug: string, categories: LinkCategoryRow[]) {
+  return categories.find((category) => category.slug === slug)?.label ?? CATEGORY_LABELS[slug] ?? slug
+}
+
+function formatDate(value?: Date | string | null) {
+  if (!value) return '-'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  })
+}
+
 function toneForSubmissionStatus(status: LinkSubmissionStatus) {
   if (status === 'approved') return 'success' as const
   if (status === 'rejected') return 'danger' as const
@@ -140,14 +177,23 @@ function toneForSubmissionStatus(status: LinkSubmissionStatus) {
 
 export default function DashboardLinksPage() {
   const linksRequest = useSWR<LinkRow[]>('/api/links?admin=true', fetcher)
+  const categoriesRequest = useSWR<LinkCategoryRow[]>('/api/link-categories', fetcher)
   const profileRequest = useSWR<SiteProfile>('/api/settings/site-profile', fetcher)
   const submissionsRequest = useSWR<LinkSubmissionRow[]>('/api/link-submissions', fetcher)
 
   const [form, setForm] = useState<LinkFormState>(EMPTY_FORM)
   const [profileForm, setProfileForm] = useState<SiteProfile | null>(null)
+  const [activeTab, setActiveTab] = useState<LinksWorkspaceTab>('links')
+  const [categoryDraft, setCategoryDraft] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [linkStatusFilter, setLinkStatusFilter] = useState<'all' | 'active' | 'hidden'>('all')
+  const [submissionStatusFilter, setSubmissionStatusFilter] =
+    useState<'all' | LinkSubmissionStatus>('pending')
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
+  const [categorySaving, setCategorySaving] = useState(false)
+  const [categoryDeletingSlug, setCategoryDeletingSlug] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadingProfileAvatar, setUploadingProfileAvatar] = useState(false)
@@ -195,6 +241,7 @@ export default function DashboardLinksPage() {
   function startNew() {
     setSelectedId(null)
     setForm(EMPTY_FORM)
+    setActiveTab('links')
     clearNotice()
   }
 
@@ -227,7 +274,7 @@ export default function DashboardLinksPage() {
         throw new Error(readApiError(payload, form.id ? '更新失败' : '创建失败'))
       }
 
-      await linksRequest.mutate()
+      await Promise.all([linksRequest.mutate(), categoriesRequest.mutate()])
 
       if (payload?.id) {
         setSelectedId(payload.id)
@@ -257,7 +304,7 @@ export default function DashboardLinksPage() {
         throw new Error(readApiError(payload, '删除失败'))
       }
 
-      await linksRequest.mutate()
+      await Promise.all([linksRequest.mutate(), categoriesRequest.mutate()])
       if (selectedId === id) startNew()
       setSuccess('友链已删除。')
     } catch (err) {
@@ -323,15 +370,126 @@ export default function DashboardLinksPage() {
     }
   }
 
-  async function updateSubmissionStatus(id: number, status: LinkSubmissionStatus) {
-    setSubmissionSavingId(id)
+  async function createCategory() {
+    const label = categoryDraft.trim()
+    if (!label) {
+      setError('请输入分组名称。')
+      return
+    }
+
+    setCategorySaving(true)
     clearNotice()
 
     try {
-      const response = await fetch(`/api/link-submissions/${id}`, {
+      const response = await fetch('/api/link-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label }),
+      })
+      const payload = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(readApiError(payload, '创建友链分组失败'))
+      }
+
+      await categoriesRequest.mutate()
+      setCategoryDraft('')
+      setForm((current) => ({ ...current, category: payload.slug ?? current.category }))
+      setActiveTab('links')
+      setSuccess('友链分组已创建。')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '创建友链分组失败')
+    } finally {
+      setCategorySaving(false)
+    }
+  }
+
+  async function deleteCategory(category: LinkCategoryRow) {
+    if (category.is_default) {
+      setError('默认分组不能删除。')
+      return
+    }
+
+    if (!confirm(`确定删除「${category.label}」分组吗？该分组下的友链会移回「友情链接」。`)) {
+      return
+    }
+
+    setCategoryDeletingSlug(category.slug)
+    clearNotice()
+
+    try {
+      const response = await fetch(`/api/link-categories/${encodeURIComponent(category.slug)}`, {
+        method: 'DELETE',
+      })
+      const payload = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(readApiError(payload, '删除友链分组失败'))
+      }
+
+      await Promise.all([categoriesRequest.mutate(), linksRequest.mutate()])
+      if (categoryFilter === category.slug) {
+        setCategoryFilter('all')
+      }
+      if (form.category === category.slug) {
+        setForm((current) => ({ ...current, category: 'friend' }))
+      }
+      setSuccess(`分组已删除，${payload?.moved ?? 0} 条友链已移回「友情链接」。`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '删除友链分组失败')
+    } finally {
+      setCategoryDeletingSlug(null)
+    }
+  }
+
+  async function updateSubmissionStatus(
+    submission: LinkSubmissionRow,
+    status: LinkSubmissionStatus
+  ) {
+    setSubmissionSavingId(submission.id)
+    clearNotice()
+
+    try {
+      let adoptedLink: LinkRow | null = null
+
+      if (status === 'approved') {
+        const normalizedSubmissionUrl = normalizeLinkUrl(submission.site_url)
+        const currentLinks = linksRequest.data ?? (await linksRequest.mutate())
+        const existingLink = currentLinks?.find(
+          (item) => normalizeLinkUrl(item.url) === normalizedSubmissionUrl
+        )
+        const linkPayload = {
+          name: submission.site_name.trim(),
+          url: submission.site_url.trim(),
+          description: submission.site_description?.trim() || undefined,
+          avatarUrl: submission.site_avatar_url?.trim() || undefined,
+          category: 'friend' as LinkCategory,
+          sortOrder: existingLink?.sort_order ?? 0,
+          isActive: true,
+        }
+        const linkResponse = await fetch(
+          existingLink ? `/api/links/${existingLink.id}` : '/api/links',
+          {
+            method: existingLink ? 'PATCH' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(linkPayload),
+          }
+        )
+        const linkResult = await linkResponse.json().catch(() => null)
+
+        if (!linkResponse.ok) {
+          throw new Error(
+            readApiError(linkResult, existingLink ? '更新友链失败' : '创建友链失败')
+          )
+        }
+
+        adoptedLink = linkResult as LinkRow
+      }
+
+      const response = await fetch(`/api/link-submissions/${submission.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, adminNote: submissionNotes[id] ?? '' }),
+        body: JSON.stringify({ status, adminNote: submissionNotes[submission.id] ?? '' }),
       })
 
       const payload = await response.json().catch(() => null)
@@ -339,8 +497,22 @@ export default function DashboardLinksPage() {
         throw new Error(readApiError(payload, '更新申请状态失败'))
       }
 
-      await submissionsRequest.mutate()
-      setSuccess(`申请状态已更新为“${SUBMISSION_STATUS_LABELS[status]}”。`)
+      await Promise.all([
+        submissionsRequest.mutate(),
+        status === 'approved' ? linksRequest.mutate() : undefined,
+        status === 'approved' ? categoriesRequest.mutate() : undefined,
+      ])
+
+      if (adoptedLink) {
+        setSelectedId(adoptedLink.id)
+        setForm(toFormState(adoptedLink))
+      }
+
+      setSuccess(
+        status === 'approved'
+          ? '已采纳申请，并写入公开友链。'
+          : `申请状态已更新为“${SUBMISSION_STATUS_LABELS[status]}”。`
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : '更新申请状态失败')
     } finally {
@@ -385,11 +557,30 @@ export default function DashboardLinksPage() {
       isActive: true,
     })
     setSelectedId(null)
+    setActiveTab('links')
     setSuccess('已把申请信息带入右侧编辑器，可以直接补充后创建友链。')
   }
 
   const pendingCount =
     submissionsRequest.data?.filter((item) => item.status === 'pending').length ?? 0
+  const categoryOptions =
+    categoriesRequest.data && categoriesRequest.data.length > 0
+      ? categoriesRequest.data
+      : DEFAULT_LINK_CATEGORIES
+  const links = linksRequest.data ?? []
+  const submissions = submissionsRequest.data ?? []
+  const filteredLinks = links.filter((link) => {
+    const matchCategory = categoryFilter === 'all' || link.category === categoryFilter
+    const matchStatus =
+      linkStatusFilter === 'all' ||
+      (linkStatusFilter === 'active' ? link.is_active : !link.is_active)
+
+    return matchCategory && matchStatus
+  })
+  const filteredSubmissions = submissions.filter(
+    (submission) =>
+      submissionStatusFilter === 'all' || submission.status === submissionStatusFilter
+  )
 
   return (
     <div className="space-y-6">
@@ -422,7 +613,47 @@ export default function DashboardLinksPage() {
       {error ? <AdminNotice tone="danger">{error}</AdminNotice> : null}
       {success ? <AdminNotice tone="success">{success}</AdminNotice> : null}
 
-      {profileForm ? (
+      <div className="grid gap-3 md:grid-cols-3">
+        {[
+          {
+            key: 'links' as const,
+            label: '友链编辑',
+            icon: 'link',
+            meta: `${linksRequest.data?.length ?? 0} 条`,
+          },
+          {
+            key: 'profile' as const,
+            label: '页面资料',
+            icon: 'badge',
+            meta: '前台卡片',
+          },
+          {
+            key: 'submissions' as const,
+            label: '申请箱',
+            icon: 'inbox',
+            meta: `${pendingCount} 待处理`,
+          },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center justify-between rounded-[24px] border px-5 py-4 text-left transition-colors ${
+              activeTab === tab.key
+                ? 'border-primary/24 bg-primary/10 text-foreground'
+                : 'border-border/70 bg-background/34 text-muted-foreground hover:border-border hover:bg-background/46'
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <MaterialSymbol icon={tab.icon} size={19} />
+              <span className="font-medium">{tab.label}</span>
+            </span>
+            <span className="text-xs font-mono uppercase tracking-[0.16em]">{tab.meta}</span>
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'profile' && profileForm ? (
         <AdminPanel
           title="友链页资料"
           description="前台顶部的本站信息、申请说明和审核规则都在这里维护。"
@@ -555,13 +786,108 @@ export default function DashboardLinksPage() {
         </AdminPanel>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+      {activeTab === 'links' ? (
+        <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,420px)]">
         <AdminPanel
-          title="友链列表"
-          description="选中左侧条目后在右侧编辑，列表只保留必要信息，浏览更轻。"
+          title="友链工作台"
+          description="按分组和显示状态筛选，行内直接编辑或删除，数据多了也不会把页面撑成一条长卷轴。"
           icon="link"
-          bodyClassName="space-y-3"
+          className="min-w-0 overflow-hidden"
+          bodyClassName="space-y-4"
         >
+          <div className="space-y-4 rounded-[24px] border border-border/70 bg-background/34 p-4">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setCategoryFilter('all')}
+                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                  categoryFilter === 'all'
+                    ? 'border-primary/24 bg-primary/12 text-foreground'
+                    : 'border-border/70 text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                全部分组
+              </button>
+              {categoryOptions.map((category) => (
+                <button
+                  key={category.slug}
+                  type="button"
+                  onClick={() => setCategoryFilter(category.slug)}
+                  className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                    categoryFilter === category.slug
+                      ? 'border-primary/24 bg-primary/12 text-foreground'
+                      : 'border-border/70 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {category.label}
+                  <span className="ml-1.5 text-xs text-muted-foreground">
+                    {category.link_count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-2">
+                {[
+                  ['all', '全部'],
+                  ['active', '公开'],
+                  ['hidden', '隐藏'],
+                ].map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setLinkStatusFilter(key as typeof linkStatusFilter)}
+                    className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                      linkStatusFilter === key
+                        ? 'border-primary/24 bg-primary/12 text-foreground'
+                        : 'border-border/70 text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-2">
+                <input
+                  value={categoryDraft}
+                  onChange={(event) => setCategoryDraft(event.target.value)}
+                  className={`${INPUT_CLASS} max-w-[220px] min-w-[160px]`}
+                  placeholder="新建分组名称"
+                />
+                <Button variant="secondary" size="sm" onClick={createCategory} loading={categorySaving}>
+                  <MaterialSymbol icon="add" size={16} />
+                  新增分组
+                </Button>
+              </div>
+            </div>
+
+            {categoryOptions.length > 1 ? (
+              <div className="flex flex-wrap gap-2 border-t border-border/60 pt-3">
+                {categoryOptions.map((category) => (
+                  <span
+                    key={category.slug}
+                    className="inline-flex items-center gap-2 rounded-full border border-border/70 px-3 py-1.5 text-xs text-muted-foreground"
+                  >
+                    <MaterialSymbol icon={category.icon || 'link'} size={14} />
+                    {category.label}
+                    {!category.is_default ? (
+                      <button
+                        type="button"
+                        onClick={() => deleteCategory(category)}
+                        disabled={categoryDeletingSlug === category.slug}
+                        className="text-red-300 transition-colors hover:text-red-200 disabled:opacity-50"
+                      >
+                        删除
+                      </button>
+                    ) : null}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
           {linksRequest.isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, index) => (
@@ -571,7 +897,7 @@ export default function DashboardLinksPage() {
                 />
               ))}
             </div>
-          ) : !linksRequest.data?.length ? (
+          ) : !filteredLinks.length ? (
             <AdminEmptyState
               icon="link"
               title="还没有友链"
@@ -583,54 +909,56 @@ export default function DashboardLinksPage() {
               }
             />
           ) : (
-            linksRequest.data.map((link) => {
+            <div className="max-h-[68vh] overflow-y-auto rounded-[24px] border border-border/70">
+              {filteredLinks.map((link) => {
               const active = selectedId === link.id
 
               return (
                 <div
                   key={link.id}
-                  className={`rounded-[22px] border px-4 py-3 transition-colors ${
+                  className={`grid gap-4 border-b border-border/60 px-5 py-4 transition-colors last:border-b-0 lg:grid-cols-[minmax(0,1fr)_112px_112px_130px] lg:items-center ${
                     active
-                      ? 'border-primary/18 bg-primary/10'
-                      : 'border-border/70 bg-background/38 hover:border-border hover:bg-background/46'
+                      ? 'bg-primary/10'
+                      : 'bg-background/22 hover:bg-background/42'
                   }`}
                 >
-                  <div className="flex items-start gap-3">
-                    <button
+                  <button
                       type="button"
                       onClick={() => {
                         setSelectedId(link.id)
                         setForm(toFormState(link))
                         clearNotice()
                       }}
-                      className="flex min-w-0 flex-1 items-start gap-3 text-left"
+                    className="min-w-0 text-left"
                     >
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[18px] border border-border/70 bg-background/46">
-                        {link.avatar_url ? (
-                          <img src={link.avatar_url} alt={link.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <span className="text-sm font-semibold text-foreground">
-                            {link.name.charAt(0).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-medium text-foreground">{link.name}</p>
-                          <AdminStatusBadge tone="neutral">{CATEGORY_LABELS[link.category]}</AdminStatusBadge>
-                          {!link.is_active ? <AdminStatusBadge tone="warning">隐藏</AdminStatusBadge> : null}
-                        </div>
-                        {link.description ? (
-                          <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
-                            {link.description}
-                          </p>
-                        ) : null}
-                        <p className="mt-2 truncate text-[11px] font-mono text-muted-foreground/75">
-                          sort {link.sort_order} · {link.url}
-                        </p>
-                      </div>
-                    </button>
+                    <p className="truncate text-base font-semibold text-foreground">{link.name}</p>
+                    <p className="mt-1 truncate text-sm text-muted-foreground">
+                      {getCategoryLabel(link.category, categoryOptions)} · {link.url}
+                    </p>
+                  </button>
 
+                  <div>
+                    <AdminStatusBadge tone={link.is_active ? 'success' : 'warning'}>
+                      {link.is_active ? '公开' : '隐藏'}
+                    </AdminStatusBadge>
+                  </div>
+
+                  <p className="text-sm font-mono text-muted-foreground">
+                    {formatDate(link.created_at)}
+                  </p>
+
+                  <div className="flex justify-start gap-2 lg:justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedId(link.id)
+                        setForm(toFormState(link))
+                        clearNotice()
+                      }}
+                    >
+                      编辑
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -643,7 +971,8 @@ export default function DashboardLinksPage() {
                   </div>
                 </div>
               )
-            })
+            })}
+            </div>
           )}
         </AdminPanel>
 
@@ -651,6 +980,7 @@ export default function DashboardLinksPage() {
           title={form.id ? '编辑友链' : '新建友链'}
           description="右侧只保留友链本身需要的字段，提交申请的数据可以一键带进来。"
           icon="edit_square"
+          className="min-w-0 overflow-hidden"
           actions={
             <div className="flex flex-wrap items-center gap-3">
               {form.id ? (
@@ -670,8 +1000,9 @@ export default function DashboardLinksPage() {
           <AdminSection
             title="头像与基础信息"
             description="头像、名称和链接决定了前台卡片的第一印象。"
+            className="lg:grid-cols-1"
           >
-            <div className="grid gap-6 xl:grid-cols-[220px_minmax(0,1fr)]">
+            <div className="grid gap-5">
               <div className={`${ADMIN_MUTED_PANEL_CLASS} p-5`}>
                 <p className="text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
                   Avatar
@@ -729,7 +1060,7 @@ export default function DashboardLinksPage() {
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4">
                 <Field label="站点名称" hint="展示名称建议控制在 12 个字以内。">
                   <input
                     value={form.name}
@@ -749,9 +1080,9 @@ export default function DashboardLinksPage() {
                     }
                     className={INPUT_CLASS}
                   >
-                    {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-                      <option key={key} value={key}>
-                        {label}
+                    {categoryOptions.map((category) => (
+                      <option key={category.slug} value={category.slug}>
+                        {category.label}
                       </option>
                     ))}
                   </select>
@@ -781,8 +1112,9 @@ export default function DashboardLinksPage() {
           <AdminSection
             title="简介与排序"
             description="简介尽量一句话说清楚，排序值越小越靠前。"
+            className="lg:grid-cols-1"
           >
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4">
               <Field label="一句话简介" fullWidth>
                 <textarea
                   value={form.description}
@@ -839,25 +1171,49 @@ export default function DashboardLinksPage() {
             onChange={handleAvatarUpload}
           />
         </AdminPanel>
-      </div>
+        </div>
+      ) : null}
 
+      {activeTab === 'submissions' ? (
       <AdminPanel
         title="友链申请"
         description="前台申请表提交的数据会直接落在这里。可以快速标记状态，也可以一键带入右侧编辑器。"
         icon="inbox"
       >
-        {!submissionsRequest.data?.length ? (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {[
+            ['all', '全部'],
+            ['pending', '待处理'],
+            ['approved', '已采纳'],
+            ['rejected', '已忽略'],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSubmissionStatusFilter(key as typeof submissionStatusFilter)}
+              className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                submissionStatusFilter === key
+                  ? 'border-primary/24 bg-primary/12 text-foreground'
+                  : 'border-border/70 text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {!filteredSubmissions.length ? (
           <AdminEmptyState
             icon="mark_email_unread"
-            title="还没有新的友链申请"
-            description="当前前台申请箱是空的，后面有提交时会自动出现在这里。"
+            title="当前筛选下没有友链申请"
+            description="切换上方状态筛选，可以查看已采纳或已忽略的申请。"
           />
         ) : (
-          <div className="space-y-4">
-            {submissionsRequest.data.map((submission) => (
+          <div className="max-h-[70vh] overflow-y-auto rounded-[24px] border border-border/70">
+            {filteredSubmissions.map((submission) => (
               <div
                 key={submission.id}
-                className="rounded-[24px] border border-border/70 bg-background/34 p-5"
+                className="border-b border-border/60 bg-background/24 p-5 last:border-b-0"
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
@@ -887,7 +1243,7 @@ export default function DashboardLinksPage() {
                     <Button
                       size="sm"
                       loading={submissionSavingId === submission.id}
-                      onClick={() => updateSubmissionStatus(submission.id, 'approved')}
+                      onClick={() => updateSubmissionStatus(submission, 'approved')}
                     >
                       <MaterialSymbol icon="check" size={16} />
                       采纳
@@ -896,7 +1252,7 @@ export default function DashboardLinksPage() {
                       variant="ghost"
                       size="sm"
                       loading={submissionSavingId === submission.id}
-                      onClick={() => updateSubmissionStatus(submission.id, 'rejected')}
+                      onClick={() => updateSubmissionStatus(submission, 'rejected')}
                     >
                       <MaterialSymbol icon="close" size={16} />
                       忽略
@@ -948,6 +1304,7 @@ export default function DashboardLinksPage() {
           </div>
         )}
       </AdminPanel>
+      ) : null}
     </div>
   )
 }

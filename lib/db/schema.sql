@@ -225,15 +225,49 @@ CREATE TABLE IF NOT EXISTS links (
   url         TEXT        NOT NULL,
   description TEXT,
   avatar_url  TEXT,
-  category    TEXT        NOT NULL DEFAULT 'friend'
-                CHECK (category IN ('friend','tool','resource','inspire','other')),
+  category    TEXT        NOT NULL DEFAULT 'friend',
   sort_order  INTEGER     NOT NULL DEFAULT 0,
   is_active   BOOLEAN     NOT NULL DEFAULT TRUE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE links DROP CONSTRAINT IF EXISTS links_category_check;
+
+CREATE TABLE IF NOT EXISTS link_categories (
+  slug        TEXT        PRIMARY KEY,
+  label       TEXT        NOT NULL,
+  description TEXT,
+  icon        TEXT        NOT NULL DEFAULT 'link',
+  sort_order  INTEGER     NOT NULL DEFAULT 0,
+  is_default  BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO link_categories (slug, label, description, icon, sort_order, is_default)
+VALUES
+  ('friend', '友情链接', '认真写字、长期更新，也愿意把自己的角落打理得舒服的人。', 'group', 0, TRUE),
+  ('tool', '常用工具', '真正会被频繁打开的产品和效率工具，安静但很能打。', 'construction', 10, FALSE),
+  ('resource', '学习资源', '文档、教程和参考资料，遇到问题时很值得先回到这里。', 'menu_book', 20, FALSE),
+  ('inspire', '灵感来源', '能带来审美、表达和想法上的触动，适合慢慢逛。', 'auto_awesome', 30, FALSE),
+  ('other', '其他收藏', '不一定容易归类，但确实值得记住的一些地方。', 'interests', 40, FALSE)
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO link_categories (slug, label, description, icon, sort_order, is_default)
+SELECT DISTINCT
+  links.category,
+  links.category,
+  NULL,
+  'link',
+  100,
+  FALSE
+FROM links
+WHERE links.category IS NOT NULL
+  AND links.category <> ''
+ON CONFLICT (slug) DO NOTHING;
+
 CREATE INDEX IF NOT EXISTS idx_links_category ON links (category);
 CREATE INDEX IF NOT EXISTS idx_links_active   ON links (is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_link_categories_sort ON link_categories (sort_order, label);
 
 CREATE TABLE IF NOT EXISTS link_submissions (
   id                SERIAL PRIMARY KEY,
