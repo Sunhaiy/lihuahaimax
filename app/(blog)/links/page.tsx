@@ -45,14 +45,6 @@ const DEFAULT_CATEGORY_CONFIG: Record<string, { label: string; icon: string; des
   },
 }
 
-function getDomain(url: string) {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '')
-  } catch {
-    return url
-  }
-}
-
 function getCategoryConfig(category?: LinkCategoryRow) {
   const defaults = DEFAULT_CATEGORY_CONFIG[category?.slug ?? ''] ?? DEFAULT_CATEGORY_CONFIG.friend
 
@@ -103,8 +95,9 @@ export default async function LinksPage() {
   const requirements = splitRequirements(siteProfile.friendLinkRequirements)
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12 sm:px-8">
-      <div className="space-y-8">
+    <div className="min-h-[calc(100vh-4rem)] bg-background">
+      <div className="mx-auto max-w-6xl px-6 py-12 sm:px-8">
+        <div className="space-y-8">
         {activeGroups.map((group) => {
           const items = group.items
           const config = getCategoryConfig(group.category)
@@ -151,13 +144,11 @@ export default async function LinksPage() {
                       <p className="truncate text-base font-semibold leading-tight tracking-[-0.03em] text-foreground transition-colors duration-200 group-hover:text-primary">
                         {link.name}
                       </p>
-                      <p className="mt-0.5 line-clamp-1 text-xs leading-5 text-muted-foreground">
-                        {link.description || getDomain(link.url)}
-                      </p>
-                      <div className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[9px] font-mono uppercase tracking-[0.14em] text-muted-foreground/70">
-                        <span className="h-1 w-1 shrink-0 rounded-full bg-primary/60" />
-                        <span className="truncate">{getDomain(link.url)}</span>
-                      </div>
+                      {link.description ? (
+                        <p className="mt-0.5 line-clamp-1 text-xs leading-5 text-muted-foreground">
+                          {link.description}
+                        </p>
+                      ) : null}
                     </div>
 
                     <span className="relative hidden h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/55 text-muted-foreground transition-colors duration-200 group-hover:border-primary/24 group-hover:text-primary sm:flex">
@@ -170,14 +161,14 @@ export default async function LinksPage() {
           )
         })}
 
-        {links.length === 0 ? (
-          <div className="rounded-[28px] border border-border/70 bg-card/82 px-6 py-20 text-center shadow-[0_18px_44px_rgba(15,23,42,0.05)] backdrop-blur-2xl">
-            <p className="text-sm text-muted-foreground">这里还没有公开链接。</p>
-          </div>
-        ) : null}
-      </div>
+          {links.length === 0 ? (
+            <div className="rounded-[28px] border border-border/70 bg-card/82 px-6 py-20 text-center shadow-[0_18px_44px_rgba(15,23,42,0.05)] backdrop-blur-2xl">
+              <p className="text-sm text-muted-foreground">这里还没有公开链接。</p>
+            </div>
+          ) : null}
+        </div>
 
-      <section className="relative mt-10 overflow-hidden rounded-[30px] border border-border/70 bg-card/88 px-6 py-7 shadow-[0_18px_50px_rgba(15,23,42,0.06)] backdrop-blur-2xl sm:px-7">
+        <section className="relative mt-10 overflow-hidden rounded-[30px] border border-border/70 bg-card/88 px-6 py-7 shadow-[0_18px_50px_rgba(15,23,42,0.06)] backdrop-blur-2xl sm:px-7">
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_58%)] dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_58%)]" />
 
         <div className="relative flex flex-col">
@@ -220,17 +211,18 @@ export default async function LinksPage() {
             </div>
           </div>
         </div>
-      </section>
+        </section>
 
-      <div className="mt-10">
-        <LinkSiteProfileCard
-          siteProfile={siteProfile}
-          stats={[
-            { label: '总收录', value: `${links.length}` },
-            { label: '分类数', value: `${activeGroups.length}` },
-            { label: '博主', value: siteProfile.ownerName },
-          ]}
-        />
+        <div className="mt-10">
+          <LinkSiteProfileCard
+            siteProfile={siteProfile}
+            stats={[
+              { label: '总收录', value: `${links.length}` },
+              { label: '分类数', value: `${activeGroups.length}` },
+              { label: '博主', value: siteProfile.ownerName },
+            ]}
+          />
+        </div>
       </div>
     </div>
   )
