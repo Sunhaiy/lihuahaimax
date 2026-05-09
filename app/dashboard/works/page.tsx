@@ -42,9 +42,9 @@ function createEmptyWork(): WorkForm {
     url: '',
     github_url: '',
     primary_url: '',
-    primary_label: '打开官网',
+    primary_label: '项目官网',
     secondary_url: '',
-    secondary_label: '打开 GitHub',
+    secondary_label: 'GitHub',
     year: new Date().getFullYear(),
     sort_order: 0,
     is_published: true,
@@ -106,9 +106,9 @@ export default function DashboardWorksPage() {
       url: form.url || null,
       github_url: form.github_url || null,
       primary_url: form.primary_url || form.url || null,
-      primary_label: form.primary_label || '打开官网',
+      primary_label: form.primary_label || '项目官网',
       secondary_url: form.secondary_url || form.github_url || null,
-      secondary_label: form.secondary_label || '打开 GitHub',
+      secondary_label: form.secondary_label || 'GitHub',
       year: form.year || null,
       sort_order: form.sort_order || 0,
       is_published: form.is_published,
@@ -164,7 +164,7 @@ export default function DashboardWorksPage() {
       <AdminPageHeader
         eyebrow="Works Manager"
         title="项目管理"
-        description="项目页现在只保留列表展示和双按钮跳转，所以后台也收成一套更轻的录入结构。"
+        description="维护项目票根正反两面的内容：正面展示标题与封面，背面展示简介、官网和 GitHub。"
         actions={
           <Button onClick={startNew}>
             <MaterialSymbol icon="add" size={18} />
@@ -174,7 +174,7 @@ export default function DashboardWorksPage() {
         meta={
           <>
             <AdminStatusBadge tone="accent">{data?.length ?? 0} 个项目</AdminStatusBadge>
-            <AdminStatusBadge tone="neutral">列表页模式</AdminStatusBadge>
+            <AdminStatusBadge tone="neutral">票根翻转</AdminStatusBadge>
           </>
         }
       />
@@ -212,6 +212,8 @@ export default function DashboardWorksPage() {
           ) : (
             data.map((item) => {
               const active = selectedId === item.id
+              const hasOfficialLink = Boolean(item.primary_url || item.url)
+              const hasGithubLink = Boolean(item.github_url || item.secondary_url)
               return (
                 <button
                   key={item.id}
@@ -238,6 +240,14 @@ export default function DashboardWorksPage() {
                       <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
                         {item.summary || item.subtitle || '还没有摘要。'}
                       </p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <AdminStatusBadge tone={hasOfficialLink ? 'accent' : 'neutral'}>
+                          {hasOfficialLink ? '有官网' : '无官网'}
+                        </AdminStatusBadge>
+                        <AdminStatusBadge tone={hasGithubLink ? 'accent' : 'neutral'}>
+                          {hasGithubLink ? '有 GitHub' : '无 GitHub'}
+                        </AdminStatusBadge>
+                      </div>
                       <p className="mt-2 truncate text-[11px] font-mono text-muted-foreground/75">
                         {item.slug || 'untitled'} · sort {item.sort_order}
                       </p>
@@ -251,7 +261,7 @@ export default function DashboardWorksPage() {
 
         <AdminPanel
           title={form.id ? '编辑项目' : '新建项目'}
-          description="这里只保留项目页真正会用到的字段。"
+          description="这些字段会同步到前台项目票根，尤其是悬停翻面后的简介和外链。"
           icon="edit_square"
           bodyClassName="space-y-6"
           actions={
@@ -269,7 +279,7 @@ export default function DashboardWorksPage() {
             </div>
           }
         >
-          <AdminSection title="基础信息" description="标题、摘要和标签会直接进入前台项目卡片。">
+          <AdminSection title="基础信息" description="标题、摘要和标签会进入前台项目票根；摘要会优先显示在翻转背面。">
             <div className="grid gap-4 md:grid-cols-2">
               <AdminField label="标题">
                 <input
@@ -298,13 +308,13 @@ export default function DashboardWorksPage() {
                 />
               </AdminField>
 
-              <AdminField label="摘要" fullWidth>
+              <AdminField label="翻面简介" fullWidth>
                 <textarea
                   value={form.summary ?? ''}
                   onChange={(event) => updateField('summary', event.target.value)}
                   className={ADMIN_TEXTAREA_CLASS}
                   rows={4}
-                  placeholder="前台项目页显示的说明文字"
+                  placeholder="鼠标悬停翻转卡片后显示的一段简短介绍"
                 />
               </AdminField>
 
@@ -327,7 +337,7 @@ export default function DashboardWorksPage() {
             </div>
           </AdminSection>
 
-          <AdminSection title="封面与跳转" description="项目页只保留封面和两个按钮。">
+          <AdminSection title="封面与背面链接" description="封面显示在票根正面；官网和 GitHub 会显示在翻转背面。">
             <div className="grid gap-4 md:grid-cols-2">
               <AdminField label="封面 URL" fullWidth>
                 <input
@@ -364,7 +374,7 @@ export default function DashboardWorksPage() {
                   value={form.primary_label ?? ''}
                   onChange={(event) => updateField('primary_label', event.target.value)}
                   className={ADMIN_INPUT_CLASS}
-                  placeholder="打开官网"
+                  placeholder="项目官网"
                 />
               </AdminField>
 
@@ -385,7 +395,7 @@ export default function DashboardWorksPage() {
                   value={form.secondary_label ?? ''}
                   onChange={(event) => updateField('secondary_label', event.target.value)}
                   className={ADMIN_INPUT_CLASS}
-                  placeholder="打开 GitHub"
+                  placeholder="GitHub"
                 />
               </AdminField>
             </div>

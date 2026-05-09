@@ -34,6 +34,19 @@ export function WorksCarousel({ works, siteUrl }: Props) {
   const ticketDate = useMemo(() => formatTicketDate(activeWork), [activeWork])
   const ticketTime = useMemo(() => formatTicketTime(activeWork), [activeWork])
   const ticketSummary = activeWork.subtitle || activeWork.summary || activeWork.description || ''
+  const primaryUrl = activeWork.primary_url || activeWork.url
+  const secondaryUrl = activeWork.github_url || activeWork.secondary_url
+  const githubUrl = secondaryUrl || (isGithubUrl(primaryUrl) ? primaryUrl : null)
+  const officialUrl =
+    primaryUrl && !isGithubUrl(primaryUrl) && normalizeExternalUrl(primaryUrl) !== normalizeExternalUrl(githubUrl)
+      ? primaryUrl
+      : null
+  const officialLabel = activeWork.primary_label?.trim() || '项目官网'
+  const githubLabel = activeWork.secondary_label?.trim() || 'GitHub'
+  const showOfficialUrl = Boolean(officialUrl)
+  const showGithubUrl = Boolean(githubUrl)
+  const backSummary =
+    activeWork.summary || activeWork.description || activeWork.subtitle || '这个项目暂时还没有写简介。'
   const barcodeValue = useMemo(
     () => buildWorkUrl(siteUrl, activeWork.slug),
     [activeWork.slug, siteUrl]
@@ -317,103 +330,144 @@ export function WorksCarousel({ works, siteUrl }: Props) {
             style={{ backgroundColor: 'var(--works-ticket-shadow-hard)' }}
           />
 
-          <article
-            className="relative overflow-hidden rounded-[1.85rem] border p-[0.92rem] transition-transform duration-300 hover:-translate-y-0.5"
-            style={{
-              backgroundColor: 'var(--works-ticket-bg)',
-              color: 'var(--works-ticket-copy)',
-              borderColor: 'var(--works-ticket-border)',
-              boxShadow:
-                '0 28px 90px var(--works-ticket-shadow), 0 6px 22px var(--works-ticket-shadow-soft)',
-            }}
-          >
-            <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+          <article className="group/ticket relative transition-transform duration-300 hover:-translate-y-0.5 [perspective:1400px]">
+            <div className="relative transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] [transform-style:preserve-3d] group-hover/ticket:[transform:rotateY(180deg)] group-focus-within/ticket:[transform:rotateY(180deg)]">
               <div
-                className="absolute left-[9%] top-[42%] h-[6.2rem] w-[82%] rounded-[1.15rem] border-[2px] opacity-0"
-                style={{ borderColor: 'var(--works-postmark-ring)' }}
-                data-ticket-postmark
+                className="relative overflow-hidden rounded-[1.85rem] border p-[0.92rem] [backface-visibility:hidden]"
+                style={{
+                  backgroundColor: 'var(--works-ticket-bg)',
+                  color: 'var(--works-ticket-copy)',
+                  borderColor: 'var(--works-ticket-border)',
+                  boxShadow:
+                    '0 28px 90px var(--works-ticket-shadow), 0 6px 22px var(--works-ticket-shadow-soft)',
+                }}
               >
-                <div
-                  className="absolute inset-[0.46rem] rounded-[0.92rem] border"
-                  style={{ borderColor: 'var(--works-postmark-ring-soft)' }}
-                />
-                <div className="absolute left-[8%] right-[10%] top-[36%] h-px" style={{ backgroundColor: 'var(--works-postmark-line)' }} />
-                <div className="absolute left-[11%] right-[8%] top-[50%] h-px" style={{ backgroundColor: 'var(--works-postmark-line)' }} />
-                <div className="absolute left-[9%] right-[14%] top-[64%] h-px" style={{ backgroundColor: 'var(--works-postmark-line)' }} />
-                <p className="absolute inset-x-0 top-[0.72rem] text-center text-[0.5rem] font-mono uppercase tracking-[0.34em]" style={{ color: 'var(--works-postmark-copy)' }}>
-                  SUXIN POST
-                </p>
-                <p className="absolute inset-x-0 bottom-[0.72rem] text-center text-[0.44rem] font-mono uppercase tracking-[0.28em]" style={{ color: 'var(--works-postmark-copy)' }}>
-                  {activeWork.slug}
-                </p>
-              </div>
-            </div>
+                <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+                  <div
+                    className="absolute left-[9%] top-[42%] h-[6.2rem] w-[82%] rounded-[1.15rem] border-[2px] opacity-0"
+                    style={{ borderColor: 'var(--works-postmark-ring)' }}
+                    data-ticket-postmark
+                  >
+                    <div
+                      className="absolute inset-[0.46rem] rounded-[0.92rem] border"
+                      style={{ borderColor: 'var(--works-postmark-ring-soft)' }}
+                    />
+                    <div className="absolute left-[8%] right-[10%] top-[36%] h-px" style={{ backgroundColor: 'var(--works-postmark-line)' }} />
+                    <div className="absolute left-[11%] right-[8%] top-[50%] h-px" style={{ backgroundColor: 'var(--works-postmark-line)' }} />
+                    <div className="absolute left-[9%] right-[14%] top-[64%] h-px" style={{ backgroundColor: 'var(--works-postmark-line)' }} />
+                    <p className="absolute inset-x-0 top-[0.72rem] text-center text-[0.5rem] font-mono uppercase tracking-[0.34em]" style={{ color: 'var(--works-postmark-copy)' }}>
+                      SUXIN POST
+                    </p>
+                    <p className="absolute inset-x-0 bottom-[0.72rem] text-center text-[0.44rem] font-mono uppercase tracking-[0.28em]" style={{ color: 'var(--works-postmark-copy)' }}>
+                      {activeWork.slug}
+                    </p>
+                  </div>
+                </div>
 
-            <Link
-              href={`/works/${activeWork.slug}`}
-              className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 dark:focus-visible:ring-black/20"
-              aria-label={`Open ${activeWork.title}`}
-            >
-              <div key={activeWork.id} className="block" data-ticket-content>
-                <div
-                  className="relative overflow-hidden rounded-[1.08rem] border"
-                  style={{
-                    backgroundColor: 'var(--works-image-frame)',
-                    borderColor: 'var(--works-image-border)',
-                    boxShadow: 'inset 0 0 0 1px var(--works-image-outline)',
-                  }}
-                  data-ticket-line
-                >
-                  <div className="aspect-[1.43/1]">
-                    {activeWork.cover_url ? (
-                      <img
-                        src={activeWork.cover_url}
-                        alt={activeWork.title}
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.025]"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_30%_20%,rgba(146,122,255,0.7),transparent_32%),radial-gradient(circle_at_70%_30%,rgba(35,215,255,0.65),transparent_34%),radial-gradient(circle_at_50%_75%,rgba(255,92,163,0.55),transparent_30%),linear-gradient(135deg,#050505,#2e2e2e)]">
-                        <span className="text-7xl font-black tracking-[-0.08em] text-white/16">
-                          {activeWork.title.charAt(0)}
-                        </span>
+                <div key={activeWork.id} className="block" data-ticket-content>
+                  <div
+                    className="relative overflow-hidden rounded-[1.08rem] border"
+                    style={{
+                      backgroundColor: 'var(--works-image-frame)',
+                      borderColor: 'var(--works-image-border)',
+                      boxShadow: 'inset 0 0 0 1px var(--works-image-outline)',
+                    }}
+                    data-ticket-line
+                  >
+                    <div className="aspect-[1.43/1]">
+                      {activeWork.cover_url ? (
+                        <img
+                          src={activeWork.cover_url}
+                          alt={activeWork.title}
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover/ticket:scale-[1.025]"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_30%_20%,rgba(146,122,255,0.7),transparent_32%),radial-gradient(circle_at_70%_30%,rgba(35,215,255,0.65),transparent_34%),radial-gradient(circle_at_50%_75%,rgba(255,92,163,0.55),transparent_30%),linear-gradient(135deg,#050505,#2e2e2e)]">
+                          <span className="text-7xl font-black tracking-[-0.08em] text-white/16">
+                            {activeWork.title.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div
+                      className="pointer-events-none absolute inset-0"
+                      style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.22))' }}
+                    />
+                  </div>
+
+                  <div className="px-[0.35rem] pb-1 pt-[1.15rem]">
+                    <p className="text-[0.78rem] font-medium tracking-[-0.01em]" style={{ color: 'var(--works-ticket-subtle)' }} data-ticket-line>
+                      Name
+                    </p>
+                    <h2 className="mt-1.5 text-[1.18rem] font-semibold leading-[1.08] tracking-[-0.055em] sm:text-[1.32rem]" data-ticket-line>
+                      {activeWork.title}
+                    </h2>
+
+                    <div className="mt-[1.4rem] grid grid-cols-2 gap-4">
+                      <div data-ticket-line>
+                        <p className="text-[0.78rem] font-medium tracking-[-0.01em]" style={{ color: 'var(--works-ticket-muted)' }}>
+                          Date
+                        </p>
+                        <p className="mt-[0.32rem] text-[0.9rem] font-medium tracking-[-0.025em]">{ticketDate}</p>
                       </div>
-                    )}
+                      <div data-ticket-line>
+                        <p className="text-[0.78rem] font-medium tracking-[-0.01em]" style={{ color: 'var(--works-ticket-muted)' }}>
+                          Time
+                        </p>
+                        <p className="mt-[0.32rem] text-[0.9rem] font-medium tracking-[-0.025em]">{ticketTime}</p>
+                      </div>
+                    </div>
                   </div>
+
+                  <div className="relative mt-[1.35rem]" data-ticket-line>
+                    <span className="absolute -left-[1.55rem] top-1/2 h-[1.1rem] w-[1.1rem] -translate-y-1/2 rounded-full shadow-[inset_-1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[inset_-1px_0_0_rgba(255,255,255,0.08)]" style={{ backgroundColor: 'var(--works-cutout)' }} />
+                    <span className="absolute -right-[1.55rem] top-1/2 h-[1.1rem] w-[1.1rem] -translate-y-1/2 rounded-full shadow-[inset_1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[inset_1px_0_0_rgba(255,255,255,0.08)]" style={{ backgroundColor: 'var(--works-cutout)' }} />
+                    <div
+                      className="h-px w-full bg-repeat-x bg-center"
+                      style={{
+                        backgroundImage: 'radial-gradient(circle, var(--works-perf) 1px, transparent 1.2px)',
+                        backgroundSize: '10px 1px',
+                      }}
+                    />
+                  </div>
+
+                  <div className="px-[1rem] pb-[1rem] pt-[1.55rem]" data-ticket-line>
+                    <div
+                      className="relative rounded-[4px] border px-[0.38rem] py-[0.34rem]"
+                      style={{
+                        borderColor: 'var(--works-barcode-border)',
+                        backgroundColor: 'var(--works-barcode-shell)',
+                        boxShadow:
+                          'inset 0 1px 0 var(--works-barcode-shell-shine), 0 10px 18px var(--works-barcode-drop)',
+                      }}
+                      data-ticket-barcode-wrap
+                    >
+                      <TicketBarcode value={barcodeValue} title={activeWork.title} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className="absolute inset-0 flex flex-col overflow-hidden rounded-[1.85rem] border p-[1.25rem] [backface-visibility:hidden] [transform:rotateY(180deg)]"
+                style={{
+                  backgroundColor: 'var(--works-ticket-bg)',
+                  color: 'var(--works-ticket-copy)',
+                  borderColor: 'var(--works-ticket-border)',
+                  boxShadow:
+                    '0 28px 90px var(--works-ticket-shadow), 0 6px 22px var(--works-ticket-shadow-soft)',
+                }}
+              >
+                <div className="pointer-events-none absolute inset-0 opacity-55" aria-hidden="true">
                   <div
-                    className="pointer-events-none absolute inset-0"
-                    style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.22))' }}
+                    className="absolute inset-x-5 top-5 h-px"
+                    style={{
+                      backgroundImage: 'radial-gradient(circle, var(--works-perf) 1px, transparent 1.2px)',
+                      backgroundSize: '10px 1px',
+                    }}
                   />
-                </div>
-
-                <div className="px-[0.35rem] pb-1 pt-[1.15rem]">
-                  <p className="text-[0.78rem] font-medium tracking-[-0.01em]" style={{ color: 'var(--works-ticket-subtle)' }} data-ticket-line>
-                    Name
-                  </p>
-                  <h2 className="mt-1.5 text-[1.18rem] font-semibold leading-[1.08] tracking-[-0.055em] sm:text-[1.32rem]" data-ticket-line>
-                    {activeWork.title}
-                  </h2>
-
-                  <div className="mt-[1.4rem] grid grid-cols-2 gap-4">
-                    <div data-ticket-line>
-                      <p className="text-[0.78rem] font-medium tracking-[-0.01em]" style={{ color: 'var(--works-ticket-muted)' }}>
-                        Date
-                      </p>
-                      <p className="mt-[0.32rem] text-[0.9rem] font-medium tracking-[-0.025em]">{ticketDate}</p>
-                    </div>
-                    <div data-ticket-line>
-                      <p className="text-[0.78rem] font-medium tracking-[-0.01em]" style={{ color: 'var(--works-ticket-muted)' }}>
-                        Time
-                      </p>
-                      <p className="mt-[0.32rem] text-[0.9rem] font-medium tracking-[-0.025em]">{ticketTime}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="relative mt-[1.35rem]" data-ticket-line>
-                  <span className="absolute -left-[1.55rem] top-1/2 h-[1.1rem] w-[1.1rem] -translate-y-1/2 rounded-full shadow-[inset_-1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[inset_-1px_0_0_rgba(255,255,255,0.08)]" style={{ backgroundColor: 'var(--works-cutout)' }} />
-                  <span className="absolute -right-[1.55rem] top-1/2 h-[1.1rem] w-[1.1rem] -translate-y-1/2 rounded-full shadow-[inset_1px_0_0_rgba(0,0,0,0.08)] dark:shadow-[inset_1px_0_0_rgba(255,255,255,0.08)]" style={{ backgroundColor: 'var(--works-cutout)' }} />
                   <div
-                    className="h-px w-full bg-repeat-x bg-center"
+                    className="absolute inset-x-5 bottom-5 h-px"
                     style={{
                       backgroundImage: 'radial-gradient(circle, var(--works-perf) 1px, transparent 1.2px)',
                       backgroundSize: '10px 1px',
@@ -421,22 +475,66 @@ export function WorksCarousel({ works, siteUrl }: Props) {
                   />
                 </div>
 
-                <div className="px-[1rem] pb-[1rem] pt-[1.55rem]" data-ticket-line>
-                  <div
-                    className="relative rounded-[4px] border px-[0.38rem] py-[0.34rem]"
+                <p className="text-[0.68rem] font-mono uppercase tracking-[0.28em]" style={{ color: 'var(--works-ticket-muted)' }}>
+                  Project Links
+                </p>
+                <h3 className="mt-4 text-[1.35rem] font-semibold leading-tight tracking-[-0.055em]">
+                  {activeWork.title}
+                </h3>
+                <p className="mt-3 line-clamp-6 text-sm leading-6 opacity-75" style={{ color: 'var(--works-ticket-copy)' }}>
+                  {backSummary}
+                </p>
+
+                <div className="mt-auto space-y-2.5 pt-5">
+                  {showOfficialUrl && officialUrl ? (
+                    <a
+                      href={officialUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition-transform duration-200 hover:-translate-y-0.5"
+                      style={{
+                        borderColor: 'var(--works-ticket-border)',
+                        backgroundColor: 'var(--works-accent)',
+                        color: 'var(--works-accent-copy)',
+                      }}
+                    >
+                      <span>{officialLabel}</span>
+                      <MaterialSymbol icon="open_in_new" size={17} />
+                    </a>
+                  ) : null}
+
+                  {showGithubUrl && githubUrl ? (
+                    <a
+                      href={githubUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition-transform duration-200 hover:-translate-y-0.5"
+                      style={{
+                        borderColor: 'var(--works-ticket-border)',
+                        backgroundColor: 'var(--works-fact-bg)',
+                        color: 'var(--works-panel-copy)',
+                      }}
+                    >
+                      <span>{githubLabel}</span>
+                      <MaterialSymbol icon="code_blocks" size={17} />
+                    </a>
+                  ) : null}
+
+                  <Link
+                    href={`/works/${activeWork.slug}`}
+                    className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition-transform duration-200 hover:-translate-y-0.5"
                     style={{
-                      borderColor: 'var(--works-barcode-border)',
-                      backgroundColor: 'var(--works-barcode-shell)',
-                      boxShadow:
-                        'inset 0 1px 0 var(--works-barcode-shell-shine), 0 10px 18px var(--works-barcode-drop)',
+                      borderColor: 'var(--works-ticket-border)',
+                      backgroundColor: 'var(--works-chip-bg)',
+                      color: 'var(--works-panel-copy)',
                     }}
-                    data-ticket-barcode-wrap
                   >
-                    <TicketBarcode value={barcodeValue} title={activeWork.title} />
-                  </div>
+                    <span>查看详情</span>
+                    <MaterialSymbol icon="arrow_forward" size={17} />
+                  </Link>
                 </div>
               </div>
-            </Link>
+            </div>
           </article>
         </div>
 
@@ -570,6 +668,14 @@ function resolveTicketTimestamp(work: WorkListItem) {
 function buildWorkUrl(siteUrl: string, slug: string) {
   const base = siteUrl?.trim() || 'http://127.0.0.1:3000'
   return `${base.replace(/\/$/, '')}/works/${slug}`
+}
+
+function normalizeExternalUrl(url?: string | null) {
+  return (url ?? '').trim().replace(/\/+$/, '').toLowerCase()
+}
+
+function isGithubUrl(url?: string | null) {
+  return normalizeExternalUrl(url).includes('github.com')
 }
 
 function TicketBarcode({ value, title }: { value: string; title: string }) {
