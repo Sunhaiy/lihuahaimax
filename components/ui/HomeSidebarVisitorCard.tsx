@@ -47,23 +47,17 @@ export function HomeSidebarVisitorCard() {
   }, [])
 
   return (
-    <div className="space-y-3">
-      <div className="rounded-[24px] border border-border/80 bg-card/90 p-4">
-        <p className="text-[11px] font-mono tracking-[0.12em] text-muted-foreground">Visitor</p>
-        <p className="mt-2 text-base font-semibold tracking-[-0.02em] text-foreground">
-          {context.greeting}
+    <div className="rounded-[24px] border border-border/75 bg-card/76 p-4 backdrop-blur-xl">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
+          一言
         </p>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          当前识别位置：{context.locationLabel}
-        </p>
-        {loading ? <div className="mt-3 h-1.5 w-16 rounded-full bg-primary/20" /> : null}
+        <span className="rounded-full border border-border/70 bg-background/48 px-2.5 py-1 text-[10px] text-muted-foreground">
+          {loading ? '加载中' : context.locationLabel}
+        </span>
       </div>
-
-      <div className="rounded-[24px] border border-border/80 bg-card/90 p-4">
-        <p className="text-[11px] font-mono tracking-[0.12em] text-muted-foreground">Hitokoto</p>
-        <p className="mt-2 text-sm leading-7 text-foreground/88">“{context.quote.text}”</p>
-        <p className="mt-3 text-[11px] text-muted-foreground">{context.quote.from}</p>
-      </div>
+      <p className="mt-3 text-sm font-medium leading-7 text-foreground/88">“{context.quote.text}”</p>
+      <p className="mt-3 text-[11px] text-muted-foreground">{context.quote.from}</p>
     </div>
   )
 }

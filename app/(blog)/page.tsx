@@ -6,7 +6,7 @@ import { HomeSidebarVisitorCard } from '@/components/ui/HomeSidebarVisitorCard'
 import { PostCard } from '@/components/ui/PostCard'
 import { getActivityHeatmap } from '@/lib/db/dao/activityDao'
 import { findMoments } from '@/lib/db/dao/momentDao'
-import { findAllTags, findPosts } from '@/lib/db/dao/postDao'
+import { findAllTags, findPosts, findPostsForArchive } from '@/lib/db/dao/postDao'
 import { getBackgroundSceneSettings } from '@/lib/scene'
 import { toRgba } from '@/lib/scene-color'
 import { getSiteProfile } from '@/lib/site'
@@ -62,6 +62,53 @@ function getMomentPreview(moment: MomentRow): { text: string; mono: boolean } | 
   return null
 }
 
+function getYearProgress(year: number) {
+  const start = new Date(year, 0, 1).getTime()
+  const end = new Date(year + 1, 0, 1).getTime()
+  const now = Date.now()
+  const progress = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100))
+
+  return progress
+}
+
+function getSidebarGreeting() {
+  const hour = new Date().getHours()
+
+  if (hour < 5) return '凌晨好，别熬啦！'
+  if (hour < 11) return '早上好，今天也慢慢来。'
+  if (hour < 14) return '中午好，记得休息。'
+  if (hour < 18) return '下午好，继续向前。'
+  return '晚上好，欢迎回来。'
+}
+
+function getArchivePreview(posts: Array<{ published_at: Date | string | null }>) {
+  const buckets = new Map<string, { label: string; count: number; href: string }>()
+
+  for (const post of posts) {
+    if (!post.published_at) continue
+
+    const date = new Date(post.published_at)
+    if (Number.isNaN(date.getTime())) continue
+
+    const year = date.getFullYear()
+    const month = date.getMonth() + 1
+    const key = `${year}-${String(month).padStart(2, '0')}`
+    const current = buckets.get(key)
+
+    if (current) {
+      current.count += 1
+    } else {
+      buckets.set(key, {
+        label: `${year} / ${String(month).padStart(2, '0')}`,
+        count: 1,
+        href: '/posts/archive',
+      })
+    }
+  }
+
+  return Array.from(buckets.values()).slice(0, 5)
+}
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -70,19 +117,22 @@ export default async function HomePage({
   const { page: pageParam } = await searchParams
   const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1)
 
-  const [postsResult, momentsResult, scene, activityData, siteProfile, tags] = await Promise.all([
+  const [postsResult, momentsResult, scene, activityData, siteProfile, tags, archivePosts] = await Promise.all([
     findPosts({ status: 'published', pageSize: 6, page }),
     findMoments({ publicOnly: true, pageSize: 10 }),
     getBackgroundSceneSettings(),
     getActivityHeatmap(365),
     getSiteProfile(),
     findAllTags(),
+    findPostsForArchive(),
   ])
 
   const hasSceneImage = Boolean(scene.image.url)
-  const latestMoment = momentsResult.data[0] ?? null
-  const latestMomentPreview = latestMoment ? getMomentPreview(latestMoment) : null
   const topTags = tags.slice(0, 18)
+  const archivePreview = getArchivePreview(archivePosts)
+  const categoryCount = new Set(archivePosts.map((post) => post.category || '未分类')).size
+  const yearProgress = getYearProgress(2026)
+  const sidebarGreeting = getSidebarGreeting()
 
   return (
     <>
@@ -285,59 +335,121 @@ export default async function HomePage({
             </div>
 
             <aside className="flex flex-col gap-3 lg:sticky lg:top-20 lg:self-start">
-              <div className="rounded-[24px] border border-border/80 bg-card/92 p-5 shadow-[0_18px_46px_rgba(10,10,12,0.05)]">
-                <div className="relative mb-4 flex items-center gap-3">
-                  <div className="relative">
-                    <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-primary/28 bg-gradient-to-br from-primary/28 to-primary/8">
-                      {siteProfile.avatarUrl ? (
-                        <img
-                          src={siteProfile.avatarUrl}
-                          alt={siteProfile.ownerName}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="select-none text-2xl font-semibold text-primary">
-                          {siteProfile.ownerInitial}
-                        </span>
-                      )}
-                    </div>
-                    <div className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-card bg-emerald-500" />
-                  </div>
+              <HomeSidebarVisitorCard />
 
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">{siteProfile.ownerName}</p>
-                    <p className="mt-1 text-[11px] tracking-[0.06em] text-primary">{siteProfile.roleLine}</p>
-                  </div>
+              <div className="rounded-[24px] border border-border/75 bg-card/78 p-4 backdrop-blur-xl">
+                <div className="relative mx-auto w-fit rounded-full border border-border/70 bg-background/52 px-4 py-1.5 text-xs font-semibold text-muted-foreground">
+                  {sidebarGreeting}
+                  <span className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-border/70 bg-background/52" />
                 </div>
 
-                <p className="text-[12px] leading-6 text-muted-foreground">{siteProfile.bio}</p>
+                <div className="mx-auto mt-5 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-primary/22 bg-primary/8">
+                  {siteProfile.avatarUrl ? (
+                    <img
+                      src={siteProfile.avatarUrl}
+                      alt={siteProfile.ownerName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="select-none text-4xl font-semibold text-primary">
+                      {siteProfile.ownerInitial}
+                    </span>
+                  )}
+                </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <div className="rounded-[18px] border border-border/70 bg-background/45 px-4 py-3 text-center">
-                    <p className="text-2xl font-semibold leading-none text-ember">{postsResult.total}</p>
-                    <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
-                      Posts
-                    </p>
-                  </div>
-                  <div className="rounded-[18px] border border-border/70 bg-background/45 px-4 py-3 text-center">
-                    <p className="text-2xl font-semibold leading-none text-ember">{momentsResult.total}</p>
-                    <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
-                      Moments
-                    </p>
-                  </div>
+                <div className="mt-4 text-center">
+                  <p className="text-xl font-semibold tracking-[-0.05em] text-foreground">
+                    {siteProfile.ownerName}
+                  </p>
+                  <p className="mt-1.5 text-xs font-semibold text-muted-foreground">{siteProfile.slogan}</p>
+                </div>
+
+                <div className="mt-4 grid grid-cols-3 rounded-[18px] border border-border/70 bg-background/44 py-2.5">
+                  {[
+                    { label: '文章', value: postsResult.total },
+                    { label: '分组', value: categoryCount },
+                    { label: '标签', value: tags.length },
+                  ].map((item, index) => (
+                    <div
+                      key={item.label}
+                      className={`text-center ${index > 0 ? 'border-l border-border/70' : ''}`}
+                    >
+                      <p className="text-xl font-semibold leading-none text-foreground">{item.value}</p>
+                      <p className="mt-1.5 text-[11px] font-medium text-muted-foreground">{item.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 flex items-center justify-center gap-2.5 text-muted-foreground">
+                  {[
+                    { label: 'GitHub', href: siteProfile.githubUrl, icon: 'code' },
+                    { label: '邮箱', href: `mailto:${siteProfile.email}`, icon: 'mail' },
+                    { label: 'RSS', href: siteProfile.rssUrl || '/rss.xml', icon: 'rss_feed' },
+                    { label: '关于', href: '/about', icon: 'person' },
+                  ].map((item) => (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      aria-label={item.label}
+                      target={item.href.startsWith('http') ? '_blank' : undefined}
+                      rel={item.href.startsWith('http') ? 'noreferrer' : undefined}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-background/42 transition-colors hover:border-primary/32 hover:text-primary"
+                    >
+                      <MaterialSymbol icon={item.icon} size={16} />
+                    </a>
+                  ))}
                 </div>
               </div>
 
-              <HomeSidebarVisitorCard />
+              <div className="rounded-[24px] border border-border/75 bg-card/78 p-5 backdrop-blur-xl">
+                <div className="flex items-center justify-between">
+                  <p className="text-base font-semibold text-foreground">2026</p>
+                  <p className="font-mono text-sm font-semibold text-muted-foreground">
+                    {yearProgress.toFixed(6)}%
+                  </p>
+                </div>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted/70">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${yearProgress}%` }}
+                  />
+                </div>
+              </div>
 
-              <div className="rounded-[24px] border border-border/80 bg-card/90 p-4">
-                <p className="text-[11px] font-mono tracking-[0.12em] text-muted-foreground">标签云</p>
+              <div className="rounded-[24px] border border-border/75 bg-card/78 p-4 backdrop-blur-xl">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
+                    归档
+                  </p>
+                  <Link
+                    href="/posts/archive"
+                    className="text-[11px] text-primary transition-colors hover:text-primary/75"
+                  >
+                    查看全部
+                  </Link>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {archivePreview.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="flex items-center justify-between rounded-[16px] border border-border/55 bg-background/34 px-3 py-2 text-sm transition-colors hover:border-primary/28 hover:text-primary"
+                    >
+                      <span className="font-medium text-foreground/86">{item.label}</span>
+                      <span className="text-xs text-muted-foreground">{item.count} 篇</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[24px] border border-border/75 bg-card/78 p-4 backdrop-blur-xl">
+                <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-muted-foreground">标签云</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {topTags.map(({ tag, count }) => (
                     <Link
                       key={tag}
                       href={`/posts?tag=${encodeURIComponent(tag)}`}
-                      className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background/45 px-3 py-1.5 text-xs text-foreground/82 transition-colors hover:border-primary/30 hover:bg-primary/6 hover:text-primary"
+                      className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background/42 px-3 py-1.5 text-xs text-foreground/82 transition-colors hover:border-primary/30 hover:bg-primary/6 hover:text-primary"
                     >
                       <span>{tag}</span>
                       <span className="text-[10px] text-muted-foreground">{count}</span>
@@ -345,21 +457,6 @@ export default async function HomePage({
                   ))}
                 </div>
               </div>
-
-              {latestMoment ? (
-                <div className="rounded-[24px] border border-border/80 bg-card/90 p-4">
-                  <p className="text-[11px] font-mono tracking-[0.12em] text-muted-foreground">最新瞬间</p>
-                  <p className="mt-3 line-clamp-4 text-sm leading-7 text-foreground/84">
-                    {latestMomentPreview?.text || '这一刻还没有留下文字，但已经被收进 moments 里了。'}
-                  </p>
-                  <div className="mt-4 flex items-center justify-between text-[11px] text-muted-foreground">
-                    <span>{new Date(latestMoment.created_at).toLocaleString('zh-CN')}</span>
-                    <Link href="/moments" className="text-primary transition-colors hover:text-primary/75">
-                      去 moments
-                    </Link>
-                  </div>
-                </div>
-              ) : null}
             </aside>
           </div>
         </div>
