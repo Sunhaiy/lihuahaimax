@@ -410,10 +410,15 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
             <div className="mt-3 max-w-[42rem]">
               <RichTextRenderer
                 content={moment.content_json}
+                className="hash-heading-surface"
                 proseClassName="
                   prose prose-neutral max-w-none dark:prose-invert
                   [&_.ProseMirror]:text-foreground
                   [&_.ProseMirror]:leading-8
+                  [&_.ProseMirror_h1]:mt-8
+                  [&_.ProseMirror_h1]:mb-4
+                  [&_.ProseMirror_h1]:text-[1.55rem]
+                  [&_.ProseMirror_h1]:font-semibold
                   [&_.ProseMirror_h2]:mt-7
                   [&_.ProseMirror_h2]:mb-3
                   [&_.ProseMirror_h2]:text-[1.35rem]
@@ -422,6 +427,18 @@ export function MomentFeedCard({ moment, siteProfile }: MomentFeedCardProps) {
                   [&_.ProseMirror_h3]:mb-3
                   [&_.ProseMirror_h3]:text-[1.12rem]
                   [&_.ProseMirror_h3]:font-semibold
+                  [&_.ProseMirror_h4]:mt-5
+                  [&_.ProseMirror_h4]:mb-2.5
+                  [&_.ProseMirror_h4]:text-[1rem]
+                  [&_.ProseMirror_h4]:font-semibold
+                  [&_.ProseMirror_h5]:mt-4
+                  [&_.ProseMirror_h5]:mb-2
+                  [&_.ProseMirror_h5]:text-[0.94rem]
+                  [&_.ProseMirror_h5]:font-semibold
+                  [&_.ProseMirror_h6]:mt-4
+                  [&_.ProseMirror_h6]:mb-2
+                  [&_.ProseMirror_h6]:text-[0.88rem]
+                  [&_.ProseMirror_h6]:font-semibold
                   [&_.ProseMirror_p]:my-4
                   [&_.ProseMirror_p]:text-[1rem]
                   [&_.ProseMirror_p]:leading-8

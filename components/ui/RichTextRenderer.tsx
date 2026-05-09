@@ -14,6 +14,99 @@ interface RichTextRendererProps {
   proseClassName?: string
 }
 
+function highlightCodeLine(line: string, language?: string) {
+  if (!line) return '&nbsp;'
+
+  if (language && hljs.getLanguage(language)) {
+    return hljs.highlight(line, { language, ignoreIllegals: true }).value || '&nbsp;'
+  }
+
+  return hljs.highlightAuto(line).value || '&nbsp;'
+}
+
+async function copyText(rawText: string) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(rawText)
+      return
+    } catch {
+    }
+  }
+
+  const textarea = document.createElement('textarea')
+  textarea.value = rawText
+  textarea.setAttribute('readonly', 'true')
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  textarea.style.pointerEvents = 'none'
+  textarea.style.top = '0'
+  textarea.style.left = '0'
+  document.body.append(textarea)
+  textarea.focus()
+  textarea.select()
+
+  const copied = document.execCommand('copy')
+  textarea.remove()
+
+  if (!copied) {
+    throw new Error('copy failed')
+  }
+}
+
+function createCopyButton(rawText: string) {
+  const button = document.createElement('button')
+  const icon = document.createElement('span')
+  let resetTimer = 0
+
+  button.type = 'button'
+  button.className = 'code-block-copy'
+  button.setAttribute('aria-label', '复制代码')
+  button.title = '复制代码'
+
+  icon.className = 'material-symbols-rounded'
+  icon.setAttribute('aria-hidden', 'true')
+  icon.textContent = 'content_copy'
+  button.append(icon)
+
+  const setButtonState = (state: 'idle' | 'copied' | 'error') => {
+    button.dataset.state = state
+    if (state === 'copied') {
+      icon.textContent = 'check'
+      button.title = '已复制'
+      button.setAttribute('aria-label', '已复制')
+      return
+    }
+
+    if (state === 'error') {
+      icon.textContent = 'error'
+      button.title = '复制失败'
+      button.setAttribute('aria-label', '复制失败')
+      return
+    }
+
+    icon.textContent = 'content_copy'
+    button.title = '复制代码'
+    button.setAttribute('aria-label', '复制代码')
+  }
+
+  button.addEventListener('click', async () => {
+    window.clearTimeout(resetTimer)
+
+    try {
+      await copyText(rawText)
+      setButtonState('copied')
+    } catch {
+      setButtonState('error')
+    }
+
+    resetTimer = window.setTimeout(() => {
+      setButtonState('idle')
+    }, 1600)
+  })
+
+  return button
+}
+
 export function RichTextRenderer({
   content,
   headings = [],
@@ -60,34 +153,49 @@ export function RichTextRenderer({
         )
           .trim()
           .toLowerCase()
-        const language = requestedLanguage && hljs.getLanguage(requestedLanguage)
+        const rawTextSource = node.querySelector('.code-block-line')
+          ? node.dataset.rawCode || pre?.dataset.rawCode || ''
+          : node.textContent ?? ''
+        const rawText = rawTextSource.replace(/\r\n/g, '\n')
+        const detectedLanguage = requestedLanguage && hljs.getLanguage(requestedLanguage)
           ? requestedLanguage
-          : undefined
-        const rawText = node.textContent ?? ''
-        const signature = `${language ?? 'auto'}::${rawText}`
+          : hljs.highlightAuto(rawText).language
+        const signature = `${detectedLanguage ?? 'auto'}::${rawText}`
 
         if (pre) {
           pre.classList.add('code-block')
         }
         if (!rawText.trim()) return
-        if (node.dataset.highlightSignature === signature) return
-
-        if (language) {
-          node.classList.add(`language-${language}`)
+        if (
+          node.dataset.highlightSignature === signature &&
+          pre?.dataset.codeBlockSignature === signature &&
+          node.querySelector('.code-block-line')
+        ) {
+          return
         }
-        node.textContent = rawText
+
+        const lines = rawText.split('\n')
+        const renderedLines = lines
+          .map((line, index) => {
+            const highlightedLine = highlightCodeLine(line, detectedLanguage)
+            return `<span class="code-block-line" data-line="${index + 1}"><span class="code-block-line-content">${highlightedLine}</span></span>`
+          })
+          .join('')
+
         node.classList.add('hljs')
         node.removeAttribute('data-highlighted')
-        hljs.highlightElement(node)
+        node.innerHTML = renderedLines
         node.dataset.highlightSignature = signature
+        node.dataset.rawCode = rawText
 
         if (pre) {
-          const detectedLanguage =
-            language ||
-            Array.from(node.classList)
-              .find((item) => item.startsWith('language-'))
-              ?.replace(/^language-/, '') ||
-            ''
+          const existingCopyButton = pre.querySelector<HTMLButtonElement>('.code-block-copy')
+          existingCopyButton?.remove()
+
+          pre.append(createCopyButton(rawText))
+          pre.dataset.codeBlockSignature = signature
+          pre.dataset.rawCode = rawText
+
           if (detectedLanguage) {
             pre.dataset.language = detectedLanguage
           } else {

@@ -13,7 +13,7 @@ export function PostContent({ content, headings }: PostContentProps) {
     <RichTextRenderer
       content={content}
       headings={headings}
-      className="post-content"
+      className="post-content hash-heading-surface"
       proseClassName="
         prose prose-neutral max-w-none dark:prose-invert
         [&_.ProseMirror]:text-[1.02rem]
@@ -39,6 +39,14 @@ export function PostContent({ content, headings }: PostContentProps) {
         [&_.ProseMirror_h4]:mb-3
         [&_.ProseMirror_h4]:text-[1.12rem]
         [&_.ProseMirror_h4]:font-semibold
+        [&_.ProseMirror_h5]:mt-7
+        [&_.ProseMirror_h5]:mb-3
+        [&_.ProseMirror_h5]:text-[1rem]
+        [&_.ProseMirror_h5]:font-semibold
+        [&_.ProseMirror_h6]:mt-6
+        [&_.ProseMirror_h6]:mb-2.5
+        [&_.ProseMirror_h6]:text-[0.92rem]
+        [&_.ProseMirror_h6]:font-semibold
         [&_.ProseMirror_p]:my-5
         [&_.ProseMirror_p]:text-[1rem]
         [&_.ProseMirror_p]:leading-8
@@ -71,8 +79,8 @@ export function PostContent({ content, headings }: PostContentProps) {
         [&_.ProseMirror_blockquote]:shadow-none
         [&_.ProseMirror_blockquote]:bg-transparent
         [&_.ProseMirror_blockquote]:px-0
-        [&_.ProseMirror_blockquote]:pb-1
-        [&_.ProseMirror_blockquote]:pt-8
+        [&_.ProseMirror_blockquote]:pb-8
+        [&_.ProseMirror_blockquote]:pt-1
         [&_.ProseMirror_blockquote]:text-[0.98rem]
         [&_.ProseMirror_blockquote]:leading-8
         [&_.ProseMirror_blockquote]:text-foreground/78
@@ -86,7 +94,7 @@ export function PostContent({ content, headings }: PostContentProps) {
         [&_.ProseMirror_code]:text-primary
         [&_.ProseMirror_pre]:my-8
         [&_.ProseMirror_pre]:overflow-x-auto
-        [&_.ProseMirror_pre]:rounded-[28px]
+        [&_.ProseMirror_pre]:rounded-[10px]
         [&_.ProseMirror_pre]:border
         [&_.ProseMirror_pre]:border-border/70
         [&_.ProseMirror_pre]:bg-transparent

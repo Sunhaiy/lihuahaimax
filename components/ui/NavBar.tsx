@@ -1,6 +1,5 @@
 'use client'
 
-import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
@@ -43,8 +42,12 @@ const POST_SUB_PAGES = [
   { href: '/posts/tags', label: '标签', icon: 'sell' },
 ]
 
+const NAV_BASE_TONE_CLS = 'bg-background'
+
+const NAV_SURFACE_CLS = NAV_BASE_TONE_CLS
+
 const PANEL_CLS =
-  'rounded-[24px] border border-border/55 bg-background/96 shadow-none backdrop-blur-xl dark:border-white/8 dark:bg-card/94'
+  `rounded-[24px] border border-border/75 ${NAV_BASE_TONE_CLS} shadow-none dark:border-white/8`
 
 interface MenuPos {
   centerX: number
@@ -96,10 +99,16 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
 
   const navLinkClass =
     'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground'
+  const postMenuItemClass =
+    'group flex flex-col items-center gap-1 rounded-2xl px-2 py-2.5 transition-all duration-200 hover:bg-muted hover:text-foreground'
+  const postCategoryItemClass =
+    'group flex items-center gap-2.5 rounded-2xl px-3 py-2.5 transition-all duration-200 hover:bg-muted hover:text-foreground'
+  const collectionMenuItemClass =
+    'group flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-200 hover:bg-muted hover:text-foreground'
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 bg-background/97 backdrop-blur-xl backdrop-saturate-125 dark:bg-background/95">
+      <header className={`fixed inset-x-0 top-0 z-50 ${NAV_SURFACE_CLS}`}>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border/75 dark:bg-white/8" />
         <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
           <Link
@@ -190,9 +199,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
         </nav>
       </header>
 
-      {mounted &&
-        postMenuOpen &&
-        createPortal(
+      {mounted && postMenuOpen ? (
           <div
             style={{
               position: 'fixed',
@@ -211,7 +218,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setPostMenuOpen(false)}
-                    className="group flex flex-col items-center gap-1 rounded-2xl px-2 py-2.5 transition-all duration-200 hover:bg-muted/80"
+                    className={postMenuItemClass}
                   >
                     <span className="text-muted-foreground transition-colors group-hover:text-foreground">
                       <MaterialSymbol icon={item.icon} size={15} />
@@ -235,7 +242,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
                         key={category}
                         href={`/posts?category=${encodeURIComponent(category)}`}
                         onClick={() => setPostMenuOpen(false)}
-                        className="group flex items-center gap-2.5 rounded-2xl px-3 py-2.5 transition-all duration-200 hover:bg-muted/80"
+                        className={postCategoryItemClass}
                       >
                         <span className="flex-shrink-0 text-muted-foreground transition-colors group-hover:text-foreground">
                           <MaterialSymbol icon={getCategoryIcon(category)} size={15} />
@@ -252,13 +259,10 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
                 </>
               ) : null}
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        ) : null}
 
-      {mounted &&
-        collectionMenuOpen &&
-        createPortal(
+      {mounted && collectionMenuOpen ? (
           <div
             style={{
               position: 'fixed',
@@ -280,7 +284,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setCollectionMenuOpen(false)}
-                    className="group flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-200 hover:bg-muted/80"
+                    className={collectionMenuItemClass}
                   >
                     <span className="flex-shrink-0 text-muted-foreground transition-colors group-hover:text-foreground">
                       <MaterialSymbol icon={item.icon} size={16} />
@@ -293,9 +297,8 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
                 ))}
               </div>
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        ) : null}
     </>
   )
 }

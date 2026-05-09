@@ -209,7 +209,7 @@ export default function DashboardMomentsPage() {
             </label>
           </div>
 
-          <label className="flex items-start gap-3 rounded-[22px] border border-border/70 bg-background/38 px-4 py-4">
+          <label className="hidden">
             <input
               type="checkbox"
               checked={isPublic}
@@ -223,6 +223,44 @@ export default function DashboardMomentsPage() {
               </span>
             </span>
           </label>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setIsPublic(true)}
+              className={`rounded-[18px] border px-4 py-4 text-left transition-colors ${
+                isPublic
+                  ? 'border-primary/24 bg-primary/10'
+                  : 'border-border/70 bg-background/50 hover:border-primary/18 hover:bg-background/60'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium text-foreground">公开展示</p>
+                {isPublic ? <AdminStatusBadge tone="success">当前</AdminStatusBadge> : null}
+              </div>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                会出现在前台 moments 页面，也能继续参与公开互动。
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsPublic(false)}
+              className={`rounded-[18px] border px-4 py-4 text-left transition-colors ${
+                !isPublic
+                  ? 'border-primary/24 bg-primary/10'
+                  : 'border-border/70 bg-background/50 hover:border-primary/18 hover:bg-background/60'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium text-foreground">仅后台可见</p>
+                {!isPublic ? <AdminStatusBadge tone="warning">当前</AdminStatusBadge> : null}
+              </div>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                只保留在后台，不会出现在公开 moments 页面。
+              </p>
+            </button>
+          </div>
 
           <TiptapEditor
             key={activeMoment ? `moment-${activeMoment.id}` : 'moment-new'}

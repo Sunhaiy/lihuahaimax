@@ -23,12 +23,43 @@ interface PostEditorProps {
 }
 
 type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
-type SaveTarget = 'draft' | 'published' | 'auto' | null
+type SaveTarget = 'draft' | 'published' | 'archived' | 'auto' | null
 
 const DEFAULT_STATS: EditorStats = {
   characters: 0,
   words: 0,
   readingMinutes: 1,
+}
+
+const POST_STATUS_OPTIONS: PostStatus[] = ['draft', 'published', 'archived']
+
+const POST_STATUS_META: Record<
+  PostStatus,
+  {
+    label: string
+    tone: 'neutral' | 'success' | 'warning'
+    description: string
+    detail: string
+  }
+> = {
+  draft: {
+    label: '草稿',
+    tone: 'neutral',
+    description: '继续在后台编辑，前台不会显示。',
+    detail: '适合还没写完、还在校对，或者只想先存一版的时候。',
+  },
+  published: {
+    label: '已发布',
+    tone: 'success',
+    description: '文章会出现在前台文章列表和详情页。',
+    detail: '保存后会继续保持公开状态，前台用户可以直接访问。',
+  },
+  archived: {
+    label: '已归档',
+    tone: 'warning',
+    description: '从前台撤下，但后台会继续保留这篇文章。',
+    detail: '适合下线旧内容、临时隐藏，或者保留历史记录不对外展示。',
+  },
 }
 
 function splitTags(input: string) {
@@ -135,7 +166,7 @@ export function PostEditor({ post }: PostEditorProps) {
       return
     }
     markDirty()
-  }, [title, slug, excerpt, tags, category, coverUrl, coverAlt, seoTitle, seoDescription, isFeatured, content])
+  }, [title, slug, excerpt, tags, category, coverUrl, coverAlt, seoTitle, seoDescription, isFeatured, content, status])
 
   const resolvedSlug = useMemo(() => slug || autoSlug(title), [slug, title])
   const tagsList = useMemo(() => splitTags(tags), [tags])
@@ -153,8 +184,7 @@ export function PostEditor({ post }: PostEditorProps) {
     }
 
     const nextCategory = category.trim() || '未分类'
-    const nextSaveTarget: SaveTarget =
-      source === 'auto' ? 'auto' : targetStatus === 'published' ? 'published' : 'draft'
+    const nextSaveTarget: SaveTarget = source === 'auto' ? 'auto' : targetStatus
 
     setSaving(true)
     setSaveTarget(nextSaveTarget)
@@ -219,13 +249,13 @@ export function PostEditor({ post }: PostEditorProps) {
 
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
     autoSaveTimerRef.current = setTimeout(() => {
-      void persist('draft', 'auto')
+      void persist(status, 'auto')
     }, 1400)
 
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
     }
-  }, [canAutosave, title, slug, excerpt, tags, category, coverUrl, coverAlt, seoTitle, seoDescription, isFeatured, content])
+  }, [canAutosave, title, slug, excerpt, tags, category, coverUrl, coverAlt, seoTitle, seoDescription, isFeatured, content, status])
 
   async function handleCoverUpload(file: File) {
     setCoverUploading(true)
@@ -576,6 +606,66 @@ export function PostEditor({ post }: PostEditorProps) {
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
                     保存状态、发布时间和内容体量都汇总在这里，写完一眼就知道文章现在处于什么阶段。
                   </p>
+                </div>
+
+                <div className="space-y-3">
+                  {POST_STATUS_OPTIONS.map((option) => {
+                    const meta = POST_STATUS_META[option]
+                    const active = status === option
+
+                    return (
+                      <div
+                        key={option}
+                        className={`rounded-[20px] border px-4 py-4 transition-colors ${
+                          active
+                            ? 'border-primary/24 bg-primary/10'
+                            : 'border-border/70 bg-background/42'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-foreground">{meta.label}</p>
+                              <AdminStatusBadge tone={active ? meta.tone : 'neutral'}>
+                                {active ? '当前状态' : meta.label}
+                              </AdminStatusBadge>
+                            </div>
+                            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                              {meta.description}
+                            </p>
+                            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                              {meta.detail}
+                            </p>
+                          </div>
+
+                          {active ? null : (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              loading={saving && saveTarget === option}
+                              onClick={() => void persist(option, 'manual')}
+                            >
+                              <MaterialSymbol
+                                icon={
+                                  option === 'published'
+                                    ? 'send'
+                                    : option === 'archived'
+                                      ? 'inventory_2'
+                                      : 'draft'
+                                }
+                                size={16}
+                              />
+                              {option === 'published'
+                                ? '公开发布'
+                                : option === 'archived'
+                                  ? '归档隐藏'
+                                  : '切回草稿'}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">

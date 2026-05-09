@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Editor, JSONContent } from '@tiptap/core'
 import { EditorContent, useEditor } from '@tiptap/react'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
@@ -24,7 +24,7 @@ interface TiptapEditorProps {
 }
 
 type ToolItem = {
-  icon: React.ReactNode
+  icon: ReactNode
   title: string
   action: (editor: Editor) => void
   isActive?: (editor: Editor) => boolean
@@ -81,18 +81,20 @@ export function TiptapEditor({
         <EditorContent
           editor={editor}
           className={cn(
-            'relative prose prose-neutral max-w-none dark:prose-invert',
+            'tiptap-editor-surface hash-heading-surface relative prose prose-neutral max-w-none dark:prose-invert',
             '[&_.ProseMirror]:px-8 [&_.ProseMirror]:py-10 [&_.ProseMirror]:font-sans [&_.ProseMirror]:text-[16px] [&_.ProseMirror]:leading-8 [&_.ProseMirror]:text-foreground [&_.ProseMirror]:focus:outline-none',
             minHeightClass,
             '[&_.ProseMirror_h1]:mb-5 [&_.ProseMirror_h1]:text-4xl [&_.ProseMirror_h1]:font-semibold [&_.ProseMirror_h1]:tracking-[-0.06em]',
             '[&_.ProseMirror_h2]:mt-12 [&_.ProseMirror_h2]:mb-5 [&_.ProseMirror_h2]:text-[2rem] [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h2]:tracking-[-0.05em]',
             '[&_.ProseMirror_h3]:mt-9 [&_.ProseMirror_h3]:mb-4 [&_.ProseMirror_h3]:text-[1.45rem] [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:tracking-[-0.04em]',
             '[&_.ProseMirror_h4]:mt-7 [&_.ProseMirror_h4]:mb-3 [&_.ProseMirror_h4]:text-[1.12rem] [&_.ProseMirror_h4]:font-semibold',
+            '[&_.ProseMirror_h5]:mt-6 [&_.ProseMirror_h5]:mb-3 [&_.ProseMirror_h5]:text-[1rem] [&_.ProseMirror_h5]:font-semibold',
+            '[&_.ProseMirror_h6]:mt-5 [&_.ProseMirror_h6]:mb-2.5 [&_.ProseMirror_h6]:text-[0.92rem] [&_.ProseMirror_h6]:font-semibold',
             '[&_.ProseMirror_p]:my-4 [&_.ProseMirror_p]:text-[1rem] [&_.ProseMirror_p]:leading-8 [&_.ProseMirror_p]:text-foreground/86',
             '[&_.ProseMirror_a]:text-primary [&_.ProseMirror_a]:underline [&_.ProseMirror_a]:decoration-primary/35 [&_.ProseMirror_a]:underline-offset-4',
-            '[&_.ProseMirror_blockquote]:rounded-[24px] [&_.ProseMirror_blockquote]:border-l-[3px] [&_.ProseMirror_blockquote]:border-primary/30 [&_.ProseMirror_blockquote]:bg-background/42 [&_.ProseMirror_blockquote]:px-5 [&_.ProseMirror_blockquote]:py-4',
-            '[&_.ProseMirror_pre]:rounded-[24px] [&_.ProseMirror_pre]:border [&_.ProseMirror_pre]:border-border/70 [&_.ProseMirror_pre]:bg-[linear-gradient(180deg,rgba(16,16,18,0.98),rgba(10,10,12,0.98))] [&_.ProseMirror_pre]:shadow-[0_20px_48px_rgba(0,0,0,0.14)]',
-            '[&_.ProseMirror_pre_code]:block [&_.ProseMirror_pre_code]:rounded-none [&_.ProseMirror_pre_code]:bg-transparent [&_.ProseMirror_pre_code]:px-5 [&_.ProseMirror_pre_code]:py-4 [&_.ProseMirror_pre_code]:font-mono [&_.ProseMirror_pre_code]:text-[0.92rem] [&_.ProseMirror_pre_code]:leading-7 [&_.ProseMirror_pre_code]:text-zinc-100',
+            '[&_.ProseMirror_blockquote]:my-8 [&_.ProseMirror_blockquote]:relative [&_.ProseMirror_blockquote]:rounded-none [&_.ProseMirror_blockquote]:border-0 [&_.ProseMirror_blockquote]:border-l-0 [&_.ProseMirror_blockquote]:shadow-none [&_.ProseMirror_blockquote]:bg-transparent [&_.ProseMirror_blockquote]:px-0 [&_.ProseMirror_blockquote]:pb-8 [&_.ProseMirror_blockquote]:pt-1 [&_.ProseMirror_blockquote]:text-[0.98rem] [&_.ProseMirror_blockquote]:leading-8 [&_.ProseMirror_blockquote]:text-foreground/78 [&_.ProseMirror_blockquote_p]:my-0',
+            '[&_.ProseMirror_pre]:my-8 [&_.ProseMirror_pre]:overflow-x-auto [&_.ProseMirror_pre]:rounded-[10px] [&_.ProseMirror_pre]:border [&_.ProseMirror_pre]:border-border/70 [&_.ProseMirror_pre]:bg-transparent [&_.ProseMirror_pre]:px-0 [&_.ProseMirror_pre]:py-0',
+            '[&_.ProseMirror_pre_code]:block [&_.ProseMirror_pre_code]:min-w-full [&_.ProseMirror_pre_code]:w-max [&_.ProseMirror_pre_code]:rounded-none [&_.ProseMirror_pre_code]:bg-transparent [&_.ProseMirror_pre_code]:px-[1.4rem] [&_.ProseMirror_pre_code]:pr-[5rem] [&_.ProseMirror_pre_code]:py-[1.55rem] [&_.ProseMirror_pre_code]:font-mono [&_.ProseMirror_pre_code]:text-[0.92rem] [&_.ProseMirror_pre_code]:leading-7 [&_.ProseMirror_pre_code]:whitespace-pre [&_.ProseMirror_pre_code]:text-inherit',
             '[&_.ProseMirror_code]:rounded-md [&_.ProseMirror_code]:bg-primary/10 [&_.ProseMirror_code]:px-1.5 [&_.ProseMirror_code]:py-1 [&_.ProseMirror_code]:font-mono [&_.ProseMirror_code]:text-[0.92em] [&_.ProseMirror_code]:text-primary',
             '[&_.ProseMirror_ul]:my-5 [&_.ProseMirror_ul]:space-y-2.5 [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ol]:my-5 [&_.ProseMirror_ol]:space-y-2.5 [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_li]:text-foreground/84',
             '[&_.ProseMirror_hr]:my-10 [&_.ProseMirror_hr]:border-border/75',
@@ -170,6 +172,12 @@ function EditorToolbar({ editor, preset }: { editor: Editor; preset: 'full' | 'l
         title: '正文段落',
         action: (instance) => instance.chain().focus().setParagraph().run(),
         isActive: (instance) => instance.isActive('paragraph'),
+      },
+      {
+        icon: <MaterialSymbol icon="format_h1" size={18} />,
+        title: '一级标题',
+        action: (instance) => instance.chain().focus().toggleHeading({ level: 1 }).run(),
+        isActive: (instance) => instance.isActive('heading', { level: 1 }),
       },
       {
         icon: <MaterialSymbol icon="format_h2" size={18} />,
@@ -251,6 +259,18 @@ function EditorToolbar({ editor, preset }: { editor: Editor; preset: 'full' | 'l
       isActive: (instance) => instance.isActive('heading', { level: 4 }),
     },
     {
+      icon: <MaterialSymbol icon="format_h5" size={18} />,
+      title: '五级标题',
+      action: (instance) => instance.chain().focus().toggleHeading({ level: 5 }).run(),
+      isActive: (instance) => instance.isActive('heading', { level: 5 }),
+    },
+    {
+      icon: <MaterialSymbol icon="format_h6" size={18} />,
+      title: '六级标题',
+      action: (instance) => instance.chain().focus().toggleHeading({ level: 6 }).run(),
+      isActive: (instance) => instance.isActive('heading', { level: 6 }),
+    },
+    {
       icon: <MaterialSymbol icon="format_strikethrough" size={18} />,
       title: '删除线',
       action: (instance) => instance.chain().focus().toggleStrike().run(),
@@ -278,10 +298,10 @@ function EditorToolbar({ editor, preset }: { editor: Editor; preset: 'full' | 'l
 
   const groups = sharedGroups.map((group, index) => {
     if (preset === 'full' && index === 1) {
-      return [...group, ...fullOnlyGroup.slice(0, 1)]
+      return [...group, ...fullOnlyGroup.slice(0, 3)]
     }
     if (preset === 'full' && index === 2) {
-      return [...group, ...fullOnlyGroup.slice(1)]
+      return [...group, ...fullOnlyGroup.slice(3)]
     }
     return group
   })

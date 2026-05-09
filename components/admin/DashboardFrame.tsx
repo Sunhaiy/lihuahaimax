@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
@@ -22,9 +22,11 @@ function isActivePath(pathname: string, href: string) {
 
 export function DashboardFrame({
   email,
+  themeChannels,
   children,
 }: {
   email?: string | null
+  themeChannels?: string
   children: ReactNode
 }) {
   const pathname = usePathname()
@@ -34,7 +36,19 @@ export function DashboardFrame({
     DASHBOARD_NAV_GROUPS[0]
 
   return (
-    <div className="admin-theme h-screen overflow-hidden bg-background text-foreground">
+    <div
+      className="admin-theme h-screen overflow-hidden bg-background text-foreground"
+      style={
+        themeChannels
+          ? ({
+              '--primary': themeChannels,
+              '--ring': themeChannels,
+              '--accent': themeChannels,
+              '--ember': themeChannels,
+            } as CSSProperties)
+          : undefined
+      }
+    >
       <div className="mx-auto flex h-full max-w-[1720px]">
         <aside className="hidden h-full w-[296px] shrink-0 border-r border-border/70 bg-card/76 backdrop-blur-2xl lg:flex lg:flex-col">
           <div className="border-b border-border/70 px-6 py-5">
