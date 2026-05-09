@@ -91,6 +91,25 @@ export function ImmersiveGallery({ items, albums }: ImmersiveGalleryProps) {
   }, [activeCollectionId])
 
   useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+    const previousHtmlOverflowY = html.style.overflowY
+    const previousBodyOverflowY = body.style.overflowY
+    const previousBodyOverscrollY = body.style.overscrollBehaviorY
+
+    window.scrollTo({ top: 0, left: 0 })
+    html.style.overflowY = 'hidden'
+    body.style.overflowY = 'hidden'
+    body.style.overscrollBehaviorY = 'none'
+
+    return () => {
+      html.style.overflowY = previousHtmlOverflowY
+      body.style.overflowY = previousBodyOverflowY
+      body.style.overscrollBehaviorY = previousBodyOverscrollY
+    }
+  }, [])
+
+  useEffect(() => {
     if (!scopeRef.current || !activeSlide || prefersReducedMotion) return
 
     const activeCard = scopeRef.current.querySelector('[data-gallery-card-active="true"]')
@@ -202,13 +221,13 @@ export function ImmersiveGallery({ items, albums }: ImmersiveGalleryProps) {
   }
 
   return (
-    <section className="relative isolate overflow-hidden bg-background text-foreground md:h-[calc(100vh-4rem)] md:min-h-[780px]">
+    <section className="relative isolate h-[calc(100svh-4rem)] overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_24%_24%,hsl(var(--primary)/0.08),transparent_24%),radial-gradient(circle_at_72%_28%,hsl(var(--primary)/0.12),transparent_18%),linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--background)/0.98)_100%)]" />
       <div className="pointer-events-none absolute bottom-[-14rem] left-1/2 h-80 w-[52rem] -translate-x-1/2 rounded-full bg-primary/10 blur-[210px]" />
 
       <div
         ref={scopeRef}
-        className="relative mx-auto flex max-w-[1520px] items-center px-5 py-8 sm:px-8 md:h-full md:py-6 xl:px-12"
+        className="relative mx-auto flex h-full max-w-[1520px] items-center px-5 py-8 sm:px-8 md:py-6 xl:px-12"
       >
         {slides.length === 0 ? (
           <div className="flex min-h-[60vh] w-full flex-col items-center justify-center text-center">
@@ -223,7 +242,7 @@ export function ImmersiveGallery({ items, albums }: ImmersiveGalleryProps) {
         ) : (
           <div className="grid w-full items-center gap-8 xl:grid-cols-[360px_minmax(0,1fr)] xl:gap-10">
             <aside
-              className="max-h-[calc(100vh-8rem)] space-y-6 overflow-y-auto pr-3 [mask-image:linear-gradient(180deg,transparent_0%,black_4%,black_96%,transparent_100%)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              className="max-h-[calc(100svh-8rem)] space-y-6 overflow-y-auto overscroll-contain pr-3 [mask-image:linear-gradient(180deg,transparent_0%,black_4%,black_96%,transparent_100%)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               data-gallery-sidebar
               data-gallery-scroll-area
             >

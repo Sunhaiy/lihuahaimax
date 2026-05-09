@@ -570,6 +570,28 @@
     background: hsl(var(--hero-panel) / 0.74);
   }
 
+  .cover-category-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.92);
+    color: #1f2937;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+    font-weight: 650;
+    line-height: 1;
+    white-space: nowrap;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .dark .cover-category-badge {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(15, 23, 42, 0.82);
+    color: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  }
+
   .menu-popover {
     transform-origin: top center;
     animation: menu-popover-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);

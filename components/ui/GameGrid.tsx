@@ -24,7 +24,7 @@ const PLATFORM_META: Record<string, { icon: string; label: string }> = {
 }
 
 const OVERLAY_BADGE_CLASS =
-  'inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-black/54 px-2.5 py-1 text-[10px] font-semibold text-white shadow-[0_10px_28px_rgba(0,0,0,0.28)] backdrop-blur-xl'
+  'inline-flex min-w-0 items-center gap-1.5 rounded-full border border-white/20 bg-zinc-950/[0.82] px-2.5 py-1.5 text-[11px] font-semibold leading-none text-white shadow-[0_12px_28px_rgba(0,0,0,0.34)]'
 
 function getFootnote(game: GameRow) {
   if (game.play_hours != null) return `${game.play_hours}h 游玩`
@@ -54,7 +54,7 @@ export function GameGrid({ games }: Props) {
         return (
           <article
             key={game.id}
-            className="group flex h-full flex-col overflow-hidden rounded-[24px] border border-border/70 bg-card/72 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/28"
+            className="group flex h-full flex-col overflow-hidden rounded-[24px] border border-border/70 bg-[hsl(var(--card)/0.82)] shadow-[0_18px_50px_rgba(15,23,42,0.06)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 dark:shadow-[0_18px_50px_rgba(0,0,0,0.22)]"
           >
             <div className="relative aspect-square overflow-hidden">
               {game.cover_url ? (
@@ -64,26 +64,26 @@ export function GameGrid({ games }: Props) {
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/16 via-card to-muted px-4 text-center">
-                  <span className="line-clamp-4 text-sm leading-6 text-muted-foreground">{game.title}</span>
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-emerald-950 px-4 text-center">
+                  <span className="line-clamp-4 text-sm font-semibold leading-6 text-white/85">{game.title}</span>
                 </div>
               )}
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/20 to-transparent" />
 
-              <div className="absolute left-3 top-3">
-                <span className={OVERLAY_BADGE_CLASS}>
+              <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
+                <span className={`${OVERLAY_BADGE_CLASS} max-w-[58%]`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${status.dotClass}`} />
-                  {status.label}
+                  <span className="truncate">{status.label}</span>
+                </span>
+
+                <span className={`${OVERLAY_BADGE_CLASS} shrink-0`}>
+                  <MaterialSymbol icon={platform.icon} size={12} />
+                  {platform.label}
                 </span>
               </div>
 
-              <div className={`absolute right-3 top-3 ${OVERLAY_BADGE_CLASS}`}>
-                <MaterialSymbol icon={platform.icon} size={12} />
-                {platform.label}
-              </div>
-
-              <div className="absolute inset-x-3 bottom-3 rounded-[18px] border border-white/10 bg-black/30 px-3.5 py-3 backdrop-blur-xl">
+              <div className="absolute inset-x-3 bottom-3 rounded-[18px] border border-white/[0.14] bg-zinc-950/[0.84] px-3.5 py-3 shadow-[0_14px_34px_rgba(0,0,0,0.36)] backdrop-blur-md">
                 <p className="line-clamp-2 text-sm font-semibold leading-5 text-white">{game.title}</p>
                 <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-white/70">
                   <span className="inline-flex min-w-0 items-center gap-1.5">
@@ -91,7 +91,7 @@ export function GameGrid({ games }: Props) {
                     <span className="truncate">{getFootnote(game)}</span>
                   </span>
                   {rating != null && !Number.isNaN(rating) ? (
-                    <span className="inline-flex items-center gap-1 font-mono text-white/84">
+                    <span className="inline-flex items-center gap-1 font-mono text-white/85">
                       <MaterialSymbol icon="star" size={12} fill />
                       {rating.toFixed(1)}
                     </span>
@@ -102,7 +102,7 @@ export function GameGrid({ games }: Props) {
 
             <div className="flex flex-1 flex-col gap-2 px-3.5 pb-3.5 pt-3">
               <div className="flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-background/36 px-2.5 py-1 font-mono">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-[hsl(var(--background)/0.8)] px-2.5 py-1 font-mono dark:bg-white/[0.08]">
                   <MaterialSymbol icon={platform.icon} size={12} />
                   {platform.label}
                 </span>
