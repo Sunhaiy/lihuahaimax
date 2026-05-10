@@ -184,9 +184,20 @@ export default async function HomePage({
         <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-28 sm:px-8 lg:px-10">
           <div className="mx-auto max-w-3xl text-center">
             <p className="scene-copy-subtle text-xs tracking-[0.14em]">欢迎来到</p>
-            <h1 className="scene-copy mt-5 text-6xl font-semibold tracking-[-0.08em] sm:text-8xl">
-              {siteProfile.siteName}
-            </h1>
+            <h1 className="sr-only">{siteProfile.siteName}</h1>
+            <div className="scene-copy mx-auto mt-5 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-hero-border/70 bg-hero-panel/55 p-1.5 shadow-[0_18px_56px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:h-32 sm:w-32">
+              {siteProfile.avatarUrl ? (
+                <img
+                  src={siteProfile.avatarUrl}
+                  alt={siteProfile.ownerName}
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center rounded-full bg-primary/12 text-4xl font-semibold text-primary sm:text-5xl">
+                  {siteProfile.ownerInitial}
+                </span>
+              )}
+            </div>
             <div className="scene-chip mt-6 max-w-2xl flex-wrap justify-center gap-2 px-4 py-2 text-[11px] font-mono uppercase tracking-[0.14em] backdrop-blur-md">
               <span>{siteProfile.siteNameEn}</span>
               <span className="text-hero-subtle/40">/</span>

@@ -20,6 +20,7 @@ function resolveMetadataBase(siteUrl?: string) {
 
 export async function generateMetadata(): Promise<Metadata> {
   const profile = await getSiteProfile().catch(() => DEFAULT_SITE_PROFILE)
+  const siteIcon = profile.avatarUrl || undefined
 
   return {
     metadataBase: resolveMetadataBase(profile.siteUrl),
@@ -49,6 +50,13 @@ export async function generateMetadata(): Promise<Metadata> {
       description: profile.bio,
       images: profile.avatarUrl ? [profile.avatarUrl] : [],
     },
+    icons: siteIcon
+      ? {
+          icon: [{ url: siteIcon }],
+          shortcut: [{ url: siteIcon }],
+          apple: [{ url: siteIcon }],
+        }
+      : undefined,
     robots: {
       index: true,
       follow: true,
