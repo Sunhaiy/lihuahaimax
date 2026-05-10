@@ -1,150 +1,422 @@
 import type { Metadata } from 'next'
+import type React from 'react'
+import Link from 'next/link'
+import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
+import { findWorks } from '@/lib/db/dao/worksDao'
+import { resolveMediaUrl } from '@/lib/media'
 import { getSiteProfile } from '@/lib/site'
+import type { WorkListItem } from '@/types/work'
 
-export const metadata: Metadata = { title: '关于' }
+export const metadata: Metadata = {
+  title: '关于',
+  description: '孙海洋的个人介绍、核心能力、精选项目与生活方式。',
+}
 
-const SKILLS = [
-  { cat: '嵌入式 & 硬件', items: ['ESP32', 'STM32', 'MQTT', 'FreeRTOS', 'KiCad'] },
-  { cat: '后端 & 基建', items: ['Node.js', 'Next.js', 'PostgreSQL', 'Docker', 'Linux'] },
-  { cat: '前端', items: ['React', 'TypeScript', 'Tailwind CSS', 'Tiptap'] },
-  { cat: '工具链', items: ['Git', 'Neovim', 'Arch Linux', 'GitHub Actions'] },
+export const revalidate = 60
+
+const STRENGTHS = [
+  { icon: 'language', title: '前端开发', lines: ['Vue / React', 'TypeScript'] },
+  { icon: 'dns', title: '后端开发', lines: ['Node.js / PostgreSQL', 'MySQL / SEO'] },
+  { icon: 'phone_iphone', title: '移动开发', lines: ['Kotlin / Android', '独立开发上线'] },
+  { icon: 'psychology', title: 'AI 构建', lines: ['从零实现 LLM', 'AI Agent / 工具产品化'] },
+  { icon: 'deployed_code', title: '产品落地', lines: ['产品设计', '从创意到部署 / 独立完成'] },
 ]
 
-const TIMELINE = [
-  { year: '2025', event: '开始持续写博客，把代码、项目和生活并排记录下来。' },
-  { year: '2023', event: '深入物联网方向，围着 ESP32、MQTT 和自动化折腾。' },
-  { year: '2021', event: '从 Arduino 起步，正式扎进嵌入式和软硬件协作。' },
-  { year: '2019', event: '写下第一行 Python，慢慢把兴趣变成长期能力。' },
+const FALLBACK_PROJECTS = [
+  {
+    title: '素心',
+    subtitle: '个人全栈博客',
+    imageUrl: '/hero.png',
+    lines: ['个人全栈博客', 'SEO 优化', '内容系统', '全栈开发'],
+  },
+  {
+    title: '来生',
+    subtitle: 'Kotlin Android App',
+    imageUrl: '/hero.png',
+    lines: ['Kotlin Android App', '独立开发', '上线发布', '持续迭代'],
+  },
+  {
+    title: 'Reflex',
+    subtitle: 'Electron + SSH Agent',
+    imageUrl: '/hero.png',
+    lines: ['Electron + SSH Agent', '自然语言操作 Shell', 'AI 自动部署', '提升效率'],
+  },
+  {
+    title: 'LLM',
+    subtitle: '从零实现大语言模型',
+    imageUrl: '/hero.png',
+    lines: ['从零实现大语言模型', '原理实践', '技术文章记录', '持续学习'],
+  },
 ]
+
+const LIFESTYLE = [
+  { icon: 'sentiment_satisfied', label: '极简审美' },
+  { icon: 'music_note', label: '热爱音乐' },
+  { icon: 'piano', label: '弹吉他' },
+  { icon: 'directions_run', label: '持续运动' },
+  { icon: 'lightbulb', label: '热爱创新' },
+]
+
+const DESIGN_FONTS = [
+  {
+    badge: 'CN',
+    name: 'Noto Sans SC',
+    weight: '700 / 900',
+    note: '中文标题、正文、导航与后台界面',
+  },
+  {
+    badge: 'EN',
+    name: 'Inter Variable',
+    weight: '400 / 700',
+    note: '英文、数字、说明文字与界面辅助信息',
+  },
+  {
+    badge: '01',
+    name: 'Roboto Mono',
+    weight: '500 / 700',
+    note: '代码、编号、日期、数据与技术标记',
+  },
+]
+
+const TYPE_SCALE = [
+  { label: '辅助标记', value: '12px / 18px' },
+  { label: '正文内容', value: '14px / 22px' },
+  { label: '卡片正文', value: '16px / 24px' },
+  { label: '模块标题', value: '24px / 36px' },
+  { label: '页面标题', value: '32px / 48px' },
+  { label: '展示标题', value: '48px / 72px' },
+  { label: '首页巨幕', value: '56px / 84px' },
+]
+
+const COLOR_TOKENS = [
+  { name: 'Ink Black', value: '#030303', desc: '作品集底色' },
+  { name: 'Paper White', value: '#FFFFFF', desc: '主体文字' },
+  { name: 'Soft Line', value: '16%', desc: '细线分割' },
+  { name: 'Theme Accent', value: 'var(--primary)', desc: '主题色提示' },
+]
+
+const DESIGN_PRINCIPLES = ['黑白基底', '细线分层', '主题色克制', '内容优先', '动效轻量']
+
+function projectLines(work: WorkListItem) {
+  const summary = work.subtitle || work.summary || work.description || '独立打磨的长期项目'
+  const tagLines = work.tags.slice(0, 3)
+  return [summary, ...tagLines].slice(0, 4)
+}
+
+function buildProjectCards(works: WorkListItem[]) {
+  const workCards = works.slice(0, 4).map((work) => ({
+    title: work.title,
+    subtitle: work.subtitle || work.summary || 'Featured project',
+    imageUrl: resolveMediaUrl(work.cover_url, work.hero_image_url) || '/hero.png',
+    lines: projectLines(work),
+  }))
+
+  return [...workCards, ...FALLBACK_PROJECTS].slice(0, 4)
+}
 
 export default async function AboutPage() {
-  const siteProfile = await getSiteProfile()
+  const [siteProfile, works] = await Promise.all([getSiteProfile(), findWorks()])
+  const projects = buildProjectCards(works)
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12">
-      <div className="mb-16 flex flex-col items-start gap-8 sm:flex-row sm:items-center">
-        <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-ember/25 bg-gradient-to-br from-ember/40 to-ember/10">
-          {siteProfile.avatarUrl ? (
-            <img
-              src={siteProfile.avatarUrl}
-              alt={siteProfile.ownerName}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="select-none text-4xl font-bold text-ember">
-              {siteProfile.ownerInitial}
-            </span>
-          )}
-        </div>
-        <div>
-          <h1 className="mb-1 text-3xl font-bold text-foreground">{siteProfile.ownerName}</h1>
-          <p className="mb-3 text-sm font-medium tracking-[0.08em] text-ember">
-            {siteProfile.roleLine}
-          </p>
-          <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
-            {siteProfile.bio} 这里也是我整理文章、项目、收藏与生活轨迹的地方。
-          </p>
-        </div>
-      </div>
+    <div className="about-portfolio relative isolate -mt-16 min-h-screen overflow-hidden bg-[#030303] pt-16 text-white selection:bg-white selection:text-black">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-70"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 72% 12%, rgba(255,255,255,0.08), transparent 26%), radial-gradient(circle at 18% 78%, rgba(255,255,255,0.05), transparent 28%), linear-gradient(120deg, rgba(255,255,255,0.035) 0%, transparent 34%, transparent 66%, rgba(255,255,255,0.025) 100%)',
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.08]"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)',
+          backgroundSize: '72px 72px',
+        }}
+      />
 
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_280px]">
-        <div className="space-y-12">
-          <section>
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
-              <span className="text-ember">+</span> 关于我
-            </h2>
-            <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
-              <p>
-                我习惯在嵌入式、Web 全栈和内容系统之间来回切换，喜欢把一个想法从硬件、接口、
-                后台到前台一步一步做完整。
-              </p>
-              <p>
-                这个站点不只是博客，也是一套长期使用的个人系统。文章、瞬间、动漫、游戏、项目、
-                友链和图像内容会慢慢汇到同一个中枢里。
-              </p>
-              <p>
-                如果你也喜欢把作品做成自己真正会用的系统，而不是只停留在演示稿上，那我们大概率聊得来。
-              </p>
-            </div>
-          </section>
+      <main className="mx-auto max-w-[1160px] px-6 py-12 sm:px-8 sm:py-16 lg:px-10">
+        <section className="relative min-h-[430px] border-b border-white/[0.16] pb-12 sm:pb-16">
+          <div className="absolute right-0 top-0 hidden text-right sm:block">
+            <p className="font-mono text-2xl font-black leading-none tracking-[0.08em] text-white">
+              ###
+            </p>
+            <p className="mt-1 text-sm text-white/58">作品集</p>
+          </div>
 
-          <section>
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
-              <span className="text-ember">+</span> 技能栈
-            </h2>
-            <div className="space-y-4">
-              {SKILLS.map(({ cat, items }) => (
-                <div key={cat}>
-                  <p className="mb-2 text-xs font-medium text-ember">{cat}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {items.map((item) => (
-                      <span
-                        key={item}
-                        className="rounded-full border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground"
-                      >
-                        {item}
-                      </span>
-                    ))}
+          <Link
+            href="/works"
+            className="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full border-4 border-white text-white transition-colors hover:bg-white hover:text-black"
+            aria-label="查看作品"
+          >
+            <MaterialSymbol icon="arrow_outward" size={42} weight={700} />
+          </Link>
+
+          <div className="max-w-[640px]">
+            <p className="text-[clamp(4.6rem,12vw,8.8rem)] font-black leading-[0.82] tracking-[-0.12em] text-white">
+              孙海洋
+            </p>
+            <p className="mt-6 text-2xl font-semibold tracking-[-0.04em] text-white sm:text-3xl">
+              Sun Haiyang
+            </p>
+            <p className="mt-5 text-xl font-semibold leading-relaxed tracking-[-0.03em] text-white sm:text-2xl">
+              全栈开发者 / Android 开发者 / AI Builder
+            </p>
+            <p className="mt-8 max-w-[520px] text-base leading-8 text-white/72">
+              崇拜技术力量，热爱探索未知边界，享受从 0 到 1 创造产品。独立开发并上线移动端
+              App「来生」、个人全栈博客「素心」，以及 AI 驱动的跨平台 SSH 终端工具「Reflex」。
+              擅长将创意、设计、编码、部署与上线完整打通。
+            </p>
+          </div>
+        </section>
+
+        <AboutSection title="核心能力" label="CORE STRENGTHS">
+          <div className="grid divide-y divide-white/[0.16] border-y border-white/[0.16] md:grid-cols-5 md:divide-x md:divide-y-0">
+            {STRENGTHS.map((item) => (
+              <div key={item.title} className="px-0 py-7 md:px-8">
+                <div className="mb-5 flex h-14 w-14 items-center justify-center border border-white/[0.52] text-white">
+                  <MaterialSymbol icon={item.icon} size={34} weight={450} />
+                </div>
+                <h3 className="text-2xl font-bold tracking-[-0.05em] text-white">{item.title}</h3>
+                <div className="mt-3 space-y-1 text-sm leading-6 text-white/62">
+                  {item.lines.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </AboutSection>
+
+        <AboutSection id="featured-projects" title="精选项目" label="FEATURED PROJECTS">
+          <div className="grid gap-7 md:grid-cols-2 xl:grid-cols-4">
+            {projects.map((project, index) => (
+              <article key={`${project.title}-${index}`} className="group">
+                <p className="mb-2 font-mono text-xl font-bold text-white">
+                  {String(index + 1).padStart(2, '0')}
+                </p>
+                <div className="border border-white/[0.42] bg-black">
+                  <div className="aspect-[4/3] overflow-hidden border-b border-white/[0.22] bg-white/[0.04]">
+                    <img
+                      src={project.imageUrl}
+                      alt={project.title}
+                      className="h-full w-full object-cover grayscale transition duration-500 group-hover:scale-[1.03] group-hover:grayscale-0"
+                    />
+                  </div>
+                  <div className="min-h-[185px] px-5 py-5">
+                    <h3 className="text-3xl font-black tracking-[-0.08em] text-white">
+                      {project.title}
+                    </h3>
+                    <div className="mt-4 space-y-1 text-base leading-6 text-white/72">
+                      {project.lines.map((line) => (
+                        <p key={line}>/ {line}</p>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              ))}
+              </article>
+            ))}
+          </div>
+        </AboutSection>
+
+        <AboutSection title="生活方式" label="LIFESTYLE">
+          <div className="grid divide-y divide-white/[0.16] border-y border-white/[0.16] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-5">
+            {LIFESTYLE.map((item) => (
+              <div key={item.label} className="flex items-center gap-4 px-0 py-6 sm:px-8">
+                <MaterialSymbol icon={item.icon} size={34} weight={420} />
+                <span className="text-lg font-medium tracking-[-0.03em] text-white/84">
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </AboutSection>
+
+        <section className="mt-10 border border-white/[0.28] p-6 sm:p-9">
+          <div className="grid gap-8 lg:grid-cols-[280px_1fr] lg:items-center">
+            <div className="relative flex min-h-40 items-center justify-center border-white/[0.16] lg:border-r">
+              <div
+                aria-hidden
+                className="absolute h-32 w-32 rounded-full opacity-50"
+                style={{
+                  backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.78) 1px, transparent 1.5px)',
+                  backgroundSize: '14px 14px',
+                }}
+              />
+              <span className="relative flex h-16 w-16 items-center justify-center rounded-full border-2 border-white text-white">
+                <MaterialSymbol icon="arrow_outward" size={40} weight={650} />
+              </span>
             </div>
-          </section>
+            <div>
+              <h2 className="max-w-2xl text-3xl font-black leading-tight tracking-[-0.08em] text-white sm:text-4xl">
+                从创意、设计、编码到部署上线，
+                <br />
+                所有项目均由我独立完成。
+              </h2>
+              <p className="mt-5 text-base leading-8 text-white/62">
+                期待用技术与创造力，与世界一起去冒险、去创造。
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <DesignSystemSection />
+
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.16] pt-6 text-xs uppercase tracking-[0.26em] text-white/42">
+          <span>{siteProfile.siteNameEn || 'SUXIN'}</span>
+          <span>s744129991@outlook.com</span>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+function DesignSystemSection() {
+  return (
+    <AboutSection title="设计规范" label="DESIGN SYSTEM">
+      <div className="grid border border-white/[0.24] lg:grid-cols-[270px_1fr_320px]">
+        <div className="relative min-h-[520px] overflow-hidden border-b border-white/[0.18] bg-black lg:border-b-0 lg:border-r">
+          <div className="absolute -left-12 top-14 text-[22rem] font-black leading-none tracking-[-0.18em] text-white">
+            &
+          </div>
+          <div aria-hidden className="absolute left-20 top-28 h-px w-36 rotate-12 bg-white/70" />
+          <div aria-hidden className="absolute left-8 top-48 h-px w-28 rotate-[-34deg] bg-white/70" />
+          <div aria-hidden className="absolute bottom-40 left-24 h-px w-44 rotate-[-18deg] bg-white/70" />
+          {[
+            'left-16 top-24',
+            'left-44 top-32',
+            'left-7 top-48',
+            'bottom-36 left-28',
+            'bottom-44 right-12',
+          ].map((position) => (
+            <span
+              key={position}
+              aria-hidden
+              className={`absolute h-2 w-2 rounded-full border border-white bg-black ${position}`}
+            />
+          ))}
+          <div className="absolute inset-x-0 bottom-0 p-8">
+            <h3 className="text-3xl font-black tracking-[-0.08em] text-white">字 Text</h3>
+            <p className="mt-4 text-lg tracking-[-0.04em] text-white/78">
+              非衬线 | 对比 | 节奏
+            </p>
+          </div>
         </div>
 
-        <div className="space-y-10">
-          <section>
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
-              <span className="text-ember">+</span> 时间线
-            </h2>
-            <div className="space-y-4">
-              {TIMELINE.map(({ year, event }) => (
-                <div key={year} className="flex gap-4">
-                  <span className="w-10 flex-shrink-0 pt-0.5 text-xs font-mono text-ember">
-                    {year}
-                  </span>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{event}</p>
+        <div className="border-b border-white/[0.18] px-6 py-8 lg:border-b-0 lg:px-10">
+          <h3 className="text-xl font-black tracking-[-0.05em] text-white">字体</h3>
+          <div className="mt-6 divide-y divide-white/[0.18]">
+            {DESIGN_FONTS.map((font) => (
+              <div key={font.name} className="grid gap-4 py-6 sm:grid-cols-[1fr_170px]">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-7 min-w-7 items-center justify-center rounded-full border border-white/70 px-2 font-mono text-[11px] text-white">
+                      {font.badge}
+                    </span>
+                    <p className="text-2xl font-black tracking-[-0.06em] text-white">
+                      {font.name}
+                    </p>
+                  </div>
+                  <p className="mt-4 text-sm leading-6 text-white/52">{font.note}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 self-center text-sm">
+                  <span className="font-mono text-white/36">字重</span>
+                  <span className="font-mono font-bold text-white">{font.weight}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8">
+            <h3 className="text-xl font-black tracking-[-0.05em] text-white">界面原则</h3>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {DESIGN_PRINCIPLES.map((item) => (
+                <span
+                  key={item}
+                  className="border border-white/[0.22] px-3 py-1.5 text-xs tracking-[0.16em] text-white/68"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-8 lg:px-10">
+          <h3 className="text-xl font-black tracking-[-0.05em] text-white">字号与行高</h3>
+          <div className="mt-7 space-y-5">
+            {TYPE_SCALE.map((item, index) => (
+              <div key={item.label} className="grid grid-cols-[84px_1fr] items-baseline gap-4">
+                <p className="text-xs text-white/38">{item.label}</p>
+                <p
+                  className={`font-mono font-black tracking-[-0.06em] text-white ${
+                    index >= 5 ? 'text-4xl' : index >= 3 ? 'text-2xl' : 'text-base'
+                  }`}
+                >
+                  {item.value}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 border-t border-white/[0.18] pt-7">
+            <h3 className="text-xl font-black tracking-[-0.05em] text-white">色彩令牌</h3>
+            <div className="mt-5 space-y-3">
+              {COLOR_TOKENS.map((token) => (
+                <div
+                  key={token.name}
+                  className="grid grid-cols-[24px_1fr_auto] items-center gap-3 text-sm"
+                >
+                  <span
+                    className="h-4 w-4 border border-white/[0.32]"
+                    style={{
+                      background:
+                        token.value === '#FFFFFF'
+                          ? '#fff'
+                          : token.value === '#030303'
+                            ? '#030303'
+                            : token.value === 'var(--primary)'
+                              ? 'hsl(var(--primary))'
+                              : 'rgba(255,255,255,0.16)',
+                    }}
+                  />
+                  <span className="font-mono text-white/78">{token.name}</span>
+                  <span className="text-xs text-white/42">{token.desc}</span>
                 </div>
               ))}
             </div>
-          </section>
-
-          <section>
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
-              <span className="text-ember">+</span> 联系方式
-            </h2>
-            <div className="space-y-2">
-              {siteProfile.githubUrl ? (
-                <a
-                  href={siteProfile.githubUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-sm text-muted-foreground transition-colors hover:text-ember"
-                >
-                  <span className="w-5 text-center">GitHub</span>
-                  {siteProfile.githubUrl}
-                </a>
-              ) : null}
-              {siteProfile.email ? (
-                <a
-                  href={`mailto:${siteProfile.email}`}
-                  className="flex items-center gap-3 text-sm text-muted-foreground transition-colors hover:text-ember"
-                >
-                  <span className="w-5 text-center">邮箱</span>
-                  {siteProfile.email}
-                </a>
-              ) : null}
-              <a
-                href="/links"
-                className="flex items-center gap-3 text-sm text-muted-foreground transition-colors hover:text-ember"
-              >
-                <span className="w-5 text-center">友链</span>
-                访问友情链接页
-              </a>
-            </div>
-          </section>
+          </div>
         </div>
       </div>
-    </div>
+    </AboutSection>
+  )
+}
+
+function AboutSection({
+  id,
+  title,
+  label,
+  children,
+}: {
+  id?: string
+  title: string
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <section id={id} className="mt-12 sm:mt-16">
+      <div className="mb-7 flex items-end justify-between gap-6 border-b border-white/[0.16] pb-3">
+        <h2 className="text-2xl font-black tracking-[-0.06em] text-white sm:text-3xl">
+          {title}
+        </h2>
+        <p className="hidden font-mono text-xs uppercase tracking-[0.42em] text-white/54 sm:block">
+          {label}
+        </p>
+      </div>
+      {children}
+    </section>
   )
 }

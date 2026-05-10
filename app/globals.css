@@ -151,6 +151,28 @@
     --scene-lightning-glow: 160 72% 78%;
   }
 
+  .public-theme:has(.about-portfolio) {
+    --background: 0 0% 1%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 4%;
+    --card-foreground: 0 0% 98%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 68%;
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
+    --primary: 0 0% 96%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 96%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 4%;
+    --surface: 0 0% 5%;
+    --surface-foreground: 0 0% 98%;
+    --line: 0 0% 16%;
+    --line-strong: 0 0% 30%;
+    --ember: 0 0% 96%;
+  }
+
   .works-theme {
     --works-stage: #f4efe8;
     --works-stage-copy: #161616;
