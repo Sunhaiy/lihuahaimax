@@ -42,6 +42,15 @@ const POST_SUB_PAGES = [
   { href: '/posts/tags', label: '标签', icon: 'sell' },
 ]
 
+const MOBILE_NAV_ITEMS = [
+  { href: '/', label: '首页', icon: 'home' },
+  { href: '/posts', label: '文章', icon: 'article' },
+  { href: '/moments', label: '瞬间', icon: 'bolt' },
+  { href: '/works', label: '项目', icon: 'deployed_code' },
+  { href: '/links', label: '友情链接', icon: 'link' },
+  { href: '/about', label: '关于', icon: 'person' },
+]
+
 const NAV_BASE_TONE_CLS = 'bg-background'
 
 const NAV_SURFACE_CLS = NAV_BASE_TONE_CLS
@@ -62,6 +71,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
   const [mounted, setMounted] = useState(false)
   const [postMenuOpen, setPostMenuOpen] = useState(false)
   const [collectionMenuOpen, setCollectionMenuOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const postTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const collectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const postTriggerRef = useRef<HTMLDivElement>(null)
@@ -72,6 +82,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
   useEffect(() => setMounted(true), [])
 
   function openPostMenu() {
+    setMobileMenuOpen(false)
     if (postTimer.current) clearTimeout(postTimer.current)
     if (postTriggerRef.current) {
       const rect = postTriggerRef.current.getBoundingClientRect()
@@ -85,6 +96,7 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
   }
 
   function openCollectionMenu() {
+    setMobileMenuOpen(false)
     if (collectionTimer.current) clearTimeout(collectionTimer.current)
     if (collectionTriggerRef.current) {
       const rect = collectionTriggerRef.current.getBoundingClientRect()
@@ -105,6 +117,8 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
     'group flex items-center gap-2.5 rounded-2xl px-3 py-2.5 transition-all duration-200 hover:bg-muted hover:text-foreground'
   const collectionMenuItemClass =
     'group flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-all duration-200 hover:bg-muted hover:text-foreground'
+  const mobileMenuItemClass =
+    'group flex items-center gap-2.5 rounded-2xl border border-border/65 bg-background/58 px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/28 hover:bg-primary/6 hover:text-primary dark:border-white/[0.07] dark:bg-card/55'
 
   return (
     <>
@@ -190,14 +204,108 @@ export function NavBar({ categories, siteProfile }: NavBarProps) {
             <ThemeToggle />
             <button
               type="button"
-              aria-label="打开菜单"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:hidden"
+              aria-label={mobileMenuOpen ? '关闭菜单' : '打开菜单'}
+              aria-controls="mobile-site-menu"
+              aria-expanded={mobileMenuOpen}
+              onClick={() => {
+                setPostMenuOpen(false)
+                setCollectionMenuOpen(false)
+                setMobileMenuOpen((open) => !open)
+              }}
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors sm:hidden ${
+                mobileMenuOpen
+                  ? 'bg-muted text-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
             >
-              <MaterialSymbol icon="menu" size={18} />
+              <MaterialSymbol icon={mobileMenuOpen ? 'close' : 'menu'} size={18} />
             </button>
           </div>
         </nav>
       </header>
+
+      {mounted && mobileMenuOpen ? (
+        <>
+          <button
+            type="button"
+            aria-label="关闭菜单"
+            className="fixed inset-0 z-[9997] bg-transparent sm:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="fixed inset-x-3 top-[4.75rem] z-[9998] sm:hidden">
+            <div
+              id="mobile-site-menu"
+              className={`menu-popover ${PANEL_CLS} max-h-[calc(100svh-6rem)] overflow-y-auto p-3`}
+            >
+              <div className="grid grid-cols-2 gap-2">
+                {MOBILE_NAV_ITEMS.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={mobileMenuItemClass}
+                  >
+                    <span className="text-muted-foreground transition-colors group-hover:text-primary">
+                      <MaterialSymbol icon={item.icon} size={16} />
+                    </span>
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="my-3 border-t border-border/75 dark:border-white/[0.07]" />
+              <p className="mb-2 px-1 text-[10px] font-medium tracking-[0.18em] text-muted-foreground">
+                收藏夹
+              </p>
+              <div className="grid grid-cols-1 gap-2">
+                {COLLECTION_ITEMS.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={mobileMenuItemClass}
+                  >
+                    <span className="text-muted-foreground transition-colors group-hover:text-primary">
+                      <MaterialSymbol icon={item.icon} size={16} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block">{item.label}</span>
+                      <span className="block truncate text-xs font-normal text-muted-foreground">
+                        {item.desc}
+                      </span>
+                    </span>
+                  </Link>
+                ))}
+              </div>
+
+              {categories.length > 0 ? (
+                <>
+                  <div className="my-3 border-t border-border/75 dark:border-white/[0.07]" />
+                  <p className="mb-2 px-1 text-[10px] font-medium tracking-[0.18em] text-muted-foreground">
+                    文章分类
+                  </p>
+                  <div className="grid grid-cols-1 gap-2">
+                    {categories.slice(0, 6).map(({ category, count }) => (
+                      <Link
+                        key={category}
+                        href={`/posts?category=${encodeURIComponent(category)}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={mobileMenuItemClass}
+                      >
+                        <span className="text-muted-foreground transition-colors group-hover:text-primary">
+                          <MaterialSymbol icon={getCategoryIcon(category)} size={16} />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate">{category}</span>
+                        <span className="text-xs font-normal text-muted-foreground">{count}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </>
+      ) : null}
 
       {mounted && postMenuOpen ? (
           <div

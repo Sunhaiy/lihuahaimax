@@ -342,7 +342,7 @@ export default async function HomePage({
               </div>
             </div>
 
-            <aside className="flex flex-col gap-3 lg:sticky lg:top-20 lg:self-start">
+            <aside className="hidden flex-col gap-3 lg:sticky lg:top-20 lg:flex lg:self-start">
               <HomeSidebarVisitorCard />
 
               <div className="rounded-[24px] border border-border/75 bg-card/78 p-4 backdrop-blur-xl">
