@@ -42,6 +42,12 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
     ? siteProfile.rssUrl
     : siteProfile.rssUrl || '/rss.xml'
   const themeChannels = hexToHslChannels(siteProfile.themeColor)
+  const themeStyle = {
+    '--primary': themeChannels,
+    '--ring': themeChannels,
+    '--accent': themeChannels,
+    '--ember': themeChannels,
+  } as React.CSSProperties
 
   return (
     <SceneShell
@@ -49,17 +55,11 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
       canEdit={false}
       quickActionHref={siteProfile.githubUrl}
       quickActionLabel="GitHub"
+      style={themeStyle}
     >
       <div
         className="public-theme flex min-h-screen flex-col bg-background text-foreground"
-        style={
-          {
-            '--primary': themeChannels,
-            '--ring': themeChannels,
-            '--accent': themeChannels,
-            '--ember': themeChannels,
-          } as React.CSSProperties
-        }
+        style={themeStyle}
       >
         <NavBar
           categories={categories}

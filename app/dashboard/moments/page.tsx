@@ -7,12 +7,10 @@ import {
   AdminPageHeader,
   AdminPanel,
   AdminStatusBadge,
-  ADMIN_INPUT_CLASS,
-  ADMIN_SELECT_CLASS,
 } from '@/components/admin/AdminPrimitives'
 import { Button } from '@/components/ui/Button'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
-import { TiptapEditor, type EditorStats } from '@/features/editor/TiptapEditor'
+import { TiptapEditor } from '@/features/editor/TiptapEditor'
 import { useCreateMoment, useDeleteMoment, useMoments, useUpdateMoment } from '@/features/moments/hooks'
 import { extractPlainTextFromRichContent } from '@/lib/utils/extractHeadings'
 import type { MomentRow, MomentType } from '@/types/moment'
@@ -20,12 +18,6 @@ import type { MomentRow, MomentType } from '@/types/moment'
 const EMPTY_DOC: JSONContent = {
   type: 'doc',
   content: [{ type: 'paragraph' }],
-}
-
-const DEFAULT_STATS: EditorStats = {
-  characters: 0,
-  words: 0,
-  readingMinutes: 1,
 }
 
 type EditableMoment = Pick<
@@ -46,7 +38,6 @@ export default function DashboardMomentsPage() {
   const [location, setLocation] = useState('')
   const [mood, setMood] = useState('')
   const [content, setContent] = useState<JSONContent>(EMPTY_DOC)
-  const [stats, setStats] = useState<EditorStats>(DEFAULT_STATS)
   const [error, setError] = useState('')
 
   const moments = (data?.data ?? []) as MomentRow[]
@@ -61,7 +52,6 @@ export default function DashboardMomentsPage() {
     setLocation('')
     setMood('')
     setContent(EMPTY_DOC)
-    setStats(DEFAULT_STATS)
     setError('')
   }
 
@@ -123,7 +113,7 @@ export default function DashboardMomentsPage() {
       <AdminPageHeader
         eyebrow="Content"
         title="瞬间管理"
-        description="现在这里支持富文本瞬间：可以写更完整的记录，也可以继续保持短促的发布节奏。旧的纯文本瞬间会继续兼容。"
+        description="保持轻量，只写内容、设置可见状态，其余交给前台干净展示。"
         meta={
           <>
             <AdminStatusBadge tone="accent">{moments.length} 条记录</AdminStatusBadge>
@@ -134,7 +124,7 @@ export default function DashboardMomentsPage() {
 
       <AdminPanel
         title={activeMoment ? '编辑瞬间' : '新建瞬间'}
-        description="轻量但完整的富文本工作台。支持标题层级、列表、引用、代码、链接和图片。"
+        description="写下这一刻，然后选择是否公开。"
         icon="edit_square"
         actions={
           <div className="flex items-center gap-2">
@@ -152,135 +142,44 @@ export default function DashboardMomentsPage() {
         }
       >
         <div className="space-y-5">
-          <div className="grid gap-4 lg:grid-cols-4">
-            <label className="space-y-2">
-              <span className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
-                类型
-              </span>
-              <select
-                value={type}
-                onChange={(event) => setType(event.target.value as MomentType)}
-                className={ADMIN_SELECT_CLASS}
-              >
-                <option value="text">随记</option>
-                <option value="mood">心情</option>
-                <option value="image">照片</option>
-                <option value="link">分享</option>
-                <option value="sleep">睡眠</option>
-                <option value="steps">步数</option>
-                <option value="heartrate">心率</option>
-              </select>
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
-                天气
-              </span>
-              <input
-                value={weather}
-                onChange={(event) => setWeather(event.target.value)}
-                className={ADMIN_INPUT_CLASS}
-                placeholder="比如：雷阵雨"
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
-                地点
-              </span>
-              <input
-                value={location}
-                onChange={(event) => setLocation(event.target.value)}
-                className={ADMIN_INPUT_CLASS}
-                placeholder="比如：静安寺"
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
-                心情
-              </span>
-              <input
-                value={mood}
-                onChange={(event) => setMood(event.target.value)}
-                className={ADMIN_INPUT_CLASS}
-                placeholder="比如：平静、雀跃"
-              />
-            </label>
-          </div>
-
-          <label className="hidden">
-            <input
-              type="checkbox"
-              checked={isPublic}
-              onChange={(event) => setIsPublic(event.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-border bg-background"
-            />
-            <span>
-              <span className="block text-sm font-medium text-foreground">公开显示</span>
-              <span className="block text-sm text-muted-foreground">
-                关闭后，这条瞬间只保留在后台，不会出现在公开 moments 页面。
-              </span>
-            </span>
-          </label>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => setIsPublic(true)}
-              className={`rounded-[18px] border px-4 py-4 text-left transition-colors ${
-                isPublic
-                  ? 'border-primary/24 bg-primary/10'
-                  : 'border-border/70 bg-background/50 hover:border-primary/18 hover:bg-background/60'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium text-foreground">公开展示</p>
-                {isPublic ? <AdminStatusBadge tone="success">当前</AdminStatusBadge> : null}
-              </div>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                会出现在前台 moments 页面，也能继续参与公开互动。
+          <div className="flex flex-col gap-3 rounded-[18px] border border-border/70 bg-background/36 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">可见状态</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {isPublic ? '公开显示在前台瞬间页。' : '只保留在后台，不对访客展示。'}
               </p>
-            </button>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => setIsPublic(false)}
-              className={`rounded-[18px] border px-4 py-4 text-left transition-colors ${
-                !isPublic
-                  ? 'border-primary/24 bg-primary/10'
-                  : 'border-border/70 bg-background/50 hover:border-primary/18 hover:bg-background/60'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium text-foreground">仅后台可见</p>
-                {!isPublic ? <AdminStatusBadge tone="warning">当前</AdminStatusBadge> : null}
-              </div>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                只保留在后台，不会出现在公开 moments 页面。
-              </p>
-            </button>
+            <div className="inline-flex w-fit rounded-full border border-border/70 bg-card/70 p-1">
+              {[
+                { label: '公开', value: true },
+                { label: '私密', value: false },
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => setIsPublic(item.value)}
+                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
+                    isPublic === item.value
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <TiptapEditor
             key={activeMoment ? `moment-${activeMoment.id}` : 'moment-new'}
             initialContent={content}
             onChange={setContent}
-            onStatsChange={setStats}
             toolbarPreset="lite"
             placeholder="把这一刻写下来：可以是几句完整的话，也可以是带图片、列表或代码的小记录。"
             className="max-w-none"
           />
-
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-border/70 bg-background/36 px-4 py-3">
-            <div className="flex flex-wrap gap-2">
-              <AdminStatusBadge tone="neutral">字符 {stats.characters}</AdminStatusBadge>
-              <AdminStatusBadge tone="neutral">词数 {stats.words}</AdminStatusBadge>
-              <AdminStatusBadge tone="neutral">阅读 {stats.readingMinutes} 分钟</AdminStatusBadge>
-              {activeMoment ? <AdminStatusBadge tone="accent">编辑中</AdminStatusBadge> : null}
-            </div>
-            <p className="text-xs text-muted-foreground">旧瞬间没有富文本内容时，会自动回退成普通文本展示。</p>
-          </div>
+          {activeMoment ? <AdminStatusBadge tone="accent">正在编辑已有瞬间</AdminStatusBadge> : null}
 
           {error ? (
             <div className="rounded-[20px] border border-red-500/20 bg-red-500/8 px-4 py-3 text-sm text-red-300">
@@ -292,7 +191,7 @@ export default function DashboardMomentsPage() {
 
       <AdminPanel
         title="历史记录"
-        description="可以直接继续编辑已有瞬间，也能快速确认它当前是公开还是私密。"
+        description="简洁查看、编辑或删除已有瞬间。"
         icon="history"
       >
         {isLoading ? (
@@ -329,16 +228,10 @@ export default function DashboardMomentsPage() {
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <AdminStatusBadge>{formatMomentType(moment.type)}</AdminStatusBadge>
                         {moment.is_public ? (
                           <AdminStatusBadge tone="success">公开</AdminStatusBadge>
                         ) : (
                           <AdminStatusBadge tone="warning">私密</AdminStatusBadge>
-                        )}
-                        {moment.content_json ? (
-                          <AdminStatusBadge tone="accent">富文本</AdminStatusBadge>
-                        ) : (
-                          <AdminStatusBadge tone="neutral">旧文本</AdminStatusBadge>
                         )}
                         <span className="font-mono">{new Date(moment.created_at).toLocaleString('zh-CN')}</span>
                       </div>
@@ -382,24 +275,5 @@ function buildFallbackMomentDoc(content: string | null): JSONContent {
         type: 'paragraph',
         content: [{ type: 'text', text: paragraph }],
       })),
-  }
-}
-
-function formatMomentType(type: MomentType) {
-  switch (type) {
-    case 'image':
-      return '照片'
-    case 'sleep':
-      return '睡眠'
-    case 'steps':
-      return '步数'
-    case 'heartrate':
-      return '心率'
-    case 'mood':
-      return '心情'
-    case 'link':
-      return '分享'
-    default:
-      return '随记'
   }
 }

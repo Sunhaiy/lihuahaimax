@@ -12,6 +12,7 @@ interface SceneShellProps {
   quickActionHref?: string
   quickActionLabel?: string
   children: React.ReactNode
+  style?: React.CSSProperties
 }
 
 function resolveScenePage(pathname: string): SceneEnabledPage {
@@ -27,6 +28,7 @@ export function SceneShell({
   quickActionHref,
   quickActionLabel,
   children,
+  style,
 }: SceneShellProps) {
   const pathname = usePathname()
   const [savedScene, setSavedScene] = useState(scene)
@@ -38,7 +40,7 @@ export function SceneShell({
   }, [scene])
 
   return (
-    <SceneBackground scene={liveScene} page={resolveScenePage(pathname)} className="min-h-screen">
+    <SceneBackground scene={liveScene} page={resolveScenePage(pathname)} className="min-h-screen" style={style}>
       {children}
       <SceneQuickSettings
         scene={savedScene}

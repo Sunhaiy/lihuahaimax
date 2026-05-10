@@ -11,10 +11,12 @@ interface SceneBackgroundProps {
   children: React.ReactNode
   className?: string
   contentClassName?: string
+  style?: React.CSSProperties
 }
 
 function isWeatherEnabled(scene: BackgroundSceneSettings, page: SceneEnabledPage) {
   if (page === 'works') return false
+  if (page === 'moments') return scene.weather.preset !== 'none'
 
   return (
     scene.weather.preset !== 'none' &&
@@ -28,14 +30,16 @@ export function SceneBackground({
   children,
   className = '',
   contentClassName = '',
+  style,
 }: SceneBackgroundProps) {
   const weatherEnabled = isWeatherEnabled(scene, page)
   const hasImage = Boolean(scene.image.url) && page !== 'moments'
+  const filterEnabled = page !== 'moments'
   const weatherIntensity =
     page === 'moments' ? Math.max(scene.weather.intensity, 0.58) : scene.weather.intensity
 
   return (
-    <div className={`scene-page-${page} relative isolate bg-background ${className}`.trim()}>
+    <div className={`scene-page-${page} relative isolate bg-background ${className}`.trim()} style={style}>
       {hasImage ? (
         <div
           aria-hidden
@@ -49,9 +53,11 @@ export function SceneBackground({
         />
       ) : null}
 
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        <SceneFilterLayer scene={scene} />
-      </div>
+      {filterEnabled ? (
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <SceneFilterLayer scene={scene} />
+        </div>
+      ) : null}
 
       <SceneWeatherLayer
         preset={scene.weather.preset}
