@@ -194,9 +194,6 @@ export default async function HomePage({
               <span className="text-hero-subtle/40">/</span>
               <span>{siteProfile.slogan}</span>
             </div>
-            <p className="scene-copy-muted mx-auto mt-8 max-w-xl text-base leading-8">
-              {siteProfile.bio}
-            </p>
           </div>
 
           {momentsResult.data.length > 0 ? (
