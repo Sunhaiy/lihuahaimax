@@ -87,6 +87,9 @@ export class LocalStorage implements StorageService {
       'image/webp': '.webp',
       'image/avif': '.avif',
       'video/mp4': '.mp4',
+      'video/webm': '.webm',
+      'video/ogg': '.ogv',
+      'video/quicktime': '.mov',
     }
     return map[mimeType] ?? ''
   }

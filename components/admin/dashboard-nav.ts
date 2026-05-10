@@ -35,7 +35,10 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
   },
   {
     label: '系统',
-    items: [{ href: '/dashboard/settings', label: '设置', icon: 'wallpaper', description: '站点与场景' }],
+    items: [
+      { href: '/dashboard/about', label: '关于', icon: 'person', description: '关于页配置' },
+      { href: '/dashboard/settings', label: '设置', icon: 'wallpaper', description: '站点与场景' },
+    ],
   },
 ]
 

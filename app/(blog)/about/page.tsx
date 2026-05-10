@@ -1,10 +1,13 @@
 import type { Metadata } from 'next'
 import type React from 'react'
 import Link from 'next/link'
+import { AboutLifestyleShowcase } from '@/components/ui/AboutLifestyleShowcase'
+import { AboutMotion } from '@/components/ui/AboutMotion'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { findWorks } from '@/lib/db/dao/worksDao'
 import { resolveMediaUrl } from '@/lib/media'
 import { getSiteProfile } from '@/lib/site'
+import type { SiteProfile } from '@/types/site'
 import type { WorkListItem } from '@/types/work'
 
 export const metadata: Metadata = {
@@ -13,14 +16,6 @@ export const metadata: Metadata = {
 }
 
 export const revalidate = 60
-
-const STRENGTHS = [
-  { icon: 'language', title: '前端开发', lines: ['Vue / React', 'TypeScript'] },
-  { icon: 'dns', title: '后端开发', lines: ['Node.js / PostgreSQL', 'MySQL / SEO'] },
-  { icon: 'phone_iphone', title: '移动开发', lines: ['Kotlin / Android', '独立开发上线'] },
-  { icon: 'psychology', title: 'AI 构建', lines: ['从零实现 LLM', 'AI Agent / 工具产品化'] },
-  { icon: 'deployed_code', title: '产品落地', lines: ['产品设计', '从创意到部署 / 独立完成'] },
-]
 
 const FALLBACK_PROJECTS = [
   {
@@ -47,14 +42,6 @@ const FALLBACK_PROJECTS = [
     imageUrl: '/hero.png',
     lines: ['从零实现大语言模型', '原理实践', '技术文章记录', '持续学习'],
   },
-]
-
-const LIFESTYLE = [
-  { icon: 'sentiment_satisfied', label: '极简审美' },
-  { icon: 'music_note', label: '热爱音乐' },
-  { icon: 'piano', label: '弹吉他' },
-  { icon: 'directions_run', label: '持续运动' },
-  { icon: 'lightbulb', label: '热爱创新' },
 ]
 
 const DESIGN_FONTS = [
@@ -103,8 +90,14 @@ function projectLines(work: WorkListItem) {
   return [summary, ...tagLines].slice(0, 4)
 }
 
-function buildProjectCards(works: WorkListItem[]) {
-  const workCards = works.slice(0, 4).map((work) => ({
+function buildProjectCards(works: WorkListItem[], selectedIds: number[]) {
+  const selectedWorks = selectedIds
+    .map((id) => works.find((work) => work.id === id))
+    .filter((work): work is WorkListItem => Boolean(work))
+  const selectedIdSet = new Set(selectedWorks.map((work) => work.id))
+  const fallbackWorks = works.filter((work) => !selectedIdSet.has(work.id))
+
+  const workCards = [...selectedWorks, ...fallbackWorks].slice(0, 4).map((work) => ({
     title: work.title,
     subtitle: work.subtitle || work.summary || 'Featured project',
     imageUrl: resolveMediaUrl(work.cover_url, work.hero_image_url) || '/hero.png',
@@ -114,12 +107,93 @@ function buildProjectCards(works: WorkListItem[]) {
   return [...workCards, ...FALLBACK_PROJECTS].slice(0, 4)
 }
 
+function StudioNameplate({ siteProfile }: { siteProfile: SiteProfile }) {
+  return (
+    <section className="about-reveal mt-9 border-y border-white/[0.14] py-8 sm:py-10">
+      <div className="relative min-h-[230px] overflow-hidden border border-white/[0.12] bg-[#080808]">
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(circle at 50% -16%, rgba(255,255,255,0.78), rgba(255,255,255,0.22) 20%, rgba(255,255,255,0.08) 36%, transparent 62%), linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02) 48%, rgba(255,255,255,0.08))',
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute -left-28 top-0 h-full w-96 opacity-60 blur-3xl"
+          style={{
+            background:
+              'linear-gradient(90deg, rgba(255,69,58,0.46), rgba(255,160,122,0.08), transparent)',
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute -right-24 top-0 h-full w-[28rem] opacity-70 blur-3xl"
+          style={{
+            background:
+              'linear-gradient(270deg, rgba(79,137,255,0.42), rgba(130,190,255,0.08), transparent)',
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.18]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,0.52) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.52) 1px, transparent 1px)',
+            backgroundSize: '64px 64px',
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black via-black/48 to-transparent"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.08)_42%,rgba(0,0,0,0.58)_100%)]"
+        />
+
+        <div className="relative z-10 flex min-h-[230px] flex-col items-center justify-center px-6 py-10 text-center">
+          <div className="relative mb-6 h-16 w-24 text-white">
+            <span className="absolute left-3 top-3 -rotate-6 text-[1.55rem] font-black italic leading-none tracking-[-0.12em]">
+              {siteProfile.aboutNameplateLogoTop}
+            </span>
+            <span className="absolute left-9 top-8 -rotate-6 text-[1.55rem] font-black italic leading-none tracking-[-0.12em]">
+              {siteProfile.aboutNameplateLogoBottom}
+            </span>
+            <span className="absolute bottom-2 left-1 h-4 w-16 -rotate-6 rounded-[50%] border-b-[6px] border-l-[4px] border-white" />
+            <span className="absolute right-2 top-0 h-10 w-10 rotate-12">
+              <span className="absolute left-1/2 top-0 h-10 w-px -translate-x-1/2 bg-white" />
+              <span className="absolute left-0 top-1/2 h-px w-10 -translate-y-1/2 bg-white" />
+              <span className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-white" />
+            </span>
+          </div>
+
+          <h2 className="text-[clamp(1.35rem,2.6vw,2.45rem)] font-black leading-tight tracking-[-0.05em] text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.55)]">
+            {siteProfile.aboutNameplateTitle}
+            {siteProfile.aboutNameplateSubtitle ? (
+              <>
+                <br />
+                {siteProfile.aboutNameplateSubtitle}
+              </>
+            ) : null}
+          </h2>
+          <p className="mt-5 text-[clamp(0.82rem,1.45vw,1.28rem)] font-black tracking-[-0.03em] text-white/24 [text-shadow:0_2px_10px_rgba(0,0,0,0.72)]">
+            {siteProfile.aboutNameplateEnglish}
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default async function AboutPage() {
   const [siteProfile, works] = await Promise.all([getSiteProfile(), findWorks()])
-  const projects = buildProjectCards(works)
+  const projects = buildProjectCards(works, siteProfile.aboutFeaturedWorkIds)
 
   return (
     <div className="about-portfolio relative isolate -mt-16 min-h-screen overflow-hidden bg-[#030303] pt-16 text-white selection:bg-white selection:text-black">
+      <AboutMotion />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 opacity-70"
@@ -139,7 +213,7 @@ export default async function AboutPage() {
       />
 
       <main className="mx-auto max-w-[1160px] px-6 py-12 sm:px-8 sm:py-16 lg:px-10">
-        <section className="relative min-h-[430px] border-b border-white/[0.16] pb-12 sm:pb-16">
+        <section className="about-hero about-reveal relative min-h-[430px] border-b border-white/[0.16] pb-12 sm:pb-16">
           <div className="absolute right-0 top-0 hidden text-right sm:block">
             <p className="font-mono text-2xl font-black leading-none tracking-[0.08em] text-white">
               ###
@@ -149,34 +223,38 @@ export default async function AboutPage() {
 
           <Link
             href="/works"
-            className="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full border-4 border-white text-white transition-colors hover:bg-white hover:text-black"
+            className="about-hero-link mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full border-4 border-white text-white transition-colors hover:bg-white hover:text-black"
             aria-label="查看作品"
           >
             <MaterialSymbol icon="arrow_outward" size={42} weight={700} />
           </Link>
 
           <div className="max-w-[640px]">
-            <p className="text-[clamp(4.6rem,12vw,8.8rem)] font-black leading-[0.82] tracking-[-0.12em] text-white">
-              孙海洋
+            <p className="about-hero-title text-[clamp(4.6rem,12vw,8.8rem)] font-black leading-[0.82] tracking-[-0.12em] text-white">
+              {siteProfile.aboutHeroName}
             </p>
-            <p className="mt-6 text-2xl font-semibold tracking-[-0.04em] text-white sm:text-3xl">
-              Sun Haiyang
+            <p className="about-hero-copy mt-6 text-2xl font-semibold tracking-[-0.04em] text-white sm:text-3xl">
+              {siteProfile.aboutHeroNameEn}
             </p>
-            <p className="mt-5 text-xl font-semibold leading-relaxed tracking-[-0.03em] text-white sm:text-2xl">
-              全栈开发者 / Android 开发者 / AI Builder
+            <p className="about-hero-copy mt-5 text-xl font-semibold leading-relaxed tracking-[-0.03em] text-white sm:text-2xl">
+              {siteProfile.aboutHeroRoleLine}
             </p>
-            <p className="mt-8 max-w-[520px] text-base leading-8 text-white/72">
-              崇拜技术力量，热爱探索未知边界，享受从 0 到 1 创造产品。独立开发并上线移动端
-              App「来生」、个人全栈博客「素心」，以及 AI 驱动的跨平台 SSH 终端工具「Reflex」。
-              擅长将创意、设计、编码、部署与上线完整打通。
+            <p className="about-hero-copy mt-8 max-w-[520px] text-base leading-8 text-white/72">
+              {siteProfile.aboutHeroBio}
             </p>
           </div>
         </section>
 
+        <StudioNameplate siteProfile={siteProfile} />
+
         <AboutSection title="核心能力" label="CORE STRENGTHS">
-          <div className="grid divide-y divide-white/[0.16] border-y border-white/[0.16] md:grid-cols-5 md:divide-x md:divide-y-0">
-            {STRENGTHS.map((item) => (
-              <div key={item.title} className="px-0 py-7 md:px-8">
+          <div className="about-stagger grid divide-y divide-white/[0.16] border-y border-white/[0.16] md:grid-cols-5 md:divide-x md:divide-y-0">
+            {siteProfile.aboutStrengths.map((item, index) => (
+              <div
+                key={item.title}
+                className="px-0 py-7 md:px-8"
+                style={{ '--stagger-index': index } as React.CSSProperties}
+              >
                 <div className="mb-5 flex h-14 w-14 items-center justify-center border border-white/[0.52] text-white">
                   <MaterialSymbol icon={item.icon} size={34} weight={450} />
                 </div>
@@ -192,13 +270,17 @@ export default async function AboutPage() {
         </AboutSection>
 
         <AboutSection id="featured-projects" title="精选项目" label="FEATURED PROJECTS">
-          <div className="grid gap-7 md:grid-cols-2 xl:grid-cols-4">
+          <div className="about-stagger grid gap-7 md:grid-cols-2 xl:grid-cols-4">
             {projects.map((project, index) => (
-              <article key={`${project.title}-${index}`} className="group">
+              <article
+                key={`${project.title}-${index}`}
+                className="group"
+                style={{ '--stagger-index': index } as React.CSSProperties}
+              >
                 <p className="mb-2 font-mono text-xl font-bold text-white">
                   {String(index + 1).padStart(2, '0')}
                 </p>
-                <div className="border border-white/[0.42] bg-black">
+                <div className="about-project-card border border-white/[0.42] bg-black">
                   <div className="aspect-[4/3] overflow-hidden border-b border-white/[0.22] bg-white/[0.04]">
                     <img
                       src={project.imageUrl}
@@ -223,19 +305,10 @@ export default async function AboutPage() {
         </AboutSection>
 
         <AboutSection title="生活方式" label="LIFESTYLE">
-          <div className="grid divide-y divide-white/[0.16] border-y border-white/[0.16] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-5">
-            {LIFESTYLE.map((item) => (
-              <div key={item.label} className="flex items-center gap-4 px-0 py-6 sm:px-8">
-                <MaterialSymbol icon={item.icon} size={34} weight={420} />
-                <span className="text-lg font-medium tracking-[-0.03em] text-white/84">
-                  {item.label}
-                </span>
-              </div>
-            ))}
-          </div>
+          <AboutLifestyleShowcase items={siteProfile.aboutLifestyleItems} />
         </AboutSection>
 
-        <section className="mt-10 border border-white/[0.28] p-6 sm:p-9">
+        <section className="about-reveal mt-10 border border-white/[0.28] p-6 sm:p-9">
           <div className="grid gap-8 lg:grid-cols-[280px_1fr] lg:items-center">
             <div className="relative flex min-h-40 items-center justify-center border-white/[0.16] lg:border-r">
               <div
@@ -251,13 +324,11 @@ export default async function AboutPage() {
               </span>
             </div>
             <div>
-              <h2 className="max-w-2xl text-3xl font-black leading-tight tracking-[-0.08em] text-white sm:text-4xl">
-                从创意、设计、编码到部署上线，
-                <br />
-                所有项目均由我独立完成。
+              <h2 className="max-w-2xl whitespace-pre-line text-3xl font-black leading-tight tracking-[-0.08em] text-white sm:text-4xl">
+                {siteProfile.aboutClosingTitle}
               </h2>
               <p className="mt-5 text-base leading-8 text-white/62">
-                期待用技术与创造力，与世界一起去冒险、去创造。
+                {siteProfile.aboutClosingDescription}
               </p>
             </div>
           </div>
@@ -265,9 +336,9 @@ export default async function AboutPage() {
 
         <DesignSystemSection />
 
-        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.16] pt-6 text-xs uppercase tracking-[0.26em] text-white/42">
+        <div className="about-reveal mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.16] pt-6 text-xs uppercase tracking-[0.26em] text-white/42">
           <span>{siteProfile.siteNameEn || 'SUXIN'}</span>
-          <span>s744129991@outlook.com</span>
+          <span>{siteProfile.aboutContactEmail}</span>
         </div>
       </main>
     </div>
@@ -407,7 +478,7 @@ function AboutSection({
   children: React.ReactNode
 }) {
   return (
-    <section id={id} className="mt-12 sm:mt-16">
+    <section id={id} className="about-reveal mt-12 sm:mt-16">
       <div className="mb-7 flex items-end justify-between gap-6 border-b border-white/[0.16] pb-3">
         <h2 className="text-2xl font-black tracking-[-0.06em] text-white sm:text-3xl">
           {title}

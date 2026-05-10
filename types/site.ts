@@ -1,3 +1,23 @@
+export interface AboutStrengthItem {
+  icon: string
+  title: string
+  lines: string[]
+}
+
+export type AboutLifestyleMediaType = 'image' | 'video'
+
+export interface AboutLifestyleItem {
+  id: string
+  icon: string
+  label: string
+  title: string
+  eyebrow: string
+  description: string
+  mediaType: AboutLifestyleMediaType
+  mediaUrl: string
+  posterUrl: string | null
+}
+
 export interface SiteProfile {
   siteName: string
   siteNameEn: string
@@ -17,4 +37,19 @@ export interface SiteProfile {
   githubUrl: string
   email: string
   footerText: string
+  aboutHeroName: string
+  aboutHeroNameEn: string
+  aboutHeroRoleLine: string
+  aboutHeroBio: string
+  aboutNameplateLogoTop: string
+  aboutNameplateLogoBottom: string
+  aboutNameplateTitle: string
+  aboutNameplateSubtitle: string
+  aboutNameplateEnglish: string
+  aboutClosingTitle: string
+  aboutClosingDescription: string
+  aboutContactEmail: string
+  aboutStrengths: AboutStrengthItem[]
+  aboutFeaturedWorkIds: number[]
+  aboutLifestyleItems: AboutLifestyleItem[]
 }
