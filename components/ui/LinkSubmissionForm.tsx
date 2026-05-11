@@ -24,6 +24,21 @@ const EMPTY_FORM: FormState = {
   contactNote: '',
 }
 
+function toAbsoluteUrl(url?: string | null) {
+  const value = (url ?? '').trim()
+  if (!value) return ''
+
+  if (/^(https?:)?\/\//i.test(value) || value.startsWith('data:') || value.startsWith('blob:')) {
+    return value
+  }
+
+  if (typeof window === 'undefined') return value
+
+  return value.startsWith('/')
+    ? `${window.location.origin}${value}`
+    : `${window.location.origin}/${value.replace(/^\/+/, '')}`
+}
+
 export function LinkSubmissionForm() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
@@ -56,7 +71,7 @@ export function LinkSubmissionForm() {
         )
       }
 
-      setForm((current) => ({ ...current, siteAvatarUrl: String(payload?.url ?? '') }))
+      setForm((current) => ({ ...current, siteAvatarUrl: toAbsoluteUrl(String(payload?.url ?? '')) }))
       setSuccess('头像上传完成，已自动填入头像链接。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '头像上传失败，请稍后再试。')
@@ -211,13 +226,13 @@ export function LinkSubmissionForm() {
       </Field>
 
       {error ? (
-        <div className="rounded-[18px] border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div className="rounded-[18px] border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-200">
           {error}
         </div>
       ) : null}
 
       {success ? (
-        <div className="rounded-[18px] border border-primary/18 bg-primary/10 px-4 py-3 text-sm text-white/82">
+        <div className="rounded-[18px] border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-foreground">
           {success}
         </div>
       ) : null}
@@ -245,12 +260,14 @@ function Field({
 }) {
   return (
     <label className="block space-y-2">
-      <span className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.22em] text-white/46">
+      <span className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.22em] text-muted-foreground">
         <span>
           {label}
           {required ? ' *' : ''}
         </span>
-        {hint ? <span className="normal-case tracking-normal text-white/28">{hint}</span> : null}
+        {hint ? (
+          <span className="normal-case tracking-normal text-muted-foreground/70">{hint}</span>
+        ) : null}
       </span>
       {children}
     </label>
@@ -258,7 +275,7 @@ function Field({
 }
 
 const INPUT_CLASS =
-  'h-11 w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 text-sm text-white placeholder:text-white/24 transition-colors focus:border-white/18 focus:outline-none focus:ring-2 focus:ring-white/8'
+  'h-11 w-full rounded-[18px] border border-border/70 bg-background/58 px-4 text-sm text-foreground placeholder:text-muted-foreground/45 transition-colors focus:border-primary/38 focus:outline-none focus:ring-2 focus:ring-primary/12 dark:border-white/10 dark:bg-background/40'
 
 const TEXTAREA_CLASS =
-  'w-full rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm leading-6 text-white placeholder:text-white/24 transition-colors focus:border-white/18 focus:outline-none focus:ring-2 focus:ring-white/8'
+  'w-full rounded-[18px] border border-border/70 bg-background/58 px-4 py-3 text-sm leading-6 text-foreground placeholder:text-muted-foreground/45 transition-colors focus:border-primary/38 focus:outline-none focus:ring-2 focus:ring-primary/12 dark:border-white/10 dark:bg-background/40'

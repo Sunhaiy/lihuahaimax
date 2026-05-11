@@ -152,6 +152,23 @@ function normalizeLinkUrl(url?: string | null) {
   return (url ?? '').trim().replace(/\/+$/, '').toLowerCase()
 }
 
+function getDashboardOrigin() {
+  if (typeof window !== 'undefined') return window.location.origin
+  return 'http://localhost:3000'
+}
+
+function toAbsoluteAssetUrl(url?: string | null, siteUrl?: string | null) {
+  const value = (url ?? '').trim()
+  if (!value) return ''
+
+  if (/^(https?:)?\/\//i.test(value) || value.startsWith('data:') || value.startsWith('blob:')) {
+    return value
+  }
+
+  const base = (siteUrl || getDashboardOrigin()).replace(/\/+$/, '')
+  return value.startsWith('/') ? `${base}${value}` : `${base}/${value.replace(/^\/+/, '')}`
+}
+
 function getCategoryLabel(slug: string, categories: LinkCategoryRow[]) {
   return categories.find((category) => category.slug === slug)?.label ?? CATEGORY_LABELS[slug] ?? slug
 }
@@ -212,7 +229,14 @@ export default function DashboardLinksPage() {
   }, [linksRequest.data, selectedId])
 
   useEffect(() => {
-    if (profileRequest.data) setProfileForm(profileRequest.data)
+    if (profileRequest.data) {
+      setProfileForm({
+        ...profileRequest.data,
+        avatarUrl: profileRequest.data.avatarUrl
+          ? toAbsoluteAssetUrl(profileRequest.data.avatarUrl, profileRequest.data.siteUrl)
+          : profileRequest.data.avatarUrl,
+      })
+    }
   }, [profileRequest.data])
 
   useEffect(() => {
@@ -323,7 +347,10 @@ export default function DashboardLinksPage() {
 
     try {
       const result = await uploadImage(file)
-      setForm((current) => ({ ...current, avatarUrl: result.url }))
+      setForm((current) => ({
+        ...current,
+        avatarUrl: toAbsoluteAssetUrl(result.url, profileForm?.siteUrl),
+      }))
       setSuccess('友链头像已上传，记得保存这条友链。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '头像上传失败')
@@ -342,7 +369,7 @@ export default function DashboardLinksPage() {
 
     try {
       const result = await uploadImage(file)
-      updateProfile('avatarUrl', result.url)
+      updateProfile('avatarUrl', toAbsoluteAssetUrl(result.url, profileForm.siteUrl))
       setSuccess('站点头像已上传，记得保存友链页资料。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '站点头像上传失败')
@@ -462,7 +489,9 @@ export default function DashboardLinksPage() {
           name: submission.site_name.trim(),
           url: submission.site_url.trim(),
           description: submission.site_description?.trim() || undefined,
-          avatarUrl: submission.site_avatar_url?.trim() || undefined,
+          avatarUrl: submission.site_avatar_url
+            ? toAbsoluteAssetUrl(submission.site_avatar_url, profileForm?.siteUrl)
+            : undefined,
           category: 'friend' as LinkCategory,
           sortOrder: existingLink?.sort_order ?? 0,
           isActive: true,
@@ -551,7 +580,7 @@ export default function DashboardLinksPage() {
       name: submission.site_name,
       url: submission.site_url,
       description: submission.site_description ?? '',
-      avatarUrl: submission.site_avatar_url ?? '',
+      avatarUrl: toAbsoluteAssetUrl(submission.site_avatar_url, profileForm?.siteUrl),
       category: 'friend',
       sortOrder: 0,
       isActive: true,
@@ -697,7 +726,9 @@ export default function DashboardLinksPage() {
                   <div className="mt-4 flex flex-wrap gap-2">
                     <MediaLibraryPicker
                       value={profileForm.avatarUrl}
-                      onSelect={(url) => updateProfile('avatarUrl', url)}
+                      onSelect={(url) =>
+                        updateProfile('avatarUrl', toAbsoluteAssetUrl(url, profileForm.siteUrl))
+                      }
                       buttonLabel="从相册选择"
                       dialogTitle="选择友情链接页头像"
                     />
@@ -744,6 +775,24 @@ export default function DashboardLinksPage() {
                       placeholder="/rss.xml"
                     />
                   </Field>
+                  <Field label="头像地址" fullWidth hint="默认使用带站点域名的完整地址，方便别人直接复制。">
+                    <input
+                      value={profileForm.avatarUrl ?? ''}
+                      onChange={(event) =>
+                        updateProfile('avatarUrl', event.target.value || null)
+                      }
+                      onBlur={(event) =>
+                        updateProfile(
+                          'avatarUrl',
+                          event.target.value
+                            ? toAbsoluteAssetUrl(event.target.value, profileForm.siteUrl)
+                            : null
+                        )
+                      }
+                      className={INPUT_CLASS}
+                      placeholder={`${profileForm.siteUrl.replace(/\/+$/, '')}/uploads/avatar.jpg`}
+                    />
+                  </Field>
                   <Field label="友链页简介" fullWidth>
                     <textarea
                       value={profileForm.friendLinkIntro}
@@ -787,7 +836,7 @@ export default function DashboardLinksPage() {
       ) : null}
 
       {activeTab === 'links' ? (
-        <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,420px)]">
+        <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <AdminPanel
           title="友链工作台"
           description="按分组和显示状态筛选，行内直接编辑或删除，数据多了也不会把页面撑成一条长卷轴。"
@@ -980,7 +1029,7 @@ export default function DashboardLinksPage() {
           title={form.id ? '编辑友链' : '新建友链'}
           description="右侧只保留友链本身需要的字段，提交申请的数据可以一键带进来。"
           icon="edit_square"
-          className="min-w-0 overflow-hidden"
+          className="min-w-0 overflow-hidden xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto"
           actions={
             <div className="flex flex-wrap items-center gap-3">
               {form.id ? (
@@ -1000,7 +1049,7 @@ export default function DashboardLinksPage() {
           <AdminSection
             title="头像与基础信息"
             description="头像、名称和链接决定了前台卡片的第一印象。"
-            className="lg:grid-cols-1"
+            className="lg:!grid-cols-1"
           >
             <div className="grid gap-5">
               <div className={`${ADMIN_MUTED_PANEL_CLASS} p-5`}>
@@ -1035,7 +1084,12 @@ export default function DashboardLinksPage() {
                 <div className="mt-4 flex flex-wrap gap-2">
                   <MediaLibraryPicker
                     value={form.avatarUrl}
-                    onSelect={(url) => setForm((current) => ({ ...current, avatarUrl: url }))}
+                    onSelect={(url) =>
+                      setForm((current) => ({
+                        ...current,
+                        avatarUrl: toAbsoluteAssetUrl(url, profileForm?.siteUrl),
+                      }))
+                    }
                     buttonLabel="从相册选择"
                     dialogTitle="选择友链头像"
                   />
@@ -1112,7 +1166,7 @@ export default function DashboardLinksPage() {
           <AdminSection
             title="简介与排序"
             description="简介尽量一句话说清楚，排序值越小越靠前。"
-            className="lg:grid-cols-1"
+            className="lg:!grid-cols-1"
           >
             <div className="grid gap-4">
               <Field label="一句话简介" fullWidth>

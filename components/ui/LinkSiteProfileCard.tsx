@@ -19,11 +19,23 @@ type InfoItem = {
   fullWidth?: boolean
 }
 
+function toAbsoluteAssetUrl(url?: string | null, baseUrl?: string) {
+  const value = (url ?? '').trim()
+  if (!value) return ''
+  if (/^(https?:)?\/\//i.test(value) || value.startsWith('data:') || value.startsWith('blob:')) {
+    return value
+  }
+
+  const base = (baseUrl || 'https://lihuahai.dev').replace(/\/+$/, '')
+  return value.startsWith('/') ? `${base}${value}` : `${base}/${value.replace(/^\/+/, '')}`
+}
+
 export function LinkSiteProfileCard({ siteProfile, stats }: LinkSiteProfileCardProps) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const timerRef = useRef<number | null>(null)
   const siteUrl = siteProfile.siteUrl || 'https://lihuahai.dev'
   const siteUrlBase = siteUrl.replace(/\/$/, '')
+  const avatarUrl = toAbsoluteAssetUrl(siteProfile.avatarUrl, siteUrlBase)
 
   const infoItems: InfoItem[] = [
     {
@@ -54,9 +66,9 @@ export function LinkSiteProfileCard({ siteProfile, stats }: LinkSiteProfileCardP
       key: 'avatar-url',
       icon: 'image',
       label: '博客头像地址',
-      value: siteProfile.avatarUrl || '未设置',
-      copyValue: siteProfile.avatarUrl || undefined,
-      href: siteProfile.avatarUrl || undefined,
+      value: avatarUrl || '未设置',
+      copyValue: avatarUrl || undefined,
+      href: avatarUrl || undefined,
     },
     {
       key: 'profile',
@@ -104,9 +116,9 @@ export function LinkSiteProfileCard({ siteProfile, stats }: LinkSiteProfileCardP
 
         <div className="mt-4 flex items-start gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-border/70 bg-background/70">
-            {siteProfile.avatarUrl ? (
+            {avatarUrl ? (
               <img
-                src={siteProfile.avatarUrl}
+                src={avatarUrl}
                 alt={siteProfile.ownerName}
                 className="h-full w-full object-cover"
               />

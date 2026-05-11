@@ -208,7 +208,7 @@ export default async function HomePage({
           </div>
 
           {momentsResult.data.length > 0 ? (
-            <div className="mt-auto pt-16">
+            <div className="mt-auto hidden pt-16 md:block">
               <div className="mx-auto max-w-5xl overflow-hidden rounded-[32px] border border-primary/8 bg-background/74 p-5 shadow-[0_16px_36px_rgba(15,23,42,0.035)] backdrop-blur-[22px] dark:border-white/[0.05] dark:bg-card/60 dark:shadow-[0_16px_36px_rgba(0,0,0,0.14)] sm:p-6">
                 <div className="mb-5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2.5">
