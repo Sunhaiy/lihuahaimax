@@ -113,7 +113,7 @@ export default async function PostPage({
           <img
             src={coverUrl}
             alt={post.cover_alt || post.title}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover brightness-[0.62] saturate-[0.94]"
           />
         ) : (
           <>
@@ -134,7 +134,11 @@ export default async function PostPage({
 
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/92 via-black/64 to-black/26"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/96 via-black/68 to-black/46"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(0,0,0,0.18),transparent_34%),linear-gradient(90deg,rgba(0,0,0,0.24),transparent_22%,transparent_78%,rgba(0,0,0,0.24))]"
         />
 
         <div className="relative flex min-h-[420px] flex-col items-center justify-center px-6 pb-28 pt-16 text-center sm:px-20">
@@ -144,7 +148,7 @@ export default async function PostPage({
                 <Link
                   key={tag}
                   href={`/posts?tags=${encodeURIComponent(tag)}`}
-                  className="rounded-full border border-white/16 bg-black/42 px-3 py-1 text-xs text-white shadow-[0_10px_26px_rgba(0,0,0,0.22)] backdrop-blur-md transition-colors hover:bg-black/54 dark:border-white/16 dark:bg-black/42 dark:text-white dark:hover:bg-black/58"
+                  className="rounded-full border border-white/32 bg-black/76 px-3.5 py-1.5 text-xs font-semibold text-white backdrop-blur-xl transition-colors hover:border-white/42 hover:bg-black/84 dark:border-white/28 dark:bg-zinc-950/72 dark:text-white dark:hover:bg-zinc-950/82"
                 >
                   {tag}
                 </Link>
@@ -152,34 +156,38 @@ export default async function PostPage({
             </div>
           ) : null}
 
-          <h1 className="max-w-3xl text-3xl font-bold leading-snug tracking-tight text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.28)] sm:text-4xl lg:text-5xl">
+          <h1 className="max-w-3xl text-3xl font-bold leading-snug tracking-tight text-white sm:text-4xl lg:text-5xl">
             {post.title}
           </h1>
 
           {post.excerpt ? (
-            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/90 drop-shadow-[0_6px_20px_rgba(0,0,0,0.28)] sm:text-base">
+            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/90 sm:text-base">
               {post.excerpt}
             </p>
           ) : null}
         </div>
 
         <div className="absolute inset-x-0 bottom-0 flex justify-center px-6 pb-6">
-          <div className="divide-x flex items-center gap-0 overflow-hidden rounded-xl border border-white/12 bg-black/52 text-xs text-white/78 shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-md divide-white/10">
-            <div className="px-4 py-2.5 font-medium text-white/90">{siteProfile.ownerName}</div>
+          <div className="divide-x flex items-center gap-0 overflow-hidden rounded-2xl border border-white/34 bg-black/78 text-xs font-semibold text-white backdrop-blur-2xl divide-white/18">
+            <div className="px-4 py-2.5 text-white">
+              {siteProfile.ownerName}
+            </div>
 
             {publishedAtIso ? (
-              <div className="flex items-center gap-1.5 px-4 py-2.5">
-                <RiTimeLine size={12} className="shrink-0" />
-                <time dateTime={publishedAtIso}>{publishedAtLabel}</time>
+              <div className="flex items-center gap-1.5 px-4 py-2.5 text-white">
+                <RiTimeLine size={12} className="shrink-0 text-white/90" />
+                <time className="text-white" dateTime={publishedAtIso}>{publishedAtLabel}</time>
               </div>
             ) : null}
 
-            <div className="flex items-center gap-1.5 px-4 py-2.5">
-              <RiEyeLine size={12} className="shrink-0" />
-              <span>{post.view_count}</span>
+            <div className="flex items-center gap-1.5 px-4 py-2.5 text-white">
+              <RiEyeLine size={12} className="shrink-0 text-white/90" />
+              <span className="text-white">{post.view_count}</span>
             </div>
 
-            <div className="px-4 py-2.5">约 {readTime} 分钟</div>
+            <div className="px-4 py-2.5 text-white">
+              约 {readTime} 分钟
+            </div>
           </div>
         </div>
       </section>
