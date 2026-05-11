@@ -181,9 +181,9 @@ export default async function HomePage({
           }}
         />
 
-        <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 pb-20 pt-28 sm:px-8 lg:px-10">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="scene-copy-subtle text-xs tracking-[0.14em]">欢迎来到</p>
+        <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 pb-20 pt-28 sm:px-8 md:justify-start lg:px-10">
+          <div className="mx-auto max-w-3xl -translate-y-8 text-center md:translate-y-0">
+            <p className="scene-copy-subtle text-xs tracking-[0.14em]">与世隔绝</p>
             <h1 className="sr-only">{siteProfile.siteName}</h1>
             <div className="scene-copy mx-auto mt-5 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-hero-border/70 bg-hero-panel/55 p-1.5 shadow-[0_18px_56px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:h-32 sm:w-32">
               {siteProfile.avatarUrl ? (
