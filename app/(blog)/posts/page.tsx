@@ -68,7 +68,8 @@ export default async function PostsPage({
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12 sm:px-8">
+    <div className="relative isolate min-h-[calc(100vh-4rem)] bg-background">
+      <div className="mx-auto max-w-6xl px-6 py-12 sm:px-8">
       {!isFiltered ? (
         <section className="mb-10 rounded-[28px] border border-border/75 bg-card/72 p-5 backdrop-blur-xl sm:p-6">
           <div className="mb-5 flex items-center justify-between gap-3">
@@ -198,6 +199,7 @@ export default async function PostsPage({
           )}
         </div>
       ) : null}
+      </div>
     </div>
   )
 }
