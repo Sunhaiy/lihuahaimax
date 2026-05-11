@@ -51,7 +51,8 @@ const MOBILE_NAV_ITEMS = [
   { href: '/about', label: '关于', icon: 'person' },
 ]
 
-const NAV_BASE_TONE_CLS = 'bg-background'
+const NAV_BASE_TONE_CLS =
+  'bg-background/80 backdrop-blur-[25px] backdrop-saturate-150 dark:bg-card/66'
 
 const NAV_SURFACE_CLS = NAV_BASE_TONE_CLS
 
