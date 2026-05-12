@@ -278,6 +278,56 @@ function EditorToolbar({ editor, preset }: { editor: Editor; preset: 'full' | 'l
     },
   ]
 
+  const insertCallout = (
+    instance: Editor,
+    variant: 'info' | 'tip' | 'warning' | 'success',
+    title: string,
+    placeholderText: string
+  ) => {
+    instance
+      .chain()
+      .focus()
+      .insertContent({
+        type: 'callout',
+        attrs: { variant, title },
+        content: [
+          {
+            type: 'paragraph',
+            content: [{ type: 'text', text: placeholderText }],
+          },
+        ],
+      })
+      .run()
+  }
+
+  const calloutBlocks: ToolItem[] = [
+    {
+      icon: <MaterialSymbol icon="info" size={18} />,
+      title: '说明卡片',
+      action: (instance) => insertCallout(instance, 'info', '说明', '这里补充背景、原理或上下文。'),
+      isActive: (instance) => instance.isActive('callout', { variant: 'info' }),
+    },
+    {
+      icon: <MaterialSymbol icon="tips_and_updates" size={18} />,
+      title: '小提示',
+      action: (instance) => insertCallout(instance, 'tip', '小提示', '这里写一个读者马上能用的小技巧。'),
+      isActive: (instance) => instance.isActive('callout', { variant: 'tip' }),
+    },
+    {
+      icon: <MaterialSymbol icon="priority_high" size={18} />,
+      title: '注意事项',
+      action: (instance) =>
+        insertCallout(instance, 'warning', '注意', '这里写容易踩坑、需要提前避开的地方。'),
+      isActive: (instance) => instance.isActive('callout', { variant: 'warning' }),
+    },
+    {
+      icon: <MaterialSymbol icon="check_circle" size={18} />,
+      title: '结论卡片',
+      action: (instance) => insertCallout(instance, 'success', '结论', '这里写这一段最终要记住的结论。'),
+      isActive: (instance) => instance.isActive('callout', { variant: 'success' }),
+    },
+  ]
+
   const customBlocks: ToolItem[] = [
     {
       icon: <MaterialSymbol icon="html" size={18} />,
@@ -307,6 +357,7 @@ function EditorToolbar({ editor, preset }: { editor: Editor; preset: 'full' | 'l
   })
 
   if (preset === 'full') {
+    groups.push(calloutBlocks)
     groups.push(customBlocks)
   }
 

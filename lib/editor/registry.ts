@@ -5,6 +5,10 @@ import { Link } from '@tiptap/extension-link'
 import { Placeholder } from '@tiptap/extension-placeholder'
 import StarterKit from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
+import { CalloutExtension } from './extensions/CalloutExtension'
+import { PinoutDiagramExtension } from './extensions/PinoutDiagramExtension'
+import { RawHtmlExtension } from './extensions/RawHtmlExtension'
+import { SshTerminalExtension } from './extensions/SshTerminalExtension'
 
 const lowlight = createLowlight(common)
 
@@ -40,5 +44,10 @@ export function getEditorExtensions(options: { placeholder?: string } = {}): Ext
     Placeholder.configure({
       placeholder: options.placeholder ?? '开始写作吧…',
     }),
+
+    CalloutExtension,
+    RawHtmlExtension,
+    PinoutDiagramExtension,
+    SshTerminalExtension,
   ]
 }

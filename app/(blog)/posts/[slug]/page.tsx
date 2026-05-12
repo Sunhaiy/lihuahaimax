@@ -121,14 +121,6 @@ export default async function PostPage({
               aria-hidden
               className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black"
             />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -left-16 -top-32 h-[480px] w-[480px] rounded-full bg-primary/12 blur-[120px]"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute bottom-0 right-0 h-64 w-64 rounded-full bg-primary/8 blur-[80px]"
-            />
           </>
         )}
 
@@ -138,7 +130,7 @@ export default async function PostPage({
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(0,0,0,0.18),transparent_34%),linear-gradient(90deg,rgba(0,0,0,0.24),transparent_22%,transparent_78%,rgba(0,0,0,0.24))]"
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.24),transparent_22%,transparent_78%,rgba(0,0,0,0.24))]"
         />
 
         <div className="relative flex min-h-[420px] flex-col items-center justify-center px-6 pb-28 pt-16 text-center sm:px-20">
@@ -192,8 +184,9 @@ export default async function PostPage({
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl overflow-visible px-3 py-10 sm:px-5">
-        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
+      <div className="bg-background">
+        <div className="mx-auto max-w-7xl overflow-visible px-3 py-10 sm:px-5">
+          <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
           <article id="post-reading-surface" className="min-w-0">
             <PostContent content={post.content as object} headings={headings} />
 
@@ -321,6 +314,7 @@ export default async function PostPage({
               />
             </div>
           </aside>
+          </div>
         </div>
       </div>
     </>
