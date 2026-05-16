@@ -109,6 +109,12 @@ function getArchivePreview(posts: Array<{ published_at: Date | string | null }>)
   return Array.from(buckets.values()).slice(0, 5)
 }
 
+function pickSidebarGreeting(pool: string[]) {
+  const source = pool.filter(Boolean)
+  if (source.length === 0) return '下午好，继续向前。'
+  return source[Math.floor(Math.random() * source.length)]
+}
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -132,7 +138,7 @@ export default async function HomePage({
   const archivePreview = getArchivePreview(archivePosts)
   const categoryCount = new Set(archivePosts.map((post) => post.category || '未分类')).size
   const yearProgress = getYearProgress(2026)
-  const sidebarGreeting = getSidebarGreeting()
+  const sidebarGreeting = pickSidebarGreeting(siteProfile.homeGreetingPool)
 
   return (
     <>
@@ -314,6 +320,7 @@ export default async function HomePage({
                           key={post.id}
                           post={post}
                           fallbackCoverUrl={siteProfile.defaultPostCoverUrl}
+                          fallbackCoverPool={siteProfile.postCoverPoolUrls}
                         />
                       ))}
                     </div>

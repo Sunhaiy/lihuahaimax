@@ -1,5 +1,6 @@
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getSiteProfile } from '@/lib/site'
 
 const FALLBACK_QUOTES = [
   { text: '风会记得每一条认真走过的路。', from: '站点备忘' },
@@ -9,9 +10,11 @@ const FALLBACK_QUOTES = [
 
 function parseClientIp(headerValue: string | null) {
   if (!headerValue) return null
+
   const value = headerValue.split(',')[0]?.trim()
   if (!value) return null
   if (value === '::1' || value === '127.0.0.1') return null
+
   return value.replace(/^::ffff:/, '')
 }
 
@@ -26,7 +29,7 @@ function isPrivateIp(ip: string) {
 
 function buildLocationLabel(city?: string | null, region?: string | null, country?: string | null) {
   const values = [country, region, city].filter(Boolean)
-  return values.length > 0 ? values.join(' · ') : '远方'
+  return values.length > 0 ? values.join(' / ') : '远方'
 }
 
 function buildGreeting(locationLabel: string, city?: string | null) {
@@ -69,6 +72,7 @@ async function fetchGeo(ip: string | null) {
     })
 
     if (!response.ok) throw new Error('geolocation request failed')
+
     const data = (await response.json()) as {
       success?: boolean
       city?: string
@@ -99,28 +103,14 @@ async function fetchGeo(ip: string | null) {
   }
 }
 
-async function fetchHitokoto() {
-  try {
-    const response = await fetch('https://v1.hitokoto.cn/?encode=json&max_length=56', {
-      cache: 'no-store',
-      signal: AbortSignal.timeout(2000),
-    })
-    if (!response.ok) throw new Error('quote request failed')
+async function fetchQuote() {
+  const profile = await getSiteProfile()
+  const source = profile.homeQuotePool.length > 0 ? profile.homeQuotePool : FALLBACK_QUOTES
+  const picked = source[Math.floor(Math.random() * source.length)]
 
-    const data = (await response.json()) as {
-      hitokoto?: string
-      from?: string
-      from_who?: string | null
-    }
-
-    if (!data.hitokoto) throw new Error('empty quote')
-
-    return {
-      text: data.hitokoto,
-      from: data.from_who ? `${data.from_who} / ${data.from ?? '一言'}` : data.from ?? '一言',
-    }
-  } catch {
-    return FALLBACK_QUOTES[Math.floor(Math.random() * FALLBACK_QUOTES.length)]
+  return {
+    text: picked.text,
+    from: picked.from,
   }
 }
 
@@ -128,7 +118,7 @@ export async function GET() {
   const headerStore = await headers()
   const ip = parseClientIp(headerStore.get('x-forwarded-for') || headerStore.get('x-real-ip'))
 
-  const [geo, quote] = await Promise.all([fetchGeo(ip), fetchHitokoto()])
+  const [geo, quote] = await Promise.all([fetchGeo(ip), fetchQuote()])
 
   return NextResponse.json({
     ...geo,

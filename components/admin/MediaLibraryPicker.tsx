@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useGalleryItems, useUploadImage } from '@/features/gallery/hooks'
 import type { GalleryCategory, GalleryItem } from '@/types/gallery'
 import { Button } from '@/components/ui/Button'
@@ -63,7 +64,8 @@ export function MediaLibraryPicker({
         {buttonLabel}
       </Button>
 
-      {open ? (
+      {open && typeof document !== 'undefined'
+        ? createPortal(
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 sm:p-6">
           <button
             type="button"
@@ -192,8 +194,10 @@ export function MediaLibraryPicker({
               onChange={handleUpload}
             />
           </div>
-        </div>
-      ) : null}
+        </div>,
+        document.body
+      )
+        : null}
     </>
   )
 }

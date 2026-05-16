@@ -847,33 +847,29 @@
   }
 
   .code-block {
-    @apply my-6 overflow-x-auto font-mono text-sm leading-relaxed;
+    @apply my-6 overflow-x-hidden font-mono text-sm leading-relaxed;
     position: relative;
     border-radius: 10px;
     border: 1px solid rgba(148, 163, 184, 0.42);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 248, 251, 0.98));
     color: #414854;
-    box-shadow:
-      0 20px 40px rgba(15, 23, 42, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.75);
     scrollbar-color: rgba(148, 163, 184, 0.85) rgba(226, 232, 240, 0.9);
   }
 
   .code-block code {
     display: block;
-    min-width: 100%;
-    width: max-content;
+    width: 100%;
+    min-width: 0;
     padding: 1.55rem 5rem 1.5rem 1.4rem;
-    white-space: normal;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .dark .code-block {
     border-color: rgba(255, 255, 255, 0.12);
     background: linear-gradient(180deg, rgba(13, 17, 23, 0.98), rgba(8, 11, 16, 0.98));
     color: #d7dde7;
-    box-shadow:
-      0 24px 56px rgba(0, 0, 0, 0.24),
-      inset 0 1px 0 rgba(255, 255, 255, 0.04);
     scrollbar-color: rgba(71, 85, 105, 0.92) rgba(15, 23, 42, 0.88);
   }
 
@@ -885,15 +881,15 @@
 
   .tiptap-editor-surface .ProseMirror .code-block .hljs {
     display: block;
-    white-space: pre;
+    white-space: pre-wrap;
   }
 
   .code-block .code-block-line {
     display: grid;
-    grid-template-columns: 3rem minmax(0, max-content);
+    grid-template-columns: 3rem minmax(0, 1fr);
     align-items: start;
     column-gap: 1.15rem;
-    min-width: max-content;
+    width: 100%;
   }
 
   .code-block .code-block-line::before {
@@ -913,7 +909,10 @@
 
   .code-block .code-block-line-content {
     display: block;
-    white-space: pre;
+    min-width: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .code-block-copy {
@@ -929,7 +928,6 @@
     border: 1px solid rgba(148, 163, 184, 0.4);
     background: rgba(255, 255, 255, 0.92);
     color: #8c919a;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
     cursor: pointer;
     transition:
       color 0.2s ease,
@@ -963,7 +961,6 @@
     border-color: rgba(255, 255, 255, 0.12);
     background: rgba(17, 24, 39, 0.88);
     color: #8b95a7;
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
   }
 
   .dark .code-block-copy:hover {
@@ -1438,4 +1435,380 @@
     opacity: 0;
     transform: translate3d(10%, 0, 0);
   }
+}
+
+:where(.article-doc, .article-read-surface .ProseMirror) {
+  color: hsl(var(--foreground));
+  font-size: 1rem;
+  line-height: 1.9;
+}
+
+:where(.article-doc, .article-read-surface .ProseMirror):focus {
+  outline: none;
+}
+
+.article-edit-surface {
+  min-height: 720px;
+}
+
+.article-edit-surface .ProseMirror {
+  min-height: 100%;
+  padding-bottom: 2.6rem;
+}
+
+.article-edit-surface .ProseMirror > p:last-child {
+  min-height: 1.8rem;
+}
+
+.article-edit-surface > :first-child,
+.article-read-surface .ProseMirror > :first-child {
+  margin-top: 0;
+}
+
+.article-doc p,
+.article-read-surface .ProseMirror p {
+  margin: 1.15rem 0;
+  color: color-mix(in srgb, hsl(var(--foreground)) 84%, transparent);
+}
+
+.article-doc h1,
+.article-doc h2,
+.article-doc h3,
+.article-doc h4,
+.article-doc h5,
+.article-doc h6,
+.article-read-surface .ProseMirror h1,
+.article-read-surface .ProseMirror h2,
+.article-read-surface .ProseMirror h3,
+.article-read-surface .ProseMirror h4,
+.article-read-surface .ProseMirror h5,
+.article-read-surface .ProseMirror h6 {
+  margin: 2.5rem 0 1rem;
+  color: hsl(var(--foreground));
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.04em;
+}
+
+.article-doc h1,
+.article-read-surface .ProseMirror h1 {
+  font-size: clamp(2.5rem, 4vw, 3.6rem);
+}
+
+.article-doc h2,
+.article-read-surface .ProseMirror h2 {
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+}
+
+.article-doc h3,
+.article-read-surface .ProseMirror h3 {
+  font-size: clamp(1.45rem, 2.4vw, 1.85rem);
+}
+
+.article-doc h4,
+.article-doc h5,
+.article-doc h6,
+.article-read-surface .ProseMirror h4,
+.article-read-surface .ProseMirror h5,
+.article-read-surface .ProseMirror h6 {
+  font-size: 1.08rem;
+}
+
+.article-doc ul,
+.article-doc ol,
+.article-read-surface .ProseMirror ul,
+.article-read-surface .ProseMirror ol {
+  margin: 1.2rem 0;
+  padding-left: 1.55rem;
+  color: color-mix(in srgb, hsl(var(--foreground)) 82%, transparent);
+}
+
+.article-doc li + li,
+.article-read-surface .ProseMirror li + li {
+  margin-top: 0.55rem;
+}
+
+.article-doc blockquote,
+.article-read-surface .ProseMirror blockquote {
+  margin: 1.8rem 0;
+  border-left: 2px solid color-mix(in srgb, hsl(var(--primary)) 38%, transparent);
+  padding-left: 1rem;
+  color: color-mix(in srgb, hsl(var(--foreground)) 72%, transparent);
+}
+
+.article-doc hr,
+.article-read-surface .ProseMirror hr {
+  margin: 2.8rem 0;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, hsl(var(--border)) 82%, transparent);
+}
+
+.article-doc a,
+.article-read-surface .ProseMirror a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, hsl(var(--primary)) 40%, transparent);
+  text-underline-offset: 0.24rem;
+  font-weight: 500;
+}
+
+.article-doc :not(pre) > code,
+.article-read-surface .ProseMirror :not(pre) > code {
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 82%, transparent);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, hsl(var(--background)) 80%, hsl(var(--primary)) 8%);
+  padding: 0.2rem 0.45rem;
+  color: hsl(var(--primary));
+  font-size: 0.92em;
+}
+
+.article-doc pre,
+.article-read-surface .ProseMirror pre {
+  margin: 1.8rem 0;
+  overflow: auto;
+  border-radius: 1.15rem;
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 80%, transparent);
+  background: color-mix(in srgb, hsl(var(--background)) 92%, black 8%);
+}
+
+.article-doc pre code,
+.article-read-surface .ProseMirror pre code {
+  display: block;
+  padding: 1.15rem 1.2rem;
+  background: transparent;
+  font-size: 0.93rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.article-doc table,
+.article-read-surface .ProseMirror table {
+  width: 100%;
+  margin: 1.8rem 0;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 80%, transparent);
+}
+
+.article-doc th,
+.article-doc td,
+.article-read-surface .ProseMirror th,
+.article-read-surface .ProseMirror td {
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 72%, transparent);
+  padding: 0.9rem 1rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.article-doc th,
+.article-read-surface .ProseMirror th {
+  background: color-mix(in srgb, hsl(var(--background)) 88%, hsl(var(--foreground)) 4%);
+  font-weight: 600;
+}
+
+.article-doc [data-node='callout'],
+.article-read-surface .ProseMirror [data-node='callout'] {
+  margin: 1.8rem 0;
+  border-radius: 1.2rem;
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 75%, transparent);
+  background: color-mix(in srgb, hsl(var(--background)) 88%, transparent);
+  overflow: hidden;
+}
+
+.article-doc [data-node='callout'][data-variant='tip'],
+.article-read-surface .ProseMirror [data-node='callout'][data-variant='tip'] {
+  border-color: rgba(16, 185, 129, 0.24);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.article-doc [data-node='callout'][data-variant='warning'],
+.article-read-surface .ProseMirror [data-node='callout'][data-variant='warning'] {
+  border-color: rgba(245, 158, 11, 0.28);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.article-doc [data-node='callout'][data-variant='summary'],
+.article-read-surface .ProseMirror [data-node='callout'][data-variant='summary'] {
+  border-color: rgba(14, 165, 233, 0.26);
+  background: rgba(14, 165, 233, 0.08);
+}
+
+.article-callout-head {
+  padding: 0.9rem 1rem 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, hsl(var(--foreground)) 55%, transparent);
+}
+
+.article-callout-body {
+  padding: 0.35rem 1rem 0.95rem;
+}
+
+.article-callout-body > :first-child {
+  margin-top: 0;
+}
+
+.article-callout-body > :last-child {
+  margin-bottom: 0;
+}
+
+.article-doc [data-node='imageFigure'],
+.article-read-surface .ProseMirror [data-node='imageFigure'] {
+  margin: 2rem auto;
+  width: 100%;
+}
+
+.article-doc [data-node='imageFigure'][data-display='wide'],
+.article-read-surface .ProseMirror [data-node='imageFigure'][data-display='wide'] {
+  width: min(112%, 1000px);
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+
+.article-doc [data-node='imageFigure'][data-display='full'],
+.article-read-surface .ProseMirror [data-node='imageFigure'][data-display='full'] {
+  width: min(128%, 1180px);
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+
+.article-figure img {
+  width: 100%;
+  border-radius: 1.4rem;
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 78%, transparent);
+  display: block;
+}
+
+.article-figure-caption {
+  margin-top: 0.7rem;
+  text-align: center;
+  font-size: 0.84rem;
+  color: color-mix(in srgb, hsl(var(--foreground)) 58%, transparent);
+}
+
+.article-structured-title {
+  margin-bottom: 0.85rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, hsl(var(--foreground)) 52%, transparent);
+}
+
+.article-step-flow,
+.article-faq,
+.article-timeline,
+.article-info-columns,
+.article-file-tree,
+.article-terminal-demo {
+  margin: 2rem 0;
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 80%, transparent);
+  border-radius: 1.35rem;
+  background: color-mix(in srgb, hsl(var(--background)) 88%, transparent);
+  padding: 1.15rem;
+}
+
+.article-step-list,
+.article-timeline-list,
+.article-file-tree-list {
+  display: grid;
+  gap: 0.9rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.article-step-item,
+.article-timeline-item,
+.article-file-tree-item,
+.article-faq-item,
+.article-info-column {
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 72%, transparent);
+  background: color-mix(in srgb, hsl(var(--background)) 82%, transparent);
+  padding: 1rem;
+}
+
+.article-step-item-title,
+.article-timeline-title,
+.article-info-column h4,
+.article-faq-question {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.article-step-item-meta,
+.article-timeline-time {
+  margin: 0 0 0.5rem;
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, hsl(var(--foreground)) 50%, transparent);
+}
+
+.article-step-item-description,
+.article-timeline-description,
+.article-faq-answer,
+.article-info-column p {
+  margin: 0.55rem 0 0;
+  color: color-mix(in srgb, hsl(var(--foreground)) 78%, transparent);
+}
+
+.article-faq-item + .article-faq-item {
+  margin-top: 0.85rem;
+}
+
+.article-info-columns {
+  display: grid;
+  gap: 0.9rem;
+}
+
+@media (min-width: 960px) {
+  .article-info-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.article-file-tree-root {
+  margin-bottom: 0.85rem;
+  font-family: 'Roboto Mono Variable', monospace;
+  font-size: 0.92rem;
+  color: hsl(var(--foreground));
+}
+
+.article-file-tree-item {
+  font-family: 'Roboto Mono Variable', monospace;
+  font-size: 0.92rem;
+  white-space: pre-wrap;
+}
+
+.article-terminal-shell {
+  margin: 0;
+  overflow: auto;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, hsl(var(--border)) 72%, transparent);
+  background: rgba(4, 8, 14, 0.9);
+  padding: 1rem 1.1rem;
+  color: rgba(234, 244, 255, 0.92);
+}
+
+.article-terminal-shell code {
+  background: transparent !important;
+  padding: 0 !important;
+  color: inherit !important;
+}
+
+.article-doc p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: color-mix(in srgb, hsl(var(--foreground)) 26%, transparent);
+  pointer-events: none;
+  height: 0;
 }

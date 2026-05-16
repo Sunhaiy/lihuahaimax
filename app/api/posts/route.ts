@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
+import { articleDocSchema } from '@/lib/articles/document'
 import { findPosts, insertPost } from '@/lib/db/dao/postDao'
 
 const createSchema = z.object({
   title: z.string().min(1).max(200),
   slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/),
-  content: z.record(z.unknown()),
+  content: articleDocSchema,
   excerpt: z.string().optional(),
-  coverUrl: z.string().min(1).optional(),
-  coverAlt: z.string().max(200).optional(),
-  seoTitle: z.string().max(200).optional(),
-  seoDescription: z.string().max(320).optional(),
+  coverUrl: z.string().min(1).nullable().optional(),
+  coverAlt: z.string().max(200).nullable().optional(),
+  seoTitle: z.string().max(200).nullable().optional(),
+  seoDescription: z.string().max(320).nullable().optional(),
   isFeatured: z.boolean().optional(),
   status: z.enum(['draft', 'published', 'archived']).optional(),
   tags: z.array(z.string()).optional(),
   category: z.string().optional(),
+  publishedAt: z.string().datetime().nullable().optional(),
 })
 
 export async function GET(req: NextRequest) {

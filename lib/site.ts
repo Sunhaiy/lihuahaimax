@@ -70,6 +70,20 @@ const DEFAULT_ABOUT_LIFESTYLE_ITEMS: SiteProfile['aboutLifestyleItems'] = [
   },
 ]
 
+const DEFAULT_HOME_GREETINGS: SiteProfile['homeGreetingPool'] = [
+  '凌晨好，别熬啦！',
+  '早上好，今天也慢慢来。',
+  '中午好，记得休息。',
+  '下午好，继续向前。',
+  '晚上好，欢迎回来。',
+]
+
+const DEFAULT_HOME_QUOTES: SiteProfile['homeQuotePool'] = [
+  { id: 'quote-1', text: '风会记得每一条认真走过的路。', from: '站点备忘' },
+  { id: 'quote-2', text: '慢一点没关系，重要的是一直在靠近。', from: '站点备忘' },
+  { id: 'quote-3', text: '把日常过细一点，生活就会亮一点。', from: '站点备忘' },
+]
+
 export const DEFAULT_SITE_PROFILE: SiteProfile = {
   siteName: '素心',
   siteNameEn: 'LIHUA HAI',
@@ -81,6 +95,9 @@ export const DEFAULT_SITE_PROFILE: SiteProfile = {
   bio: '嵌入式工程师、全栈构建者，也认真记录深夜、项目和碎片念头。',
   avatarUrl: null,
   defaultPostCoverUrl: null,
+  postCoverPoolUrls: [],
+  homeGreetingPool: DEFAULT_HOME_GREETINGS,
+  homeQuotePool: DEFAULT_HOME_QUOTES,
   gamesHeroImageUrl: null,
   siteUrl: 'https://lihuahai.dev',
   rssUrl: '/rss.xml',
@@ -139,6 +156,14 @@ function cloneAboutLifestyleItems(items: SiteProfile['aboutLifestyleItems']) {
   return items.map((item) => ({ ...item }))
 }
 
+function cloneHomeQuotes(items: SiteProfile['homeQuotePool']) {
+  return items.map((item) => ({ ...item }))
+}
+
+function cloneGreetingPool(items: SiteProfile['homeGreetingPool']) {
+  return [...items]
+}
+
 function normalizeAboutStrengths(value: unknown): SiteProfile['aboutStrengths'] {
   if (!Array.isArray(value)) return cloneAboutStrengths(DEFAULT_ABOUT_STRENGTHS)
 
@@ -174,6 +199,42 @@ function normalizeAboutFeaturedWorkIds(value: unknown): number[] {
     .filter((item) => Number.isInteger(item) && item > 0)
 
   return Array.from(new Set(ids)).slice(0, 4)
+}
+
+function normalizeGreetingPool(value: unknown): SiteProfile['homeGreetingPool'] {
+  if (!Array.isArray(value)) return cloneGreetingPool(DEFAULT_HOME_GREETINGS)
+
+  const items = value.map(cleanText).filter(Boolean).slice(0, 16)
+  return items.length ? items : cloneGreetingPool(DEFAULT_HOME_GREETINGS)
+}
+
+function normalizeHomeQuotePool(value: unknown): SiteProfile['homeQuotePool'] {
+  if (!Array.isArray(value)) return cloneHomeQuotes(DEFAULT_HOME_QUOTES)
+
+  const items = value
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') return null
+
+      const source = item as Partial<SiteProfile['homeQuotePool'][number]>
+      const text = cleanText(source.text)
+      if (!text) return null
+
+      return {
+        id: cleanText(source.id) || `quote-${index + 1}`,
+        text,
+        from: cleanText(source.from) || '站点备忘',
+      }
+    })
+    .filter((item): item is SiteProfile['homeQuotePool'][number] => Boolean(item))
+    .slice(0, 24)
+
+  return items.length ? items : cloneHomeQuotes(DEFAULT_HOME_QUOTES)
+}
+
+function normalizePostCoverPool(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+
+  return Array.from(new Set(value.map(cleanText).filter(Boolean))).slice(0, 48)
 }
 
 function normalizeAboutLifestyleItems(value: unknown): SiteProfile['aboutLifestyleItems'] {
@@ -227,6 +288,9 @@ export function normalizeSiteProfile(input?: Partial<SiteProfile> | null): SiteP
     bio: cleanText(source.bio) || DEFAULT_SITE_PROFILE.bio,
     avatarUrl: cleanOptionalUrl(source.avatarUrl),
     defaultPostCoverUrl: cleanOptionalUrl(source.defaultPostCoverUrl),
+    postCoverPoolUrls: normalizePostCoverPool(source.postCoverPoolUrls),
+    homeGreetingPool: normalizeGreetingPool(source.homeGreetingPool),
+    homeQuotePool: normalizeHomeQuotePool(source.homeQuotePool),
     gamesHeroImageUrl: cleanOptionalUrl(source.gamesHeroImageUrl),
     siteUrl: cleanText(source.siteUrl) || DEFAULT_SITE_PROFILE.siteUrl,
     rssUrl: cleanText(source.rssUrl) || DEFAULT_SITE_PROFILE.rssUrl,

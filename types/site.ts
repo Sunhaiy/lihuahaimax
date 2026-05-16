@@ -4,6 +4,12 @@ export interface AboutStrengthItem {
   lines: string[]
 }
 
+export interface SiteQuoteItem {
+  id: string
+  text: string
+  from: string
+}
+
 export type AboutLifestyleMediaType = 'image' | 'video'
 
 export interface AboutLifestyleItem {
@@ -29,6 +35,9 @@ export interface SiteProfile {
   bio: string
   avatarUrl: string | null
   defaultPostCoverUrl: string | null
+  postCoverPoolUrls: string[]
+  homeGreetingPool: string[]
+  homeQuotePool: SiteQuoteItem[]
   gamesHeroImageUrl: string | null
   siteUrl: string
   rssUrl: string

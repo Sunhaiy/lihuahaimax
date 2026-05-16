@@ -288,7 +288,11 @@ export async function insertPost(input: CreatePostInput): Promise<PostRow> {
       input.status ?? 'draft',
       input.tags ?? [],
       input.category ?? '未分类',
-      input.status === 'published' ? new Date() : null,
+      input.publishedAt
+        ? new Date(input.publishedAt)
+        : input.status === 'published'
+          ? new Date()
+          : null,
     ]
   )
 
@@ -346,11 +350,15 @@ export async function updatePost(id: number, input: UpdatePostInput): Promise<Po
     setClauses.push(`category = $${idx++}`)
     values.push(input.category)
   }
+  if (input.publishedAt !== undefined) {
+    setClauses.push(`published_at = $${idx++}`)
+    values.push(input.publishedAt ? new Date(input.publishedAt) : null)
+  }
   if (input.status !== undefined) {
     setClauses.push(`status = $${idx++}`)
     values.push(input.status)
 
-    if (input.status === 'published') {
+    if (input.status === 'published' && input.publishedAt === undefined) {
       setClauses.push(`published_at = COALESCE(published_at, NOW())`)
     }
   }
@@ -479,6 +487,36 @@ export async function resetCategory(name: string): Promise<number> {
     `UPDATE posts
      SET category = '未分类'
      WHERE category = $1 AND category != '未分类'`,
+    [name]
+  )
+
+  revalidateTag(POSTS_TAG)
+  resetPublishedPostsSnapshot()
+  return result.rowCount ?? 0
+}
+
+export async function renameTag(oldTag: string, newTag: string): Promise<number> {
+  const result = await query(
+    `UPDATE posts
+     SET tags = ARRAY(
+       SELECT DISTINCT value
+       FROM unnest(array_replace(tags, $1, $2)) AS value
+       WHERE value <> ''
+     )
+     WHERE $1 = ANY(tags)`,
+    [oldTag, newTag]
+  )
+
+  revalidateTag(POSTS_TAG)
+  resetPublishedPostsSnapshot()
+  return result.rowCount ?? 0
+}
+
+export async function resetTag(name: string): Promise<number> {
+  const result = await query(
+    `UPDATE posts
+     SET tags = array_remove(tags, $1)
+     WHERE $1 = ANY(tags)`,
     [name]
   )
 

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { resolveMediaUrl } from '@/lib/media'
+import { pickDeterministicMediaUrl, resolveMediaUrl } from '@/lib/media'
 import type { PostRow } from '@/types/post'
 
 interface PostCardProps {
@@ -8,10 +8,14 @@ interface PostCardProps {
     'id' | 'slug' | 'title' | 'excerpt' | 'cover_url' | 'category' | 'tags' | 'published_at'
   >
   fallbackCoverUrl?: string | null
+  fallbackCoverPool?: string[]
 }
 
-export function PostCard({ post, fallbackCoverUrl }: PostCardProps) {
-  const coverUrl = resolveMediaUrl(post.cover_url, fallbackCoverUrl)
+export function PostCard({ post, fallbackCoverUrl, fallbackCoverPool }: PostCardProps) {
+  const coverUrl = resolveMediaUrl(
+    post.cover_url,
+    pickDeterministicMediaUrl(fallbackCoverPool, post.slug || post.id, fallbackCoverUrl)
+  )
 
   return (
     <Link href={`/posts/${post.slug}`} className="group block h-full">

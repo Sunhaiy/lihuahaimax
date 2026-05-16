@@ -11,6 +11,38 @@ type RichNode = {
   content?: RichNode[]
 }
 
+const ATTR_TEXT_IGNORES = new Set([
+  'src',
+  'url',
+  'href',
+  'display',
+  'tempId',
+  'language',
+  'mimeType',
+  'target',
+  'rel',
+])
+
+function collectAttrText(value: unknown, key?: string): string[] {
+  if (typeof value === 'string') {
+    if (!value.trim()) return []
+    if (key && ATTR_TEXT_IGNORES.has(key)) return []
+    return [value.trim()]
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectAttrText(item))
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>).flatMap(([entryKey, entryValue]) =>
+      collectAttrText(entryValue, entryKey)
+    )
+  }
+
+  return []
+}
+
 function collectNodeText(node: RichNode | null | undefined): string {
   if (!node) return ''
   const own = typeof node.text === 'string' ? node.text : ''
@@ -52,6 +84,10 @@ export function extractPlainTextFromRichContent(content: object | null | undefin
   walkNodes((content ?? {}) as RichNode, (node) => {
     if (typeof node.text === 'string' && node.text.trim()) {
       parts.push(node.text.trim())
+    }
+
+    if (node.attrs) {
+      parts.push(...collectAttrText(node.attrs))
     }
   })
 

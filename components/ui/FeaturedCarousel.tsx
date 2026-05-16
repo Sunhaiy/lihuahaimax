@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react'
-import { resolveMediaUrl } from '@/lib/media'
+import { pickDeterministicMediaUrl, resolveMediaUrl } from '@/lib/media'
 import type { PostRow } from '@/types/post'
 
 type CarouselPost = Pick<PostRow, 'id' | 'slug' | 'title' | 'cover_url' | 'published_at' | 'category'>
@@ -11,9 +11,11 @@ type CarouselPost = Pick<PostRow, 'id' | 'slug' | 'title' | 'cover_url' | 'publi
 export function FeaturedCarousel({
   posts,
   fallbackCoverUrl,
+  fallbackCoverPool,
 }: {
   posts: CarouselPost[]
   fallbackCoverUrl?: string | null
+  fallbackCoverPool?: string[]
 }) {
   const [page, setPage] = useState(0)
   const PER = 3
@@ -26,7 +28,10 @@ export function FeaturedCarousel({
     <div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {visible.map((post) => {
-          const coverUrl = resolveMediaUrl(post.cover_url, fallbackCoverUrl)
+          const coverUrl = resolveMediaUrl(
+            post.cover_url,
+            pickDeterministicMediaUrl(fallbackCoverPool, post.slug || post.id, fallbackCoverUrl)
+          )
 
           return (
             <Link

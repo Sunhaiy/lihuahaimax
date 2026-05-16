@@ -142,17 +142,73 @@ async function uploadImage(file: File) {
   return response.json() as Promise<{ url: string }>
 }
 
+async function uploadPostCoverPoolImage(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await fetch('/api/upload/post-cover-pool', {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null)
+    throw new Error(readApiError(error, '上传随机封面失败'))
+  }
+
+  return response.json() as Promise<{ url: string }>
+}
+
+function serializeGreetingPool(items: string[]) {
+  return items.join('\n')
+}
+
+function parseGreetingPool(input: string) {
+  return input
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function serializeQuotePool(items: SiteProfile['homeQuotePool']) {
+  return items.map((item) => `${item.text} | ${item.from}`).join('\n')
+}
+
+function parseQuotePool(input: string): SiteProfile['homeQuotePool'] {
+  return input
+    .split(/\r?\n/)
+    .map((line, index) => {
+      const raw = line.trim()
+      if (!raw) return null
+
+      const parts = raw.split('|')
+      const text = parts[0]?.trim() ?? ''
+      const from = parts.slice(1).join('|').trim() || '站点备忘'
+      if (!text) return null
+
+      return {
+        id: `quote-${index + 1}`,
+        text,
+        from,
+      }
+    })
+    .filter((item): item is SiteProfile['homeQuotePool'][number] => Boolean(item))
+}
+
 export default function SettingsPage() {
   const sceneRequest = useSWR<BackgroundSceneSettings>('/api/settings/background-scene', fetcher)
   const profileRequest = useSWR<SiteProfile>('/api/settings/site-profile', fetcher)
 
   const [sceneForm, setSceneForm] = useState<BackgroundSceneSettings | null>(null)
   const [profileForm, setProfileForm] = useState<SiteProfile | null>(null)
+  const [homeGreetingText, setHomeGreetingText] = useState('')
+  const [homeQuoteText, setHomeQuoteText] = useState('')
   const [savingScene, setSavingScene] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
   const [uploadingScene, setUploadingScene] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [uploadingDefaultCover, setUploadingDefaultCover] = useState(false)
+  const [uploadingCoverPool, setUploadingCoverPool] = useState(false)
   const [uploadingGamesHero, setUploadingGamesHero] = useState(false)
   const [clearingScene, setClearingScene] = useState(false)
   const [error, setError] = useState('')
@@ -161,6 +217,7 @@ export default function SettingsPage() {
   const sceneFileRef = useRef<HTMLInputElement>(null)
   const avatarFileRef = useRef<HTMLInputElement>(null)
   const defaultCoverFileRef = useRef<HTMLInputElement>(null)
+  const postCoverPoolFileRef = useRef<HTMLInputElement>(null)
   const gamesHeroFileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -168,7 +225,11 @@ export default function SettingsPage() {
   }, [sceneRequest.data])
 
   useEffect(() => {
-    if (profileRequest.data) setProfileForm(profileRequest.data)
+    if (profileRequest.data) {
+      setProfileForm(profileRequest.data)
+      setHomeGreetingText(serializeGreetingPool(profileRequest.data.homeGreetingPool))
+      setHomeQuoteText(serializeQuotePool(profileRequest.data.homeQuotePool))
+    }
   }, [profileRequest.data])
 
   function resetNotice() {
@@ -293,6 +354,42 @@ export default function SettingsPage() {
       setUploadingGamesHero(false)
       if (gamesHeroFileRef.current) gamesHeroFileRef.current.value = ''
     }
+  }
+
+  async function handlePostCoverPoolUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingCoverPool(true)
+    resetNotice()
+
+    try {
+      const result = await uploadPostCoverPoolImage(file)
+      updateProfile(
+        'postCoverPoolUrls',
+        Array.from(new Set([...(profileForm?.postCoverPoolUrls ?? []), result.url]))
+      )
+      setSuccess('随机文章封面已上传，记得保存站点资料。')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '上传随机封面失败')
+    } finally {
+      setUploadingCoverPool(false)
+      if (postCoverPoolFileRef.current) postCoverPoolFileRef.current.value = ''
+    }
+  }
+
+  function appendPostCoverPoolUrl(url: string) {
+    updateProfile(
+      'postCoverPoolUrls',
+      Array.from(new Set([...(profileForm?.postCoverPoolUrls ?? []), url]))
+    )
+  }
+
+  function removePostCoverPoolUrl(targetUrl: string) {
+    updateProfile(
+      'postCoverPoolUrls',
+      (profileForm?.postCoverPoolUrls ?? []).filter((url) => url !== targetUrl)
+    )
   }
 
   async function handleClearSceneImage() {
@@ -891,6 +988,143 @@ export default function SettingsPage() {
             </div>
           </AdminSection>
         </div>
+
+          <AdminSection
+            title="首页卡片配置"
+            description="配置首页侧边栏的一言卡片和资料卡顶部问候语，前台会从这里随机抽取。"
+            aside={<AdminStatusBadge tone="accent">Homepage</AdminStatusBadge>}
+          >
+            <div className="space-y-5">
+              <div className="grid gap-4 xl:grid-cols-2">
+                <AdminField
+                  label="问候语池"
+                  hint="一行一句，资料卡顶部气泡会随机展示其中一条。"
+                >
+                  <textarea
+                    value={homeGreetingText}
+                    onChange={(event) => {
+                      const nextValue = event.target.value
+                      setHomeGreetingText(nextValue)
+                      updateProfile('homeGreetingPool', parseGreetingPool(nextValue))
+                    }}
+                    rows={6}
+                    className={ADMIN_TEXTAREA_CLASS}
+                    placeholder={'凌晨好，别熬啦！\n下午好，继续向前。\n晚上好，欢迎回来。'}
+                  />
+                </AdminField>
+
+                <AdminField
+                  label="一言句库"
+                  hint="一行一条，格式为“句子 | 来源”。来源不写时会默认显示为站点备忘。"
+                >
+                  <textarea
+                    value={homeQuoteText}
+                    onChange={(event) => {
+                      const nextValue = event.target.value
+                      setHomeQuoteText(nextValue)
+                      updateProfile('homeQuotePool', parseQuotePool(nextValue))
+                    }}
+                    rows={6}
+                    className={ADMIN_TEXTAREA_CLASS}
+                    placeholder={'慢一点没关系，重要的是一直在靠近。 | 站点备忘\n风会记得每一条认真走过的路。 | 站点备忘'}
+                  />
+                </AdminField>
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-2">
+                <div className={`${ADMIN_MUTED_PANEL_CLASS} p-4`}>
+                  <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+                    Greeting Preview
+                  </p>
+                  <div className="mt-4 rounded-[22px] border border-border/70 bg-background/44 p-4 text-sm text-foreground">
+                    {(profileForm.homeGreetingPool[0] || '下午好，继续向前。').trim()}
+                  </div>
+                </div>
+
+                <div className={`${ADMIN_MUTED_PANEL_CLASS} p-4`}>
+                  <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-muted-foreground">
+                    Quote Preview
+                  </p>
+                  <div className="mt-4 rounded-[22px] border border-border/70 bg-background/44 p-4">
+                    <p className="text-sm font-medium leading-7 text-foreground">
+                      “{profileForm.homeQuotePool[0]?.text || '慢一点没关系，重要的是一直在靠近。'}”
+                    </p>
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      {profileForm.homeQuotePool[0]?.from || '站点备忘'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </AdminSection>
+
+          <AdminSection
+            title="随机文章封面池"
+            description="文章没有单独封面时，会从这里稳定随机抽取一张。后台上传的图片会单独存到 post-cover-pool 文件夹。"
+            aside={
+              <AdminStatusBadge tone="neutral">
+                {profileForm.postCoverPoolUrls.length} 张
+              </AdminStatusBadge>
+            }
+          >
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => postCoverPoolFileRef.current?.click()}
+                  loading={uploadingCoverPool}
+                >
+                  <MaterialSymbol icon="image_arrow_up" size={16} />
+                  上传到随机封面池
+                </Button>
+                <MediaLibraryPicker
+                  onSelect={appendPostCoverPoolUrl}
+                  category="artwork"
+                  buttonLabel="从相册加入"
+                  dialogTitle="加入随机文章封面池"
+                  description="这里选中的图片会进入文章随机封面池，供没有单独封面的文章回退使用。"
+                />
+              </div>
+
+              {profileForm.postCoverPoolUrls.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                  {profileForm.postCoverPoolUrls.map((url) => (
+                    <div
+                      key={url}
+                      className="overflow-hidden rounded-[22px] border border-border/70 bg-background/44"
+                    >
+                      <div className="aspect-[4/3] overflow-hidden">
+                        <img src={url} alt="随机文章封面" className="h-full w-full object-cover" />
+                      </div>
+                      <div className="flex items-center justify-between gap-3 px-3 py-3">
+                        <p className="truncate text-[11px] font-mono text-muted-foreground">{url}</p>
+                        <button
+                          type="button"
+                          onClick={() => removePostCoverPoolUrl(url)}
+                          className="shrink-0 text-xs text-red-400 transition-colors hover:text-red-300"
+                        >
+                          删除
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className={`${ADMIN_MUTED_PANEL_CLASS} p-5 text-sm text-muted-foreground`}>
+                  还没有可用的随机封面。上传几张后，文章在未单独设置封面时就会自动从这里抽取。
+                </div>
+              )}
+            </div>
+          </AdminSection>
+
+        <input
+          ref={postCoverPoolFileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePostCoverPoolUpload}
+        />
 
         <input
           ref={sceneFileRef}

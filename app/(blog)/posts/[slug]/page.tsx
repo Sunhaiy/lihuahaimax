@@ -2,16 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
-  RiArrowLeftSLine,
-  RiArrowRightSLine,
   RiEyeLine,
   RiTimeLine,
 } from '@remixicon/react'
 import { auth } from '@/auth'
 import { TOC } from '@/components/ui/TOC'
-import { resolveMediaUrl } from '@/lib/media'
+import { pickDeterministicMediaUrl, resolveMediaUrl } from '@/lib/media'
 import {
-  findAdjacentPosts,
   findPostBySlug,
   findPosts,
   incrementViewCount,
@@ -40,7 +37,10 @@ export async function generateMetadata({
     return { title: '文章不存在' }
   }
 
-  const coverUrl = resolveMediaUrl(post.cover_url, siteProfile.defaultPostCoverUrl)
+  const coverUrl = resolveMediaUrl(
+    post.cover_url,
+    pickDeterministicMediaUrl(siteProfile.postCoverPoolUrls, post.slug || post.id, siteProfile.defaultPostCoverUrl)
+  )
   const canonicalUrl = `${(siteProfile.siteUrl || 'https://lihuahai.dev').replace(/\/$/, '')}/posts/${post.slug}`
   const publishedTime = toIsoDateString(post.published_at)
 
@@ -89,18 +89,14 @@ export default async function PostPage({
     incrementViewCount(post.id).catch(() => {})
   }
 
-  const publishedAtDate = toDate(post.published_at)
-
-  const [adjacent, siteProfile] = await Promise.all([
-    publishedAtDate
-      ? findAdjacentPosts(publishedAtDate, post.id)
-      : Promise.resolve({ prev: null, next: null }),
-    getSiteProfile(),
-  ])
+  const siteProfile = await getSiteProfile()
 
   const headings = extractHeadings(post.content as object)
   const readTime = estimateReadTime(post.content as object)
-  const coverUrl = resolveMediaUrl(post.cover_url, siteProfile.defaultPostCoverUrl)
+  const coverUrl = resolveMediaUrl(
+    post.cover_url,
+    pickDeterministicMediaUrl(siteProfile.postCoverPoolUrls, post.slug || post.id, siteProfile.defaultPostCoverUrl)
+  )
   const canonicalUrl = `${(siteProfile.siteUrl || 'https://lihuahai.dev').replace(/\/$/, '')}/posts/${post.slug}`
   const licenseName = 'CC BY-NC-SA 4.0'
   const publishedAtIso = toIsoDateString(post.published_at)
@@ -216,50 +212,6 @@ export default async function PostPage({
                 <p className="text-xs leading-relaxed text-muted-foreground">{siteProfile.bio}</p>
               </div>
             </div>
-
-            {adjacent.prev || adjacent.next ? (
-              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {adjacent.prev ? (
-                  <Link
-                    href={`/posts/${adjacent.prev.slug}`}
-                    className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/30"
-                  >
-                    <RiArrowLeftSLine
-                      size={18}
-                      className="mt-0.5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary"
-                    />
-                    <div className="min-w-0">
-                      <p className="mb-1 text-[10px] text-muted-foreground">上一篇</p>
-                      <p className="line-clamp-2 text-sm font-medium text-foreground transition-colors group-hover:text-primary">
-                        {adjacent.prev.title}
-                      </p>
-                    </div>
-                  </Link>
-                ) : (
-                  <div />
-                )}
-
-                {adjacent.next ? (
-                  <Link
-                    href={`/posts/${adjacent.next.slug}`}
-                    className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-right transition-colors hover:border-primary/30 sm:flex-row-reverse"
-                  >
-                    <RiArrowRightSLine
-                      size={18}
-                      className="mt-0.5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary"
-                    />
-                    <div className="min-w-0">
-                      <p className="mb-1 text-[10px] text-muted-foreground">下一篇</p>
-                      <p className="line-clamp-2 text-sm font-medium text-foreground transition-colors group-hover:text-primary">
-                        {adjacent.next.title}
-                      </p>
-                    </div>
-                  </Link>
-                ) : (
-                  <div />
-                )}
-              </div>
-            ) : null}
 
             <section className="mt-6 overflow-hidden rounded-[30px] border border-border/70 bg-card/82 shadow-[0_20px_60px_rgba(0,0,0,0.08)] backdrop-blur-xl">
               <div className="relative px-5 py-5 sm:px-6">

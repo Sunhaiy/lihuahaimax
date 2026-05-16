@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#09090B"/>
+      <stop offset="0.55" stop-color="#111827"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1320 160) rotate(132) scale(520 420)">
+      <stop stop-color="#7dd3fc" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#7dd3fc" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" rx="42" fill="url(#bg)"/>
+  <rect x="44" y="44" width="1512" height="812" rx="34" stroke="rgba(255,255,255,0.08)"/>
+  <rect x="72" y="78" width="210" height="46" rx="23" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.08)"/>
+  <text x="105" y="108" fill="#7dd3fc" font-size="19" font-weight="700" letter-spacing="5">LLM NOTES</text>
+  <rect x="1302" y="72" width="176" height="88" rx="28" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)"/>
+  <text x="1336" y="110" fill="#f8fafc" font-size="20" font-weight="700">PART 06</text>
+  <text x="1336" y="136" fill="rgba(226,232,240,0.64)" font-size="16">AI 笔记</text>
+  <path d="M72 456H1528" stroke="rgba(255,255,255,0.1)"/>
+  <circle cx="1320" cy="160" r="320" fill="url(#glow)"/>
+  <circle cx="1320" cy="160" r="220" fill="#7dd3fc" fill-opacity="0.05"/>
+  <rect x="72" y="510" width="452" height="230" rx="30" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.08)"/>
+  <text x="108" y="566" fill="#7dd3fc" font-size="18" font-weight="700" letter-spacing="3">CORE FOCUS</text>
+  <text x="108" y="618" fill="#f8fafc" font-size="30" font-weight="700">讲清原理，不堆黑话</text>
+  <text x="108" y="664" fill="rgba(226,232,240,0.72)" font-size="22">把抽象概念拆成可以真正看懂的步骤。</text>
+  <text x="108" y="710" fill="rgba(226,232,240,0.72)" font-size="22">每篇都围绕一个核心问题展开。</text>
+  <text x="72" y="186" fill="#f8fafc" font-size="44" font-weight="700">手算一遍注意力</text>
+  <text x="72" y="382" fill="rgba(226,232,240,0.76)" font-size="20" font-weight="500">用 3 个字、2 维的小例子，把四步注意力从</text><text x="72" y="410" fill="rgba(226,232,240,0.76)" font-size="20" font-weight="500">头到尾算了一遍。</text>
+</svg>

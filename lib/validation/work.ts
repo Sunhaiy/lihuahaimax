@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 function isUrl(value: string | null | undefined) {
   if (!value) return true
+  if (value.startsWith('/')) return true
   try {
     new URL(value)
     return true

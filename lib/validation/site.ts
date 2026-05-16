@@ -45,6 +45,12 @@ const aboutLifestyleItemSchema = z.object({
     .default(null),
 })
 
+const siteQuoteSchema = z.object({
+  id: z.string().trim().max(48).default(''),
+  text: z.string().trim().max(240).default(''),
+  from: z.string().trim().max(80).default(''),
+})
+
 export const siteProfileSchema = z.object({
   siteName: z.string().trim().min(1).max(80),
   siteNameEn: z.string().trim().max(120).default(''),
@@ -70,6 +76,17 @@ export const siteProfileSchema = z.object({
     .refine((value) => !value || isUploadOrAbsoluteUrl(value), 'Invalid default post cover URL')
     .nullable()
     .optional(),
+  postCoverPoolUrls: z
+    .array(
+      z
+        .string()
+        .trim()
+        .refine((value) => !value || isUploadOrAbsoluteUrl(value), 'Invalid post cover pool URL')
+    )
+    .max(48)
+    .default([]),
+  homeGreetingPool: z.array(z.string().trim().max(80)).max(16).default([]),
+  homeQuotePool: z.array(siteQuoteSchema).max(24).default([]),
   gamesHeroImageUrl: z
     .string()
     .trim()

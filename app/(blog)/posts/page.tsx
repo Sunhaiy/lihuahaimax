@@ -4,7 +4,7 @@ import { FeaturedCarousel } from '@/components/ui/FeaturedCarousel'
 import { PostsFilter } from '@/components/ui/PostsFilter'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import { findAllTags, findCategories, findPosts } from '@/lib/db/dao/postDao'
-import { resolveMediaUrl } from '@/lib/media'
+import { pickDeterministicMediaUrl, resolveMediaUrl } from '@/lib/media'
 import { getSiteProfile } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -86,6 +86,7 @@ export default async function PostsPage({
           <FeaturedCarousel
             posts={carouselPosts}
             fallbackCoverUrl={siteProfile.defaultPostCoverUrl}
+            fallbackCoverPool={siteProfile.postCoverPoolUrls}
           />
         </section>
       ) : null}
@@ -118,7 +119,14 @@ export default async function PostsPage({
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredResult.data.map((post) => {
-            const coverUrl = resolveMediaUrl(post.cover_url, siteProfile.defaultPostCoverUrl)
+            const coverUrl = resolveMediaUrl(
+              post.cover_url,
+              pickDeterministicMediaUrl(
+                siteProfile.postCoverPoolUrls,
+                post.slug || post.id,
+                siteProfile.defaultPostCoverUrl
+              )
+            )
 
             return (
               <Link key={post.id} href={`/posts/${post.slug}`} className="group block h-full">

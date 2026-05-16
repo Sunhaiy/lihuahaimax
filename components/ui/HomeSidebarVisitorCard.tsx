@@ -32,15 +32,22 @@ export function HomeSidebarVisitorCard() {
         const response = await fetch('/api/visitor-context', { cache: 'no-store' })
         if (!response.ok) throw new Error('request failed')
         const data = (await response.json()) as VisitorContext
-        if (!cancelled) setContext(data)
+        if (!cancelled) {
+          setContext(data)
+        }
       } catch {
-        if (!cancelled) setContext(FALLBACK_CONTEXT)
+        if (!cancelled) {
+          setContext(FALLBACK_CONTEXT)
+        }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
     void loadContext()
+
     return () => {
       cancelled = true
     }
@@ -56,7 +63,9 @@ export function HomeSidebarVisitorCard() {
           {loading ? '加载中' : context.locationLabel}
         </span>
       </div>
-      <p className="mt-3 text-sm font-medium leading-7 text-foreground/88">“{context.quote.text}”</p>
+      <p className="mt-3 text-sm font-medium leading-7 text-foreground/88">
+        “{context.quote.text}”
+      </p>
       <p className="mt-3 text-[11px] text-muted-foreground">{context.quote.from}</p>
     </div>
   )

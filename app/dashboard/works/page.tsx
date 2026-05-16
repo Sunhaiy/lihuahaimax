@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import useSWR from 'swr'
 import {
   AdminEmptyState,
@@ -11,8 +11,10 @@ import {
   AdminSection,
   AdminStatusBadge,
   ADMIN_INPUT_CLASS,
+  ADMIN_MUTED_PANEL_CLASS,
   ADMIN_TEXTAREA_CLASS,
 } from '@/components/admin/AdminPrimitives'
+import { MediaLibraryPicker } from '@/components/admin/MediaLibraryPicker'
 import { Button } from '@/components/ui/Button'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import type { WorkDetail } from '@/types/work'
@@ -20,6 +22,28 @@ import type { WorkDetail } from '@/types/work'
 const fetcher = (url: string) => fetch(url).then((response) => response.json())
 
 type WorkForm = WorkDetail
+
+function readApiError(payload: unknown, fallback: string) {
+  if (!payload || typeof payload !== 'object') return fallback
+
+  const source = payload as {
+    error?: string | { fieldErrors?: Record<string, string[]>; formErrors?: string[] }
+  }
+
+  if (typeof source.error === 'string' && source.error.trim()) return source.error
+
+  if (source.error && typeof source.error === 'object') {
+    const formError = source.error.formErrors?.find(Boolean)
+    if (formError) return formError
+
+    const fieldError = Object.values(source.error.fieldErrors ?? {})
+      .flat()
+      .find(Boolean)
+    if (fieldError) return fieldError
+  }
+
+  return fallback
+}
 
 function createEmptyWork(): WorkForm {
   return {
@@ -62,8 +86,10 @@ export default function DashboardWorksPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [uploadingCover, setUploadingCover] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const coverInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!data?.length || selectedId == null) return
@@ -84,6 +110,39 @@ export default function DashboardWorksPage() {
     setSelectedId(null)
     setForm(createEmptyWork())
     resetNotice()
+  }
+
+  async function handleCoverUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingCover(true)
+    resetNotice()
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload/cover', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json().catch(() => null)
+      if (!response.ok) {
+        throw new Error(result?.error || '上传封面失败')
+      }
+
+      updateField('cover_url', result.url)
+      setSuccess('作品封面已上传，记得保存项目。')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '上传封面失败')
+    } finally {
+      setUploadingCover(false)
+      if (coverInputRef.current) {
+        coverInputRef.current.value = ''
+      }
+    }
   }
 
   async function handleSave() {
@@ -260,6 +319,13 @@ export default function DashboardWorksPage() {
               )
             })
           )}
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleCoverUpload}
+          />
         </AdminPanel>
 
         <AdminPanel
@@ -343,12 +409,59 @@ export default function DashboardWorksPage() {
           <AdminSection title="封面与背面链接" description="封面显示在票根正面；官网和 GitHub 会显示在翻转背面。">
             <div className="grid gap-4 md:grid-cols-2">
               <AdminField label="封面 URL" fullWidth>
-                <input
-                  value={form.cover_url}
-                  onChange={(event) => updateField('cover_url', event.target.value)}
-                  className={ADMIN_INPUT_CLASS}
-                  placeholder="https://example.com/cover.jpg"
-                />
+                <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
+                  <div className={`${ADMIN_MUTED_PANEL_CLASS} overflow-hidden`}>
+                    <div className="aspect-[4/3] bg-background/40">
+                      {form.cover_url ? (
+                        <img src={form.cover_url} alt="作品封面预览" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                          暂无封面
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <input
+                      value={form.cover_url}
+                      onChange={(event) => updateField('cover_url', event.target.value)}
+                      className={ADMIN_INPUT_CLASS}
+                      placeholder="https://example.com/cover.jpg"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => coverInputRef.current?.click()}
+                        loading={uploadingCover}
+                      >
+                        <MaterialSymbol icon="image_arrow_up" size={16} />
+                        {form.cover_url ? '替换封面' : '上传封面'}
+                      </Button>
+                      <MediaLibraryPicker
+                        value={form.cover_url}
+                        onSelect={(url) => updateField('cover_url', url)}
+                        category="artwork"
+                        buttonLabel="从相册选择"
+                        dialogTitle="选择作品封面"
+                        description="作品卡片正面的封面可以直接上传，也可以复用相册里的图片。"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={!form.cover_url}
+                        onClick={() => updateField('cover_url', '')}
+                      >
+                        <MaterialSymbol icon="delete" size={16} />
+                        清空
+                      </Button>
+                    </div>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      封面会显示在票根正面，建议使用构图干净、主体明确的横图或方图。
+                    </p>
+                  </div>
+                </div>
               </AdminField>
 
               <AdminField label="年份">

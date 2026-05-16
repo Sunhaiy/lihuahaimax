@@ -1,10 +1,12 @@
+import type { ArticleDoc } from '@/lib/articles/document'
+
 export type PostStatus = 'draft' | 'published' | 'archived'
 
 export interface PostRow {
   id: number
   title: string
   slug: string
-  content: object
+  content: ArticleDoc
   excerpt: string | null
   cover_url: string | null
   cover_alt: string | null
@@ -24,7 +26,7 @@ export interface Post {
   id: number
   title: string
   slug: string
-  content: object
+  content: ArticleDoc
   excerpt: string | null
   coverUrl: string | null
   coverAlt: string | null
@@ -45,16 +47,17 @@ export type PostListItem = Omit<Post, 'content'>
 export interface CreatePostInput {
   title: string
   slug: string
-  content: object
+  content: ArticleDoc
   excerpt?: string
-  coverUrl?: string
-  coverAlt?: string
-  seoTitle?: string
-  seoDescription?: string
+  coverUrl?: string | null
+  coverAlt?: string | null
+  seoTitle?: string | null
+  seoDescription?: string | null
   isFeatured?: boolean
   status?: PostStatus
   tags?: string[]
   category?: string
+  publishedAt?: string | null
 }
 
 export type UpdatePostInput = Partial<CreatePostInput>
