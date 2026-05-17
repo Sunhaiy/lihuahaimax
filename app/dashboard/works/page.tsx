@@ -130,7 +130,7 @@ export default function DashboardWorksPage() {
 
       const result = await response.json().catch(() => null)
       if (!response.ok) {
-        throw new Error(result?.error || '上传封面失败')
+        throw new Error(readApiError(result, '上传封面失败'))
       }
 
       updateField('cover_url', result.url)
@@ -182,7 +182,7 @@ export default function DashboardWorksPage() {
 
       const result = response.status === 204 ? null : await response.json().catch(() => null)
       if (!response.ok) {
-        throw new Error(result?.error || '保存失败')
+        throw new Error(readApiError(result, '保存失败'))
       }
 
       await mutate()

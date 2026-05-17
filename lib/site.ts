@@ -1,4 +1,4 @@
-import { revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { SETTINGS_KEYS } from '@/lib/constants/settings'
 import { getSettings, setSetting } from '@/lib/db/dao/settingsDao'
 import type { SiteProfile } from '@/types/site'
@@ -133,6 +133,25 @@ function cleanText(value: unknown) {
 function cleanOptionalUrl(value: unknown) {
   const next = cleanText(value)
   return next || null
+}
+
+function normalizeAssetUrl(value: unknown, siteUrl: string) {
+  const next = cleanText(value)
+  if (!next) return null
+  if (next.startsWith('/')) return next
+
+  try {
+    const target = new URL(next)
+    const base = new URL(siteUrl)
+    const sameHost = target.host === base.host
+    if (sameHost && target.pathname.startsWith('/uploads/')) {
+      return `${target.pathname}${target.search}${target.hash}`
+    }
+  } catch {
+    return next
+  }
+
+  return next
 }
 
 function firstCharacter(value: string) {
@@ -276,6 +295,7 @@ export function normalizeSiteProfile(input?: Partial<SiteProfile> | null): SiteP
   const siteName = cleanText(source.siteName) || DEFAULT_SITE_PROFILE.siteName
   const ownerName = cleanText(source.ownerName) || siteName || DEFAULT_SITE_PROFILE.ownerName
   const ownerInitial = cleanText(source.ownerInitial) || firstCharacter(ownerName || siteName)
+  const siteUrl = cleanText(source.siteUrl) || DEFAULT_SITE_PROFILE.siteUrl
 
   return {
     siteName,
@@ -286,13 +306,15 @@ export function normalizeSiteProfile(input?: Partial<SiteProfile> | null): SiteP
     slogan: cleanText(source.slogan) || DEFAULT_SITE_PROFILE.slogan,
     roleLine: cleanText(source.roleLine) || DEFAULT_SITE_PROFILE.roleLine,
     bio: cleanText(source.bio) || DEFAULT_SITE_PROFILE.bio,
-    avatarUrl: cleanOptionalUrl(source.avatarUrl),
-    defaultPostCoverUrl: cleanOptionalUrl(source.defaultPostCoverUrl),
-    postCoverPoolUrls: normalizePostCoverPool(source.postCoverPoolUrls),
+    avatarUrl: normalizeAssetUrl(source.avatarUrl, siteUrl),
+    defaultPostCoverUrl: normalizeAssetUrl(source.defaultPostCoverUrl, siteUrl),
+    postCoverPoolUrls: normalizePostCoverPool(source.postCoverPoolUrls).map((item) =>
+      normalizeAssetUrl(item, siteUrl)
+    ).filter((item): item is string => Boolean(item)),
     homeGreetingPool: normalizeGreetingPool(source.homeGreetingPool),
     homeQuotePool: normalizeHomeQuotePool(source.homeQuotePool),
-    gamesHeroImageUrl: cleanOptionalUrl(source.gamesHeroImageUrl),
-    siteUrl: cleanText(source.siteUrl) || DEFAULT_SITE_PROFILE.siteUrl,
+    gamesHeroImageUrl: normalizeAssetUrl(source.gamesHeroImageUrl, siteUrl),
+    siteUrl,
     rssUrl: cleanText(source.rssUrl) || DEFAULT_SITE_PROFILE.rssUrl,
     friendLinkIntro: cleanText(source.friendLinkIntro) || DEFAULT_SITE_PROFILE.friendLinkIntro,
     friendLinkRequirements:
@@ -410,6 +432,14 @@ export async function persistSiteProfile(profile: SiteProfile) {
 
   revalidateTag('site-profile')
   revalidateTag('settings')
+  revalidatePath('/')
+  revalidatePath('/links')
+  revalidatePath('/about')
+  revalidatePath('/posts')
+  revalidatePath('/moments')
+  revalidatePath('/works')
+  revalidatePath('/anime')
+  revalidatePath('/games')
 
   return normalized
 }

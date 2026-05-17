@@ -169,6 +169,24 @@ function toAbsoluteAssetUrl(url?: string | null, siteUrl?: string | null) {
   return value.startsWith('/') ? `${base}${value}` : `${base}/${value.replace(/^\/+/, '')}`
 }
 
+function normalizeSiteAssetUrl(url?: string | null, siteUrl?: string | null) {
+  const value = (url ?? '').trim()
+  if (!value) return ''
+  if (value.startsWith('/')) return value
+
+  try {
+    const target = new URL(value)
+    const base = new URL((siteUrl || getDashboardOrigin()).trim())
+    if (target.host === base.host && target.pathname.startsWith('/uploads/')) {
+      return `${target.pathname}${target.search}${target.hash}`
+    }
+  } catch {
+    return value
+  }
+
+  return value
+}
+
 function getCategoryLabel(slug: string, categories: LinkCategoryRow[]) {
   return categories.find((category) => category.slug === slug)?.label ?? CATEGORY_LABELS[slug] ?? slug
 }
@@ -230,12 +248,7 @@ export default function DashboardLinksPage() {
 
   useEffect(() => {
     if (profileRequest.data) {
-      setProfileForm({
-        ...profileRequest.data,
-        avatarUrl: profileRequest.data.avatarUrl
-          ? toAbsoluteAssetUrl(profileRequest.data.avatarUrl, profileRequest.data.siteUrl)
-          : profileRequest.data.avatarUrl,
-      })
+      setProfileForm(profileRequest.data)
     }
   }, [profileRequest.data])
 
@@ -349,7 +362,7 @@ export default function DashboardLinksPage() {
       const result = await uploadImage(file)
       setForm((current) => ({
         ...current,
-        avatarUrl: toAbsoluteAssetUrl(result.url, profileForm?.siteUrl),
+        avatarUrl: result.url,
       }))
       setSuccess('友链头像已上传，记得保存这条友链。')
     } catch (err) {
@@ -369,7 +382,7 @@ export default function DashboardLinksPage() {
 
     try {
       const result = await uploadImage(file)
-      updateProfile('avatarUrl', toAbsoluteAssetUrl(result.url, profileForm.siteUrl))
+      updateProfile('avatarUrl', result.url)
       setSuccess('站点头像已上传，记得保存友链页资料。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '站点头像上传失败')
@@ -386,7 +399,10 @@ export default function DashboardLinksPage() {
     clearNotice()
 
     try {
-      const next = await saveSiteProfile(profileForm)
+      const next = await saveSiteProfile({
+        ...profileForm,
+        avatarUrl: normalizeSiteAssetUrl(profileForm.avatarUrl, profileForm.siteUrl) || null,
+      })
       profileRequest.mutate(next, false)
       setProfileForm(next)
       setSuccess('友链页资料已保存。')
@@ -727,7 +743,7 @@ export default function DashboardLinksPage() {
                     <MediaLibraryPicker
                       value={profileForm.avatarUrl}
                       onSelect={(url) =>
-                        updateProfile('avatarUrl', toAbsoluteAssetUrl(url, profileForm.siteUrl))
+                        updateProfile('avatarUrl', normalizeSiteAssetUrl(url, profileForm.siteUrl))
                       }
                       buttonLabel="从相册选择"
                       dialogTitle="选择友情链接页头像"
@@ -785,7 +801,7 @@ export default function DashboardLinksPage() {
                         updateProfile(
                           'avatarUrl',
                           event.target.value
-                            ? toAbsoluteAssetUrl(event.target.value, profileForm.siteUrl)
+                            ? normalizeSiteAssetUrl(event.target.value, profileForm.siteUrl)
                             : null
                         )
                       }

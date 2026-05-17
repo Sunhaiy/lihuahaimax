@@ -35,7 +35,8 @@ export function LinkSiteProfileCard({ siteProfile, stats }: LinkSiteProfileCardP
   const timerRef = useRef<number | null>(null)
   const siteUrl = siteProfile.siteUrl || 'https://lihuahai.dev'
   const siteUrlBase = siteUrl.replace(/\/$/, '')
-  const avatarUrl = toAbsoluteAssetUrl(siteProfile.avatarUrl, siteUrlBase)
+  const avatarDisplayUrl = (siteProfile.avatarUrl ?? '').trim()
+  const avatarAbsoluteUrl = toAbsoluteAssetUrl(siteProfile.avatarUrl, siteUrlBase)
 
   const infoItems: InfoItem[] = [
     {
@@ -65,17 +66,17 @@ export function LinkSiteProfileCard({ siteProfile, stats }: LinkSiteProfileCardP
     {
       key: 'avatar-url',
       icon: 'image',
-      label: '博客头像地址',
-      value: avatarUrl || '未设置',
-      copyValue: avatarUrl || undefined,
-      href: avatarUrl || undefined,
+      label: '头像地址',
+      value: avatarAbsoluteUrl || '未设置',
+      copyValue: avatarAbsoluteUrl || undefined,
+      href: avatarAbsoluteUrl || undefined,
     },
     {
       key: 'profile',
       icon: 'person',
       label: '站点说明',
-      value: `${siteProfile.ownerName} · ${siteProfile.roleLine}`,
-      copyValue: `${siteProfile.ownerName} · ${siteProfile.roleLine}`,
+      value: `${siteProfile.ownerName} / ${siteProfile.roleLine}`,
+      copyValue: `${siteProfile.ownerName} / ${siteProfile.roleLine}`,
       fullWidth: true,
     },
   ]
@@ -112,13 +113,15 @@ export function LinkSiteProfileCard({ siteProfile, stats }: LinkSiteProfileCardP
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_58%)] dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_58%)]" />
 
       <div className="relative">
-        <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-muted-foreground">简介</p>
+        <p className="text-[11px] font-mono uppercase tracking-[0.28em] text-muted-foreground">
+          简介
+        </p>
 
         <div className="mt-4 flex items-start gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-border/70 bg-background/70">
-            {avatarUrl ? (
+            {avatarDisplayUrl ? (
               <img
-                src={avatarUrl}
+                src={avatarDisplayUrl}
                 alt={siteProfile.ownerName}
                 className="h-full w-full object-cover"
               />
@@ -163,7 +166,11 @@ export function LinkSiteProfileCard({ siteProfile, stats }: LinkSiteProfileCardP
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2 text-[11px] font-mono uppercase tracking-[0.18em] text-muted-foreground">
-                      <MaterialSymbol icon={item.icon} size={14} className="shrink-0 text-muted-foreground" />
+                      <MaterialSymbol
+                        icon={item.icon}
+                        size={14}
+                        className="shrink-0 text-muted-foreground"
+                      />
                       <span className="truncate">{item.label}</span>
                     </div>
 
