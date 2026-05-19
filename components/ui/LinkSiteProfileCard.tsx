@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MaterialSymbol } from '@/components/ui/MaterialSymbol'
 import type { SiteProfile } from '@/types/site'
 
@@ -22,6 +22,7 @@ type InfoItem = {
 function toAbsoluteAssetUrl(url?: string | null, baseUrl?: string) {
   const value = (url ?? '').trim()
   if (!value) return ''
+
   if (/^(https?:)?\/\//i.test(value) || value.startsWith('data:') || value.startsWith('blob:')) {
     return value
   }
@@ -30,13 +31,57 @@ function toAbsoluteAssetUrl(url?: string | null, baseUrl?: string) {
   return value.startsWith('/') ? `${base}${value}` : `${base}/${value.replace(/^\/+/, '')}`
 }
 
+function normalizeCardAvatarUrl(url?: string | null, siteUrl?: string) {
+  const value = (url ?? '').trim()
+  if (!value) return ''
+
+  if (value.startsWith('/uploads/')) return value
+
+  const brokenSameHost = value.match(/^https?:\/\/\/+([^/]+)(\/uploads\/.*)$/i)
+  if (brokenSameHost) {
+    const host = brokenSameHost[1]?.toLowerCase()
+    const siteHost = (() => {
+      try {
+        return new URL((siteUrl || 'https://lihuahai.dev').trim()).host.toLowerCase()
+      } catch {
+        return 'lihuahai.dev'
+      }
+    })()
+
+    if (host === siteHost) {
+      return brokenSameHost[2]
+    }
+  }
+
+  try {
+    const target = new URL(value)
+    const base = new URL((siteUrl || 'https://lihuahai.dev').trim())
+    if (target.host === base.host && target.pathname.startsWith('/uploads/')) {
+      return `${target.pathname}${target.search}${target.hash}`
+    }
+  } catch {
+    return value
+  }
+
+  return value
+}
+
 export function LinkSiteProfileCard({ siteProfile, stats }: LinkSiteProfileCardProps) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [avatarFailed, setAvatarFailed] = useState(false)
   const timerRef = useRef<number | null>(null)
   const siteUrl = siteProfile.siteUrl || 'https://lihuahai.dev'
-  const siteUrlBase = siteUrl.replace(/\/$/, '')
-  const avatarDisplayUrl = (siteProfile.avatarUrl ?? '').trim()
-  const avatarAbsoluteUrl = toAbsoluteAssetUrl(siteProfile.avatarUrl, siteUrlBase)
+  const siteUrlBase = siteUrl.replace(/\/+$/, '')
+
+  const avatarDisplayUrl = useMemo(
+    () => normalizeCardAvatarUrl(siteProfile.avatarUrl, siteUrlBase),
+    [siteProfile.avatarUrl, siteUrlBase]
+  )
+  const avatarAbsoluteUrl = useMemo(
+    () => toAbsoluteAssetUrl(avatarDisplayUrl, siteUrlBase),
+    [avatarDisplayUrl, siteUrlBase]
+  )
+  const avatarRenderUrl = avatarDisplayUrl || avatarAbsoluteUrl
 
   const infoItems: InfoItem[] = [
     {
@@ -82,6 +127,10 @@ export function LinkSiteProfileCard({ siteProfile, stats }: LinkSiteProfileCardP
   ]
 
   useEffect(() => {
+    setAvatarFailed(false)
+  }, [avatarRenderUrl])
+
+  useEffect(() => {
     return () => {
       if (timerRef.current) {
         window.clearTimeout(timerRef.current)
@@ -119,11 +168,12 @@ export function LinkSiteProfileCard({ siteProfile, stats }: LinkSiteProfileCardP
 
         <div className="mt-4 flex items-start gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[20px] border border-border/70 bg-background/70">
-            {avatarDisplayUrl ? (
+            {avatarRenderUrl && !avatarFailed ? (
               <img
-                src={avatarDisplayUrl}
+                src={avatarRenderUrl}
                 alt={siteProfile.ownerName}
                 className="h-full w-full object-cover"
+                onError={() => setAvatarFailed(true)}
               />
             ) : (
               <span className="text-lg font-semibold text-primary">{siteProfile.ownerInitial}</span>

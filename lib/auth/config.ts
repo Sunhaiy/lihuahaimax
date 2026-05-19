@@ -1,11 +1,3 @@
-/**
- * lib/auth/config.ts
- *
- * NextAuth.js v5 (Auth.js) 配置。
- * 单人博主模式：使用 Credentials 凭据登录，
- * 管理员账号写在环境变量中，无需数据库用户表。
- */
-
 import type { NextAuthConfig } from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { z } from 'zod'
@@ -16,7 +8,6 @@ const loginSchema = z.object({
 })
 
 export const authConfig: NextAuthConfig = {
-  // 使用 JWT 策略（无需数据库 session 表）
   session: { strategy: 'jwt' },
 
   pages: {
@@ -24,7 +15,6 @@ export const authConfig: NextAuthConfig = {
   },
 
   callbacks: {
-    // 保护所有 /dashboard/* 路由
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user
       const isOnDashboard = nextUrl.pathname.startsWith('/dashboard')
@@ -43,7 +33,7 @@ export const authConfig: NextAuthConfig = {
     session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string
-        // @ts-expect-error 自定义字段
+        // @ts-expect-error custom field
         session.user.role = token.role
       }
       return session
@@ -62,25 +52,8 @@ export const authConfig: NextAuthConfig = {
         if (!parsed.success) return null
 
         const { email, password } = parsed.data
-
-        // 与环境变量中的管理员账号比对
-        const adminEmail = process.env.ADMIN_EMAIL
-        const adminPassword = process.env.ADMIN_PASSWORD
-
-        if (!adminEmail || !adminPassword) {
-          console.error('[Auth] ADMIN_EMAIL or ADMIN_PASSWORD not set in env')
-          return null
-        }
-
-        if (email !== adminEmail || password !== adminPassword) {
-          return null
-        }
-
-        return {
-          id: 'admin',
-          name: '梨花海管理员',
-          email: adminEmail,
-        }
+        const { authenticateAdmin } = await import('@/lib/auth/adminCredentials')
+        return authenticateAdmin(email, password)
       },
     }),
   ],

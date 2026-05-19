@@ -54,7 +54,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const post = await insertPost(parsed.data)
+    const post = await insertPost({
+      ...parsed.data,
+      publishedAt: parsed.data.publishedAt ?? new Date().toISOString(),
+    })
     return NextResponse.json(post, { status: 201 })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'

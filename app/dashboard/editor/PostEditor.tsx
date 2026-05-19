@@ -98,6 +98,10 @@ function toDateTimeLocalValue(value: string | null) {
   ].join('T')
 }
 
+function getCurrentDateTimeLocalValue() {
+  return toDateTimeLocalValue(new Date().toISOString())
+}
+
 function hasContent(input: {
   title: string
   excerpt: string
@@ -150,7 +154,8 @@ export function PostEditor({ post }: PostEditorProps) {
     post?.updated_at ? new Date(post.updated_at).toISOString() : null
   )
   const [publishedAt, setPublishedAt] = useState<string>(
-    toDateTimeLocalValue(post?.published_at ? new Date(post.published_at).toISOString() : null)
+    toDateTimeLocalValue(post?.published_at ? new Date(post.published_at).toISOString() : null) ||
+      getCurrentDateTimeLocalValue()
   )
   const [saving, setSaving] = useState(false)
   const [saveTarget, setSaveTarget] = useState<SaveTarget>(null)
@@ -174,6 +179,12 @@ export function PostEditor({ post }: PostEditorProps) {
       })
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (status === 'published' && !publishedAt) {
+      setPublishedAt(getCurrentDateTimeLocalValue())
+    }
+  }, [status, publishedAt])
 
   function autoSlug(input: string) {
     const latin = input

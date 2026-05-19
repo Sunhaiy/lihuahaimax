@@ -140,6 +140,18 @@ function normalizeAssetUrl(value: unknown, siteUrl: string) {
   if (!next) return null
   if (next.startsWith('/')) return next
 
+  const brokenSameHost = next.match(/^https?:\/\/\/+([^/]+)(\/uploads\/.*)$/i)
+  if (brokenSameHost) {
+    try {
+      const base = new URL(siteUrl)
+      if (brokenSameHost[1]?.toLowerCase() === base.host.toLowerCase()) {
+        return brokenSameHost[2]
+      }
+    } catch {
+      return brokenSameHost[2]
+    }
+  }
+
   try {
     const target = new URL(next)
     const base = new URL(siteUrl)

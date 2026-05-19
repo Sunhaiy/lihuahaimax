@@ -97,9 +97,21 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
       },
       {
         href: '/dashboard/settings',
-        label: '设置',
+        label: '站点设置',
         icon: 'wallpaper',
         description: '站点与场景',
+      },
+      {
+        href: '/dashboard/ai-writer',
+        label: 'AI 写文',
+        icon: 'auto_awesome',
+        description: 'DeepSeek 自动写文',
+      },
+      {
+        href: '/dashboard/account',
+        label: '账号安全',
+        icon: 'shield_lock',
+        description: '修改管理员邮箱与密码',
       },
     ],
   },

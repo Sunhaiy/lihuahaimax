@@ -195,6 +195,36 @@ function parseQuotePool(input: string): SiteProfile['homeQuotePool'] {
     .filter((item): item is SiteProfile['homeQuotePool'][number] => Boolean(item))
 }
 
+function normalizeSiteAssetUrl(url?: string | null, siteUrl?: string | null) {
+  const value = (url ?? '').trim()
+  if (!value) return ''
+  if (value.startsWith('/')) return value
+
+  const brokenSameHost = value.match(/^https?:\/\/\/+([^/]+)(\/uploads\/.*)$/i)
+  if (brokenSameHost) {
+    try {
+      const base = new URL((siteUrl || 'http://localhost:3000').trim())
+      if (brokenSameHost[1]?.toLowerCase() === base.host.toLowerCase()) {
+        return brokenSameHost[2]
+      }
+    } catch {
+      return brokenSameHost[2]
+    }
+  }
+
+  try {
+    const target = new URL(value)
+    const base = new URL((siteUrl || 'http://localhost:3000').trim())
+    if (target.host === base.host && target.pathname.startsWith('/uploads/')) {
+      return `${target.pathname}${target.search}${target.hash}`
+    }
+  } catch {
+    return value
+  }
+
+  return value
+}
+
 export default function SettingsPage() {
   const sceneRequest = useSWR<BackgroundSceneSettings>('/api/settings/background-scene', fetcher)
   const profileRequest = useSWR<SiteProfile>('/api/settings/site-profile', fetcher)
@@ -268,7 +298,17 @@ export default function SettingsPage() {
     resetNotice()
 
     try {
-      const next = await saveSiteProfile(profileForm)
+      const next = await saveSiteProfile({
+        ...profileForm,
+        avatarUrl: normalizeSiteAssetUrl(profileForm.avatarUrl, profileForm.siteUrl) || null,
+        defaultPostCoverUrl:
+          normalizeSiteAssetUrl(profileForm.defaultPostCoverUrl, profileForm.siteUrl) || null,
+        gamesHeroImageUrl:
+          normalizeSiteAssetUrl(profileForm.gamesHeroImageUrl, profileForm.siteUrl) || null,
+        postCoverPoolUrls: (profileForm.postCoverPoolUrls ?? [])
+          .map((item) => normalizeSiteAssetUrl(item, profileForm.siteUrl))
+          .filter(Boolean),
+      })
       profileRequest.mutate(next, false)
       setProfileForm(next)
       setSuccess('站点资料已保存。')
@@ -308,7 +348,7 @@ export default function SettingsPage() {
 
     try {
       const result = await uploadImage(file)
-      updateProfile('avatarUrl', result.url)
+      updateProfile('avatarUrl', normalizeSiteAssetUrl(result.url, profileForm?.siteUrl) || null)
       setSuccess('头像已上传，记得保存站点资料。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '上传头像失败')
@@ -327,7 +367,10 @@ export default function SettingsPage() {
 
     try {
       const result = await uploadImage(file)
-      updateProfile('defaultPostCoverUrl', result.url)
+      updateProfile(
+        'defaultPostCoverUrl',
+        normalizeSiteAssetUrl(result.url, profileForm?.siteUrl) || null
+      )
       setSuccess('默认文章封面已上传，记得保存站点资料。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '上传默认封面失败')
@@ -346,7 +389,10 @@ export default function SettingsPage() {
 
     try {
       const result = await uploadImage(file)
-      updateProfile('gamesHeroImageUrl', result.url)
+      updateProfile(
+        'gamesHeroImageUrl',
+        normalizeSiteAssetUrl(result.url, profileForm?.siteUrl) || null
+      )
       setSuccess('游戏页 Hero 已上传，记得保存站点资料。')
     } catch (err) {
       setError(err instanceof Error ? err.message : '上传游戏页 Hero 失败')
@@ -367,7 +413,12 @@ export default function SettingsPage() {
       const result = await uploadPostCoverPoolImage(file)
       updateProfile(
         'postCoverPoolUrls',
-        Array.from(new Set([...(profileForm?.postCoverPoolUrls ?? []), result.url]))
+        Array.from(
+          new Set([
+            ...(profileForm?.postCoverPoolUrls ?? []),
+            normalizeSiteAssetUrl(result.url, profileForm?.siteUrl),
+          ].filter(Boolean))
+        )
       )
       setSuccess('随机文章封面已上传，记得保存站点资料。')
     } catch (err) {
@@ -381,7 +432,12 @@ export default function SettingsPage() {
   function appendPostCoverPoolUrl(url: string) {
     updateProfile(
       'postCoverPoolUrls',
-      Array.from(new Set([...(profileForm?.postCoverPoolUrls ?? []), url]))
+      Array.from(
+        new Set([
+          ...(profileForm?.postCoverPoolUrls ?? []),
+          normalizeSiteAssetUrl(url, profileForm?.siteUrl),
+        ].filter(Boolean))
+      )
     )
   }
 
@@ -584,7 +640,9 @@ export default function SettingsPage() {
                   <>
                     <MediaLibraryPicker
                       value={profileForm.avatarUrl}
-                      onSelect={(url) => updateProfile('avatarUrl', url)}
+                      onSelect={(url) =>
+                        updateProfile('avatarUrl', normalizeSiteAssetUrl(url, profileForm.siteUrl) || null)
+                      }
                       buttonLabel="从相册选择"
                       dialogTitle="选择站点头像"
                       description="优先复用相册里的资源，也可以在弹窗中继续补传。"
@@ -632,7 +690,12 @@ export default function SettingsPage() {
                   <>
                     <MediaLibraryPicker
                       value={profileForm.defaultPostCoverUrl}
-                      onSelect={(url) => updateProfile('defaultPostCoverUrl', url)}
+                      onSelect={(url) =>
+                        updateProfile(
+                          'defaultPostCoverUrl',
+                          normalizeSiteAssetUrl(url, profileForm.siteUrl) || null
+                        )
+                      }
                       category="artwork"
                       buttonLabel="从相册选择"
                       dialogTitle="选择默认文章封面"
@@ -681,7 +744,12 @@ export default function SettingsPage() {
                   <>
                     <MediaLibraryPicker
                       value={profileForm.gamesHeroImageUrl}
-                      onSelect={(url) => updateProfile('gamesHeroImageUrl', url)}
+                      onSelect={(url) =>
+                        updateProfile(
+                          'gamesHeroImageUrl',
+                          normalizeSiteAssetUrl(url, profileForm.siteUrl) || null
+                        )
+                      }
                       category="artwork"
                       buttonLabel="从相册选择"
                       dialogTitle="选择游戏页 Hero 背景"
@@ -714,7 +782,12 @@ export default function SettingsPage() {
               <AdminField label="头像地址" hint="可以手动粘贴，也可以直接从相册选择或上传。">
                 <input
                   value={profileForm.avatarUrl ?? ''}
-                  onChange={(event) => updateProfile('avatarUrl', event.target.value || null)}
+                  onChange={(event) =>
+                    updateProfile(
+                      'avatarUrl',
+                      normalizeSiteAssetUrl(event.target.value, profileForm.siteUrl) || null
+                    )
+                  }
                   className={ADMIN_INPUT_CLASS}
                   placeholder="https://example.com/avatar.jpg"
                 />
@@ -726,7 +799,10 @@ export default function SettingsPage() {
                 <input
                   value={profileForm.defaultPostCoverUrl ?? ''}
                   onChange={(event) =>
-                    updateProfile('defaultPostCoverUrl', event.target.value || null)
+                    updateProfile(
+                      'defaultPostCoverUrl',
+                      normalizeSiteAssetUrl(event.target.value, profileForm.siteUrl) || null
+                    )
                   }
                   className={ADMIN_INPUT_CLASS}
                   placeholder="https://example.com/default-cover.jpg"
@@ -739,7 +815,10 @@ export default function SettingsPage() {
                 <input
                   value={profileForm.gamesHeroImageUrl ?? ''}
                   onChange={(event) =>
-                    updateProfile('gamesHeroImageUrl', event.target.value || null)
+                    updateProfile(
+                      'gamesHeroImageUrl',
+                      normalizeSiteAssetUrl(event.target.value, profileForm.siteUrl) || null
+                    )
                   }
                   className={ADMIN_INPUT_CLASS}
                   placeholder="https://example.com/games-hero.jpg"
