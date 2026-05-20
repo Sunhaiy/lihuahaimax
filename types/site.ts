@@ -46,6 +46,10 @@ export interface SiteProfile {
   githubUrl: string
   email: string
   footerText: string
+  footerIcpNumber: string
+  footerIcpUrl: string
+  footerPoliceNumber: string
+  footerPoliceUrl: string
   aboutHeroName: string
   aboutHeroNameEn: string
   aboutHeroRoleLine: string

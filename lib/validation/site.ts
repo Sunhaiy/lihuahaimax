@@ -116,6 +116,18 @@ export const siteProfileSchema = z.object({
     .refine((value) => !value || emailSchema.safeParse(value).success, 'Invalid email')
     .default(''),
   footerText: z.string().trim().max(140).default(''),
+  footerIcpNumber: z.string().trim().max(80).default(''),
+  footerIcpUrl: z
+    .string()
+    .trim()
+    .refine((value) => !value || isAbsoluteUrl(value), 'Invalid ICP URL')
+    .default(''),
+  footerPoliceNumber: z.string().trim().max(80).default(''),
+  footerPoliceUrl: z
+    .string()
+    .trim()
+    .refine((value) => !value || isAbsoluteUrl(value), 'Invalid police filing URL')
+    .default(''),
   aboutHeroName: z.string().trim().max(80).default(''),
   aboutHeroNameEn: z.string().trim().max(120).default(''),
   aboutHeroRoleLine: z.string().trim().max(160).default(''),

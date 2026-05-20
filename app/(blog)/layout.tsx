@@ -48,6 +48,27 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
     '--accent': themeChannels,
     '--ember': themeChannels,
   } as React.CSSProperties
+  const footerMeta = [
+    siteProfile.footerIcpNumber
+      ? {
+          key: 'icp',
+          label: siteProfile.footerIcpNumber,
+          href: siteProfile.footerIcpUrl || null,
+        }
+      : null,
+    siteProfile.footerPoliceNumber
+      ? {
+          key: 'police',
+          label: siteProfile.footerPoliceNumber,
+          href: siteProfile.footerPoliceUrl || null,
+        }
+      : null,
+    {
+      key: 'design',
+      label: 'Design by \u7d20\u5fc3',
+      href: null,
+    },
+  ].filter(Boolean) as Array<{ key: string; label: string; href: string | null }>
 
   return (
     <SceneShell
@@ -72,36 +93,50 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
         <main className="min-h-0 flex-1 pt-16">{children}</main>
 
         <footer className="relative z-20 mt-auto shrink-0 border-t border-border bg-background py-8">
-          <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
-            <p className="text-xs text-muted-foreground">
-              (c) {new Date().getFullYear()} {siteProfile.siteName} · {siteProfile.footerText}
-            </p>
+          <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6">
+            <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+              <p className="text-center text-xs text-muted-foreground sm:text-left">
+                (c) {new Date().getFullYear()} {siteProfile.siteName}{' | '}{siteProfile.footerText}
+              </p>
 
-            <div className="flex items-center gap-4">
-              <Link
-                href={rssHref}
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                RSS
-              </Link>
-              <Link
-                href="/sitemap.xml"
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                网站地图
-              </Link>
-              <Link
-                href="/links"
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                友情链接
-              </Link>
-              <Link
-                href="/dashboard"
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                后台
-              </Link>
+              <div className="flex items-center gap-4">
+                <Link
+                  href={rssHref}
+                  className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  RSS
+                </Link>
+                <Link
+                  href="/sitemap.xml"
+                  className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >{'\u7f51\u7ad9\u5730\u56fe'}</Link>
+                <Link
+                  href="/links"
+                  className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >{'\u53cb\u60c5\u94fe\u63a5'}</Link>
+                <Link
+                  href="/dashboard"
+                  className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >{'\u540e\u53f0'}</Link>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground sm:justify-start">
+              {footerMeta.map((item) =>
+                item.href ? (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="transition-colors hover:text-foreground"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <span key={item.key}>{item.label}</span>
+                )
+              )}
             </div>
           </div>
         </footer>

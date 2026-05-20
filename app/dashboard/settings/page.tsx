@@ -602,6 +602,38 @@ export default function SettingsPage() {
                   className={ADMIN_INPUT_CLASS}
                 />
               </AdminField>
+              <AdminField label={'\u5907\u6848 ICP \u53f7'}>
+                <input
+                  value={profileForm.footerIcpNumber}
+                  onChange={(event) => updateProfile('footerIcpNumber', event.target.value)}
+                  className={ADMIN_INPUT_CLASS}
+                  placeholder={'\u4f8b\u5982\uff1a\u6caa ICP \u5907 2026000001 \u53f7'}
+                />
+              </AdminField>
+              <AdminField label={'ICP \u8df3\u8f6c\u94fe\u63a5'}>
+                <input
+                  value={profileForm.footerIcpUrl}
+                  onChange={(event) => updateProfile('footerIcpUrl', event.target.value)}
+                  className={ADMIN_INPUT_CLASS}
+                  placeholder="https://beian.miit.gov.cn/"
+                />
+              </AdminField>
+              <AdminField label={'\u516c\u5b89\u5907\u6848\u53f7'}>
+                <input
+                  value={profileForm.footerPoliceNumber}
+                  onChange={(event) => updateProfile('footerPoliceNumber', event.target.value)}
+                  className={ADMIN_INPUT_CLASS}
+                  placeholder={'\u4f8b\u5982\uff1a\u6caa\u516c\u7f51\u5b89\u5907 31000000000001 \u53f7'}
+                />
+              </AdminField>
+              <AdminField label={'\u516c\u5b89\u5907\u6848\u94fe\u63a5'}>
+                <input
+                  value={profileForm.footerPoliceUrl}
+                  onChange={(event) => updateProfile('footerPoliceUrl', event.target.value)}
+                  className={ADMIN_INPUT_CLASS}
+                  placeholder="https://beian.mps.gov.cn/"
+                />
+              </AdminField>
               <AdminField label="个人简介" fullWidth>
                 <textarea
                   value={profileForm.bio}
